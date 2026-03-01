@@ -1,0 +1,86 @@
+/* FILE: src/maiming/presentation/theme/main.qss */
+QMainWindow { background: #202225; }
+
+QLabel#hud {
+    color: rgba(255,255,255,245);
+    background: rgba(0,0,0,205);
+    border: 1px solid rgba(255,255,255,50);
+    padding: 10px;
+    font-size: 14px;
+}
+
+QWidget#pauseRoot { background: rgba(0,0,0,140); }
+
+QWidget#pauseRoot QFrame#panel {
+    background: rgba(32,34,37,230);
+    border: 1px solid rgba(255,255,255,30);
+    border-radius: 8px;
+}
+
+QWidget#pauseRoot QLabel { color: white; font-size: 13px; }
+QWidget#pauseRoot QLabel#title { font-size: 20px; font-weight: 600; }
+QWidget#pauseRoot QLabel#sectionTitle { font-size: 15px; font-weight: 600; }
+
+QWidget#pauseRoot QPushButton {
+    color: white;
+    background: rgba(70,70,70,200);
+    border: 1px solid rgba(255,255,255,40);
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+QWidget#pauseRoot QPushButton:hover { background: rgba(90,90,90,220); }
+
+QWidget#pauseRoot QCheckBox { color: white; font-size: 13px; }
+
+QWidget#pauseRoot QFrame#sep { color: rgba(255,255,255,40); }
+
+QWidget#inventoryRoot { background: rgba(0,0,0,165); }
+
+QWidget#inventoryRoot QFrame#panel {
+    background: rgba(32,34,37,242);
+    border: 1px solid rgba(255,255,255,45);
+    border-radius: 10px;
+}
+
+QWidget#inventoryRoot QLabel { color: white; font-size: 13px; }
+QWidget#inventoryRoot QLabel#title { font-size: 20px; font-weight: 700; }
+QWidget#inventoryRoot QLabel#subtitle { color: rgba(255,255,255,210); }
+
+QWidget#inventoryRoot QPushButton#closeBtn {
+    color: white;
+    background: rgba(70,70,70,215);
+    border: 1px solid rgba(255,255,255,55);
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+QWidget#inventoryRoot QPushButton#closeBtn:hover { background: rgba(90,90,90,235); }
+
+QWidget#inventoryRoot QPushButton#slot {
+    background: rgba(15,15,15,235);
+    border: 2px solid rgba(255,255,255,32);
+    border-radius: 6px;
+}
+QWidget#inventoryRoot QPushButton#slot:hover { border: 2px solid rgba(255,255,255,85); }
+QWidget#inventoryRoot QPushButton#slot[selected="true"] { border: 2px solid rgba(255,255,255,230); }
+
+QWidget#inventoryRoot QScrollArea { border: none; background: transparent; }
+
+QWidget#deathRoot { background: rgba(0,0,0,170); }
+
+QWidget#deathRoot QFrame#panel {
+    background: rgba(32,34,37,245);
+    border: 1px solid rgba(255,255,255,55);
+    border-radius: 10px;
+}
+
+QWidget#deathRoot QLabel { color: white; font-size: 13px; }
+QWidget#deathRoot QLabel#title { font-size: 22px; font-weight: 800; }
+
+QWidget#deathRoot QPushButton {
+    color: white;
+    background: rgba(70,70,70,220);
+    border: 1px solid rgba(255,255,255,60);
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+QWidget#deathRoot QPushButton:hover { background: rgba(90,90,90,235); }

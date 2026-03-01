@@ -1,9 +1,45 @@
 # FILE: pyproject.toml
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
 [project]
 name = "maiming"
-version = "2.0.0"
-requires-python = ">=3.11"
-dependencies = ["PyQt6>=6.6", "numpy>=1.26", "PyOpenGL>=3.1.7"]
+version = "2.5.0"
+description = """
+Maiming is a deterministic Bedrock-movement sandbox coupled to an OpenGL 3.3 instanced voxel renderer, designed to support rigorous, reproducible studies of Minecraft PvP aiming, interaction reach, and block-accurate scene perception. The codebase prioritizes explicit architectural boundaries, stable fixed-timestep simulation behavior, and GPU-friendly face and shadow-map pipelines that remain predictable under refactoring pressure.
+"""
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.13"
+dependencies = [
+    "PyQt6>=6.6",
+    "numpy>=1.26",
+    "PyOpenGL>=3.1.7",
+]
+
+license = "Apache License Version 2.0"
+license-files = ["LICENSE"]
+
+keywords = ["minecraft", "pvp", "aim", "simulation", "opengl", "voxel", "shadow-map"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.scripts]
+maiming = "maiming.api.run:run_app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maiming"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/maiming/**", "assets/**", "main.py", "README.md", "pyproject.toml", "LICENSE"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py313"
