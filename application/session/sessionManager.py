@@ -8,8 +8,8 @@ from core.geometry.aabb import AABB
 
 from domain.world.worldState import WorldState, generate_test_map
 from domain.entities.playerEntity import PlayerEntity
-from domain.systems.movementSystem import MoveInput, step_minecraft
-from domain.systems.collisionSystem import integrate_with_collisions
+from domain.systems.movementSystem import MoveInput, step_bedrock
+from domain.systems.collisionSystem import integrate_with_collisions, can_auto_jump_one_block
 from domain.systems.buildSystem import pick_block
 
 from domain.blocks.stateCodec import parse_state, format_state
@@ -29,40 +29,107 @@ class SessionManager:
         st = SessionSettings(seed=seed)
         world = generate_test_map(seed=seed)
         player = PlayerEntity(
-            position=Vec3(0.0, 1.0, -10.0),
+            position=Vec3(float(st.spawn_x), float(st.spawn_y), float(st.spawn_z)),
             velocity=Vec3(0.0, 0.0, 0.0),
             yaw_deg=0.0,
             pitch_deg=0.0,
         )
         return SessionManager(settings=st, world=world, player=player)
 
-    def step(self, dt: float, move_f: float, move_s: float, jump: bool, crouch: bool, mdx: float, mdy: float) -> None:
-        yaw_delta = (-mdx) * self.settings.mouse_sens_deg_per_px
-        pitch_delta = (mdy) * self.settings.mouse_sens_deg_per_px
+    def respawn(self) -> None:
+        p = self.player
+        p.position = Vec3(float(self.settings.spawn_x), float(self.settings.spawn_y), float(self.settings.spawn_z))
+        p.velocity = Vec3(0.0, 0.0, 0.0)
+        p.yaw_deg = 0.0
+        p.pitch_deg = 0.0
+        p.on_ground = False
+
+        p.crouch_eye_offset = 0.0
+        p.hold_jump_queued = False
+        p.auto_jump_pending = False
+        p.auto_jump_start_y = float(p.position.y)
+        p.auto_jump_cooldown_s = 0.0
+
+    def step(
+        self,
+        dt: float,
+        move_f: float,
+        move_s: float,
+        jump_held: bool,
+        jump_pressed: bool,
+        sprint: bool,
+        crouch: bool,
+        mdx: float,
+        mdy: float,
+        auto_jump_enabled: bool,
+    ) -> None:
+        prev_on_ground = bool(self.player.on_ground)
+        prev_vy = float(self.player.velocity.y)
+
+        yaw_delta = (-float(mdx)) * float(self.settings.mouse_sens_deg_per_px)
+        pitch_delta = (float(mdy)) * float(self.settings.mouse_sens_deg_per_px)
+
+        if not bool(jump_held):
+            self.player.hold_jump_queued = False
+
+        jump_pulse = False
+
+        if bool(self.player.on_ground) and bool(jump_pressed):
+            jump_pulse = True
+        elif bool(self.player.on_ground) and bool(self.player.hold_jump_queued) and bool(jump_held):
+            jump_pulse = True
+            self.player.hold_jump_queued = False
+        else:
+            if bool(auto_jump_enabled) and (not bool(jump_held)) and bool(self.player.on_ground):
+                cd = float(self.player.auto_jump_cooldown_s)
+                if cd > 0.0:
+                    self.player.auto_jump_cooldown_s = max(0.0, cd - float(dt))
+                else:
+                    f = clampf(move_f, -1.0, 1.0)
+                    s = clampf(move_s, -1.0, 1.0)
+                    if abs(float(f)) + abs(float(s)) > 1e-6:
+                        from domain.systems.movementSystem import _wish_dir
+                        wish = _wish_dir(self.player, f, s)
+                        probe = float(self.settings.movement.auto_jump_probe)
+                        dx = float(wish.x) * probe
+                        dz = float(wish.z) * probe
+                        if can_auto_jump_one_block(self.player, self.world, dx=dx, dz=dz, params=self.settings.collision):
+                            jump_pulse = True
+                            self.player.auto_jump_pending = True
+                            self.player.auto_jump_start_y = float(self.player.position.y)
 
         mi = MoveInput(
             forward=clampf(move_f, -1.0, 1.0),
             strafe=clampf(move_s, -1.0, 1.0),
-            jump_pressed=bool(jump),
+            sprint=bool(sprint),
             crouch=bool(crouch),
-            yaw_delta_deg=yaw_delta,
-            pitch_delta_deg=pitch_delta,
+            jump_pulse=bool(jump_pulse),
+            jump_held=bool(jump_held),
+            yaw_delta_deg=float(yaw_delta),
+            pitch_delta_deg=float(pitch_delta),
         )
 
-        step_minecraft(self.player, mi, dt, params=self.settings.movement)
+        step_bedrock(self.player, mi, float(dt), params=self.settings.movement)
 
-        landed_now = integrate_with_collisions(
+        report = integrate_with_collisions(
             self.player,
             self.world,
-            dt,
+            float(dt),
             params=self.settings.collision,
             crouch=bool(crouch),
-            jump_pressed=bool(jump),
+            jump_pressed=bool(jump_pulse),
         )
 
-        if landed_now and bool(jump):
-            delay = float(self.settings.movement.jump_repeat_delay_s)
-            self.player.jump_cooldown_s = max(float(self.player.jump_cooldown_s), delay)
+        landed_now = (not prev_on_ground) and bool(report.supported_after) and (float(prev_vy) <= 0.0)
+
+        if bool(landed_now) and bool(jump_held):
+            self.player.hold_jump_queued = True
+
+        if bool(landed_now) and bool(self.player.auto_jump_pending):
+            dy = float(self.player.position.y) - float(self.player.auto_jump_start_y)
+            if dy >= float(self.settings.movement.auto_jump_success_dy):
+                self.player.auto_jump_cooldown_s = float(self.settings.movement.auto_jump_cooldown_s)
+            self.player.auto_jump_pending = False
 
     def make_snapshot(self) -> RenderSnapshotDTO:
         blocks = [BlockInstanceDTO(x, y, z, bid) for x, y, z, bid in self.world.iter_blocks()]

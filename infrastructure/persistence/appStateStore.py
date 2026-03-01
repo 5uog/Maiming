@@ -31,6 +31,7 @@ class PersistedSettings:
     cloud_seed: int = 1337
 
     build_mode: bool = False
+    auto_jump_enabled: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -46,6 +47,7 @@ class PersistedSettings:
             "cloud_density": int(self.cloud_density),
             "cloud_seed": int(self.cloud_seed),
             "build_mode": bool(self.build_mode),
+            "auto_jump_enabled": bool(self.auto_jump_enabled),
         }
 
     @staticmethod
@@ -81,15 +83,11 @@ class PersistedSettings:
             cloud_density=g_int("cloud_density", 1),
             cloud_seed=g_int("cloud_seed", 1337),
             build_mode=g_bool("build_mode", False),
+            auto_jump_enabled=g_bool("auto_jump_enabled", False),
         )
 
 @dataclass(frozen=True)
 class PersistedPlayer:
-    """
-    The player state is persisted as a minimal set of physically meaningful scalars.
-    The intent is to reproduce the last viewpoint and motion state without coupling persistence to
-    transient UI objects or simulation timers, which keeps the save format stable under refactors.
-    """
     pos_x: float = 0.0
     pos_y: float = 1.0
     pos_z: float = -10.0
@@ -153,10 +151,6 @@ class PersistedPlayer:
 
 @dataclass(frozen=True)
 class PersistedWorld:
-    """
-    The world is persisted as a mapping from integer block coordinates to the full block state string.
-    The state string is stored verbatim because it already carries property payload in a stable format.
-    """
     revision: int
     blocks: Dict[Tuple[int, int, int], str]
 
@@ -197,10 +191,6 @@ class PersistedWorld:
 
 @dataclass(frozen=True)
 class AppState:
-    """
-    The application state groups persisted settings, player state, and the world snapshot into one payload.
-    Versioning exists to keep migrations explicit and to avoid silently reinterpreting old data layouts.
-    """
     version: int
     settings: PersistedSettings
     player: PersistedPlayer
@@ -244,10 +234,6 @@ class AppState:
 
 @dataclass
 class AppStateStore:
-    """
-    The store is rooted at project_root/user_data by default to keep the MVP self-contained.
-    This location can be replaced by an OS-specific user config directory once distribution semantics are defined.
-    """
     project_root: Path
 
     def _store(self) -> JsonFileStore:

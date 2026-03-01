@@ -9,16 +9,17 @@ from domain.config.collisionParams import CollisionParams, DEFAULT_COLLISION_PAR
 
 @dataclass
 class SessionSettings:
-    # User-adjustable runtime settings
     seed: int = 0
     fov_deg: float = 80.0
     mouse_sens_deg_per_px: float = 0.09
 
-    # Domain parameters (typically fixed per session)
+    spawn_x: float = 0.0
+    spawn_y: float = 1.0
+    spawn_z: float = -10.0
+
     movement: MovementParams = field(default_factory=lambda: DEFAULT_MOVEMENT_PARAMS)
     collision: CollisionParams = field(default_factory=lambda: DEFAULT_COLLISION_PARAMS)
 
-    # Shared ranges (avoid duplicating numeric constraints across UI/widgets)
     FOV_MIN: ClassVar[float] = 50.0
     FOV_MAX: ClassVar[float] = 110.0
     SENS_MIN: ClassVar[float] = 0.01

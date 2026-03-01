@@ -28,6 +28,7 @@ class PauseOverlay(QWidget):
     sun_elevation_changed = pyqtSignal(float)
 
     build_mode_changed = pyqtSignal(bool)
+    auto_jump_changed = pyqtSignal(bool)
 
     def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
@@ -176,6 +177,13 @@ class PauseOverlay(QWidget):
         build_row.addStretch(1)
         pv.addLayout(build_row)
 
+        aj_row = QHBoxLayout()
+        self._cb_auto_jump = QCheckBox("Auto-Jump (Bedrock-style)", panel)
+        self._cb_auto_jump.toggled.connect(self.auto_jump_changed.emit)
+        aj_row.addWidget(self._cb_auto_jump)
+        aj_row.addStretch(1)
+        pv.addLayout(aj_row)
+
         root.addWidget(panel, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addStretch(1)
 
@@ -195,6 +203,7 @@ class PauseOverlay(QWidget):
         sun_az_deg: float,
         sun_el_deg: float,
         build_mode: bool,
+        auto_jump_enabled: bool,
     ) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
@@ -265,6 +274,10 @@ class PauseOverlay(QWidget):
         self._cb_build_mode.blockSignals(True)
         self._cb_build_mode.setChecked(bool(build_mode))
         self._cb_build_mode.blockSignals(False)
+
+        self._cb_auto_jump.blockSignals(True)
+        self._cb_auto_jump.setChecked(bool(auto_jump_enabled))
+        self._cb_auto_jump.blockSignals(False)
 
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")

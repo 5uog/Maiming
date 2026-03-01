@@ -1,6 +1,8 @@
 # FILE: domain/systems/collisionSystem.py
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from core.math.vec3 import Vec3
 from core.geometry.aabb import AABB
 from domain.entities.playerEntity import PlayerEntity
@@ -12,6 +14,14 @@ from domain.blocks.stateCodec import parse_state
 from domain.blocks.runtimeModels import collision_boxes_for_block
 
 _REG = create_default_registry()
+
+@dataclass(frozen=True)
+class CollisionReport:
+    supported_before: bool
+    supported_after: bool
+    landed_now: bool
+    stepped_up: bool
+    step_up_dy: float
 
 def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
     pxz = int(params.nearby_xz_pad)
@@ -149,15 +159,16 @@ def _resolve_downward_snap(
 
     return pos_y, bool(hit_ground)
 
-def _try_step_up(
+def _try_step_up_height(
     player: PlayerEntity,
     world: WorldState,
     pos: Vec3,
     dx: float,
     dz: float,
+    height: float,
     params: CollisionParams,
 ) -> Vec3 | None:
-    sh = float(params.step_height)
+    sh = float(max(0.0, height))
     if sh <= 1e-6:
         return None
 
@@ -175,6 +186,25 @@ def _try_step_up(
 
     return landed
 
+def can_auto_jump_one_block(
+    player: PlayerEntity,
+    world: WorldState,
+    dx: float,
+    dz: float,
+    params: CollisionParams = DEFAULT_COLLISION_PARAMS,
+) -> bool:
+    pos = player.position
+    if abs(float(dx)) + abs(float(dz)) <= 1e-9:
+        return False
+
+    if _try_step_up_height(player, world, pos, float(dx), float(dz), float(params.step_height), params) is not None:
+        return False
+
+    if _try_step_up_height(player, world, pos, float(dx), float(dz), 1.0, params) is None:
+        return False
+
+    return True
+
 def integrate_with_collisions(
     player: PlayerEntity,
     world: WorldState,
@@ -182,12 +212,12 @@ def integrate_with_collisions(
     params: CollisionParams = DEFAULT_COLLISION_PARAMS,
     crouch: bool = False,
     jump_pressed: bool = False,
-) -> bool:
+) -> CollisionReport:
     eps = float(params.eps)
 
     supported_before = bool(player.on_ground) or _ground_probe(player, world, params)
 
-    delta = player.velocity * dt
+    delta = player.velocity * float(dt)
     pos = player.position
 
     if supported_before and bool(crouch) and (not bool(jump_pressed)):
@@ -196,14 +226,18 @@ def integrate_with_collisions(
     allow_step = bool(supported_before) and (not bool(crouch)) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
 
     hit_ground = False
+    stepped_up = False
+    step_up_dy = 0.0
 
     if abs(delta.x) > 0.0:
         pos_try = Vec3(pos.x + delta.x, pos.y, pos.z)
         if allow_step and _any_intersection(world, player.aabb_at(pos_try), params):
-            stepped = _try_step_up(player, world, pos, float(delta.x), 0.0, params)
+            stepped = _try_step_up_height(player, world, pos, float(delta.x), 0.0, float(params.step_height), params)
             if stepped is not None:
+                step_up_dy = float(stepped.y - pos.y)
                 pos = stepped
                 hit_ground = True
+                stepped_up = True
             else:
                 pos_x = pos_try
                 aabb = player.aabb_at(pos_x)
@@ -250,10 +284,12 @@ def integrate_with_collisions(
     if abs(delta.z) > 0.0:
         pos_try = Vec3(pos.x, pos.y, pos.z + delta.z)
         if allow_step and _any_intersection(world, player.aabb_at(pos_try), params):
-            stepped = _try_step_up(player, world, pos, 0.0, float(delta.z), params)
+            stepped = _try_step_up_height(player, world, pos, 0.0, float(delta.z), float(params.step_height), params)
             if stepped is not None:
+                step_up_dy = float(stepped.y - pos.y)
                 pos = stepped
                 hit_ground = True
+                stepped_up = True
             else:
                 pos_z = pos_try
                 aabb = player.aabb_at(pos_z)
@@ -285,5 +321,12 @@ def integrate_with_collisions(
     supported_after = bool(hit_ground) or _ground_probe(player, world, params)
     player.on_ground = supported_after
 
-    landed_now = (not supported_before) and supported_after
-    return bool(landed_now)
+    landed_now = (not bool(supported_before)) and bool(supported_after)
+
+    return CollisionReport(
+        supported_before=bool(supported_before),
+        supported_after=bool(supported_after),
+        landed_now=bool(landed_now),
+        stepped_up=bool(stepped_up),
+        step_up_dy=float(step_up_dy),
+    )
