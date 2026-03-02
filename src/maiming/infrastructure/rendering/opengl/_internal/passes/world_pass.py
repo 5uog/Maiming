@@ -1,7 +1,9 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/passes/world_pass.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/world_pass.py
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Dict
+
 import numpy as np
 
 from OpenGL.GL import (
@@ -18,6 +20,7 @@ from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas
 from ...facade.gl_renderer_params import ShadowParams
 from .shadow_map_pass import ShadowMapInfo
+from maiming.domain.world.chunking import ChunkKey
 
 @dataclass(frozen=True)
 class WorldDrawInputs:
@@ -32,29 +35,51 @@ class WorldDrawInputs:
     shadow: ShadowParams
     shadow_info: ShadowMapInfo
 
+    camera_chunk: ChunkKey
+    render_distance_chunks: int
+
+@dataclass
+class _ChunkFaces:
+    meshes: list[MeshBuffer]
+    counts: list[int]
+    last_rev: int
+
 class WorldPass:
     def __init__(self) -> None:
         self._prog: ShaderProgram | None = None
-        self._meshes: list[MeshBuffer] | None = None
         self._atlas: TextureAtlas | None = None
+        self._chunks: Dict[ChunkKey, _ChunkFaces] = {}
 
-        self._counts: list[int] = [0, 0, 0, 0, 0, 0]
-        self._last_revision: int = -1
-
-    def initialize(self, prog: ShaderProgram, meshes: list[MeshBuffer], atlas: TextureAtlas) -> None:
+    def initialize(self, prog: ShaderProgram, atlas: TextureAtlas) -> None:
         self._prog = prog
-        self._meshes = meshes
         self._atlas = atlas
 
-    def upload_faces(self, world_revision: int, faces: list[np.ndarray]) -> None:
-        if self._meshes is None:
-            return
-        if int(world_revision) == int(self._last_revision):
-            return
-        self._last_revision = int(world_revision)
+    def destroy(self) -> None:
+        for ch in self._chunks.values():
+            for m in ch.meshes:
+                m.destroy()
+        self._chunks.clear()
+        self._prog = None
+        self._atlas = None
 
+    def _ensure_chunk(self, k: ChunkKey) -> _ChunkFaces:
+        ch = self._chunks.get(k)
+        if ch is not None:
+            return ch
+
+        meshes = [MeshBuffer.create_quad_instanced(i) for i in range(6)]
+        counts = [0, 0, 0, 0, 0, 0]
+        ch = _ChunkFaces(meshes=meshes, counts=counts, last_rev=-1)
+        self._chunks[k] = ch
+        return ch
+
+    def upload_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         if len(faces) != 6:
-            faces = (faces + [np.zeros((0, 12), dtype=np.float32) for _ in range(6)])[:6]
+            return
+        ch = self._ensure_chunk(chunk_key)
+        if int(world_revision) == int(ch.last_rev):
+            return
+        ch.last_rev = int(world_revision)
 
         for fi in range(6):
             data = faces[fi]
@@ -62,13 +87,22 @@ class WorldPass:
                 data = data.astype(np.float32, copy=False)
             if not data.flags["C_CONTIGUOUS"]:
                 data = np.ascontiguousarray(data, dtype=np.float32)
+            ch.meshes[fi].upload_instances(data)
+            ch.counts[fi] = int(data.shape[0])
 
-            self._meshes[fi].upload_instances(data)
-            self._counts[fi] = int(data.shape[0])
+    @staticmethod
+    def _within_render_distance(ck: ChunkKey, cam: ChunkKey, rd: int) -> bool:
+        dx = abs(int(ck[0]) - int(cam[0]))
+        dz = abs(int(ck[2]) - int(cam[2]))
+        dy = abs(int(ck[1]) - int(cam[1]))
+        return (dx <= int(rd)) and (dz <= int(rd)) and (dy <= 1)
 
     def draw(self, inp: WorldDrawInputs) -> None:
-        if self._prog is None or self._meshes is None or self._atlas is None:
+        if self._prog is None or self._atlas is None:
             return
+
+        rd = int(max(2, min(16, int(inp.render_distance_chunks))))
+        cam = inp.camera_chunk
 
         with GLStateGuard(
             capture_framebuffer=False,
@@ -111,13 +145,17 @@ class WorldPass:
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
 
-            for fi, (mesh, cnt) in enumerate(zip(self._meshes, self._counts)):
-                if int(cnt) <= 0:
+            for ck, ch in self._chunks.items():
+                if not self._within_render_distance(ck, cam, rd):
                     continue
-                self._prog.set_int("u_face", int(fi))
-                glBindVertexArray(mesh.vao)
-                glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
-                glBindVertexArray(0)
+
+                for fi, (mesh, cnt) in enumerate(zip(ch.meshes, ch.counts)):
+                    if int(cnt) <= 0:
+                        continue
+                    self._prog.set_int("u_face", int(fi))
+                    glBindVertexArray(mesh.vao)
+                    glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
+                    glBindVertexArray(0)
 
             glDisable(GL_CULL_FACE)
 

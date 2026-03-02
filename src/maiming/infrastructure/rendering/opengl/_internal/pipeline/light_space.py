@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/pipeline/light_space.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/pipeline/light_space.py
 from __future__ import annotations
 
 import numpy as np

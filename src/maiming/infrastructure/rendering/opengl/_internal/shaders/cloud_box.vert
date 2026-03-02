@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/cloudBox.vert
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/cloud_box.vert
 #version 330 core
 
 layout(location = 0) in vec3 a_pos;

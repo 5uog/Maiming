@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/shadow.vert
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/shadow.vert
 #version 330 core
 
 layout(location = 0) in vec3 a_pos;

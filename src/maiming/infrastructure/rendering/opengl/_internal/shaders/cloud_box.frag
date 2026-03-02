@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/cloudBox.frag
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/cloud_box.frag
 #version 330 core
 
 in vec3 v_normal;

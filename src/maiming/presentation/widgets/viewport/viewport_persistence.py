@@ -35,6 +35,8 @@ class PersistedRuntime:
     sun_az_deg: float = 45.0
     sun_el_deg: float = 60.0
 
+    render_distance_chunks: int = 6
+
 def apply_persisted_state_if_present(
     *,
     project_root: Path,
@@ -63,6 +65,7 @@ def apply_persisted_state_if_present(
         build_mode=bool(ps.build_mode),
         auto_jump_enabled=bool(ps.auto_jump_enabled),
         cloud_wire=False,
+        render_distance_chunks=int(max(2, min(16, int(ps.render_distance_chunks)))),
     )
 
     pp = st.player
@@ -81,10 +84,7 @@ def apply_persisted_state_if_present(
 
     pw = st.world
     if pw.blocks:
-        session.world.blocks.clear()
-        for (x, y, z), s in pw.blocks.items():
-            session.world.blocks[(int(x), int(y), int(z))] = str(s)
-        session.world.revision = int(max(1, int(pw.revision)))
+        session.world.replace_all(blocks={k: str(v) for (k, v) in pw.blocks.items()}, revision=int(max(1, int(pw.revision))))
 
     renderer.set_world_wireframe(bool(out.world_wire))
     renderer.set_shadow_enabled(bool(out.shadow_enabled))
@@ -113,6 +113,7 @@ def save_state(
     shadow_enabled: bool,
     sun_az_deg: float,
     sun_el_deg: float,
+    render_distance_chunks: int,
 ) -> None:
     store = AppStateStore(project_root=Path(project_root))
 
@@ -130,6 +131,7 @@ def save_state(
         cloud_seed=int(cloud_seed),
         build_mode=bool(build_mode),
         auto_jump_enabled=bool(auto_jump_enabled),
+        render_distance_chunks=int(max(2, min(16, int(render_distance_chunks)))),
     )
 
     pl = session.player
@@ -147,9 +149,10 @@ def save_state(
         crouch_eye_offset=float(max(0.0, min(float(pl.crouch_eye_drop), float(pl.crouch_eye_offset)))),
     )
 
+    snap = session.world.snapshot_blocks()
     world = PersistedWorld(
         revision=int(session.world.revision),
-        blocks={k: str(v) for (k, v) in session.world.blocks.items()},
+        blocks={k: str(v) for (k, v) in snap.items()},
     )
 
     state = AppState(version=2, settings=settings, player=player, world=world)

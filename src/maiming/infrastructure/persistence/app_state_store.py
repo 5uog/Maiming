@@ -9,11 +9,6 @@ from maiming.infrastructure.persistence.json_file_store import JsonFileStore
 
 @dataclass(frozen=True)
 class PersistedSettings:
-    """
-    This document stores user-facing runtime parameters that are expected to persist across sessions.
-    The scope is intentionally limited to values that have a clear UI mapping to avoid silently persisting
-    internal tuning knobs that may change during development.
-    """
     fov_deg: float = 80.0
     mouse_sens_deg_per_px: float = 0.09
 
@@ -33,6 +28,8 @@ class PersistedSettings:
     build_mode: bool = False
     auto_jump_enabled: bool = False
 
+    render_distance_chunks: int = 6
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "fov_deg": float(self.fov_deg),
@@ -48,6 +45,7 @@ class PersistedSettings:
             "cloud_seed": int(self.cloud_seed),
             "build_mode": bool(self.build_mode),
             "auto_jump_enabled": bool(self.auto_jump_enabled),
+            "render_distance_chunks": int(self.render_distance_chunks),
         }
 
     @staticmethod
@@ -70,6 +68,9 @@ class PersistedSettings:
             v = d.get(k, default)
             return bool(v) if isinstance(v, (bool, int)) else bool(default)
 
+        rd = g_int("render_distance_chunks", 6)
+        rd = int(max(2, min(16, rd)))
+
         return PersistedSettings(
             fov_deg=g_float("fov_deg", 80.0),
             mouse_sens_deg_per_px=g_float("mouse_sens_deg_per_px", 0.09),
@@ -84,6 +85,7 @@ class PersistedSettings:
             cloud_seed=g_int("cloud_seed", 1337),
             build_mode=g_bool("build_mode", False),
             auto_jump_enabled=g_bool("auto_jump_enabled", False),
+            render_distance_chunks=int(rd),
         )
 
 @dataclass(frozen=True)

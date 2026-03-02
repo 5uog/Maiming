@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/resources/texture_atlas.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/resources/texture_atlas.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -134,11 +134,6 @@ def _collect_images(block_dir: Path, tile_size: int, names: Iterable[str] | None
     return out
 
 def _pad_extrude(src: QImage, pad: int) -> QImage:
-    """
-    The atlas is packed without per-tile gaps unless padding is explicitly added.
-    This function creates a (tile + 2*pad) image and duplicates edge pixels into the padding area,
-    preventing out-of-tile sampling from reading transparent atlas background.
-    """
     p = int(max(0, pad))
     w = int(src.width())
     h = int(src.height())

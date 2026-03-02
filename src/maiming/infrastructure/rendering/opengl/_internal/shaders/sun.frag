@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/sun.frag
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/sun.frag
 #version 330 core
 
 in vec2 v_uv;

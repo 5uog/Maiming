@@ -1,8 +1,11 @@
 # FILE: src/maiming/domain/world/world_state.py
 from __future__ import annotations
 
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from typing import Dict, Tuple, Iterable, Any
+
+from maiming.domain.world.chunking import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
 
 BlockKey = Tuple[int, int, int]
 
@@ -11,24 +14,159 @@ class WorldState:
     blocks: Dict[BlockKey, str]
     revision: int = 0
 
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
+
+    _dirty_chunks: set[ChunkKey] = field(default_factory=set, init=False, repr=False)
+    _chunk_index: Dict[ChunkKey, set[BlockKey]] = field(default_factory=dict, init=False, repr=False)
+
+    _chunk_mesh_rev: Dict[ChunkKey, int] = field(default_factory=dict, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        with self._lock:
+            self._chunk_index.clear()
+            for k in self.blocks.keys():
+                ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
+                s = self._chunk_index.get(ck)
+                if s is None:
+                    s = set()
+                    self._chunk_index[ck] = s
+                s.add((int(k[0]), int(k[1]), int(k[2])))
+
+            self._chunk_mesh_rev.clear()
+            for ck in self._chunk_index.keys():
+                self._chunk_mesh_rev[ck] = int(max(1, int(self._chunk_mesh_rev.get(ck, 0))))
+
+            self._dirty_chunks = set(self._chunk_index.keys())
+
+    def existing_chunk_keys(self) -> set[ChunkKey]:
+        with self._lock:
+            return set(self._chunk_index.keys())
+
+    def chunk_mesh_revision(self, ck: ChunkKey) -> int:
+        with self._lock:
+            return int(self._chunk_mesh_rev.get((int(ck[0]), int(ck[1]), int(ck[2])), 0))
+
+    def consume_dirty_chunks(self) -> set[ChunkKey]:
+        with self._lock:
+            out = set(self._dirty_chunks)
+            self._dirty_chunks.clear()
+            return out
+
+    def consume_dirty_chunks_with_rev(self) -> Dict[ChunkKey, int]:
+        with self._lock:
+            out: Dict[ChunkKey, int] = {}
+            for ck in self._dirty_chunks:
+                out[ck] = int(self._chunk_mesh_rev.get(ck, 0))
+            self._dirty_chunks.clear()
+            return out
+
+    def snapshot_blocks(self) -> Dict[BlockKey, str]:
+        with self._lock:
+            return dict(self.blocks)
+
+    def _index_add(self, k: BlockKey) -> None:
+        ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
+        s = self._chunk_index.get(ck)
+        if s is None:
+            s = set()
+            self._chunk_index[ck] = s
+        s.add((int(k[0]), int(k[1]), int(k[2])))
+
+        if ck not in self._chunk_mesh_rev:
+            self._chunk_mesh_rev[ck] = 1
+
+    def _index_remove(self, k: BlockKey) -> None:
+        ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
+        s = self._chunk_index.get(ck)
+        if s is None:
+            return
+        s.discard((int(k[0]), int(k[1]), int(k[2])))
+        if not s:
+            try:
+                del self._chunk_index[ck]
+            except KeyError:
+                pass
+            self._chunk_mesh_rev.pop(ck, None)
+
+    def _mark_chunks_dirty(self, keys: Iterable[ChunkKey]) -> None:
+        for ck0 in keys:
+            ck = (int(ck0[0]), int(ck0[1]), int(ck0[2]))
+            cur = int(self._chunk_mesh_rev.get(ck, 0))
+            nxt = 1 if cur <= 0 else (cur + 1)
+            self._chunk_mesh_rev[ck] = int(nxt)
+            self._dirty_chunks.add(ck)
+
     def set_block(self, x: int, y: int, z: int, block_id: str) -> None:
-        self.blocks[(x, y, z)] = block_id
-        self.revision += 1
+        k = (int(x), int(y), int(z))
+        with self._lock:
+            existed = k in self.blocks
+            self.blocks[k] = str(block_id)
+            if not existed:
+                self._index_add(k)
+
+            self.revision += 1
+            self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
 
     def remove_block(self, x: int, y: int, z: int) -> None:
-        if (x, y, z) in self.blocks:
-            del self.blocks[(x, y, z)]
+        k = (int(x), int(y), int(z))
+        with self._lock:
+            if k not in self.blocks:
+                return
+
+            del self.blocks[k]
+            self._index_remove(k)
+
             self.revision += 1
+            self._mark_chunks_dirty(neighbor_chunk_keys_for_cell(int(x), int(y), int(z)))
 
     def iter_blocks(self) -> Iterable[tuple[int, int, int, str]]:
-        for (x, y, z), bid in self.blocks.items():
-            yield x, y, z, bid
+        with self._lock:
+            items = list(self.blocks.items())
+        for (x, y, z), bid in items:
+            yield int(x), int(y), int(z), str(bid)
+
+    def snapshot_for_chunk_build(self, target: ChunkKey) -> tuple[list[tuple[int, int, int, str]], Dict[BlockKey, str]]:
+        cx, cy, cz = (int(target[0]), int(target[1]), int(target[2]))
+        neigh: list[ChunkKey] = []
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for dz in (-1, 0, 1):
+                    neigh.append((cx + dx, cy + dy, cz + dz))
+
+        with self._lock:
+            state_at: Dict[BlockKey, str] = {}
+
+            for ck in neigh:
+                keys = self._chunk_index.get(ck)
+                if not keys:
+                    continue
+                for k in keys:
+                    s = self.blocks.get(k)
+                    if s is None:
+                        continue
+                    state_at[(int(k[0]), int(k[1]), int(k[2]))] = str(s)
+
+            blocks_local: list[tuple[int, int, int, str]] = []
+            keys_t = self._chunk_index.get((cx, cy, cz))
+            if keys_t:
+                for k in keys_t:
+                    s = state_at.get(k)
+                    if s is None:
+                        s2 = self.blocks.get(k)
+                        if s2 is None:
+                            continue
+                        s = str(s2)
+                        state_at[(int(k[0]), int(k[1]), int(k[2]))] = s
+                    blocks_local.append((int(k[0]), int(k[1]), int(k[2]), str(s)))
+
+        return blocks_local, state_at
 
     def to_persisted_dict(self) -> dict[str, Any]:
-        items: list[list[Any]] = []
-        for (x, y, z), s in self.blocks.items():
-            items.append([int(x), int(y), int(z), str(s)])
-        return {"revision": int(self.revision), "blocks": items}
+        with self._lock:
+            items: list[list[Any]] = []
+            for (x, y, z), s in self.blocks.items():
+                items.append([int(x), int(y), int(z), str(s)])
+            return {"revision": int(self.revision), "blocks": items}
 
     @staticmethod
     def from_persisted_dict(d: dict[str, Any]) -> "WorldState":
@@ -54,3 +192,27 @@ class WorldState:
                 out[(x, y, z)] = s
 
         return WorldState(blocks=out, revision=int(max(0, revision)))
+
+    def replace_all(self, *, blocks: Dict[BlockKey, str], revision: int) -> None:
+        with self._lock:
+            self.blocks.clear()
+            for k, v in blocks.items():
+                kk = (int(k[0]), int(k[1]), int(k[2]))
+                self.blocks[kk] = str(v)
+
+            self.revision = int(max(0, int(revision)))
+
+            self._chunk_index.clear()
+            for k in self.blocks.keys():
+                ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
+                s = self._chunk_index.get(ck)
+                if s is None:
+                    s = set()
+                    self._chunk_index[ck] = s
+                s.add((int(k[0]), int(k[1]), int(k[2])))
+
+            self._chunk_mesh_rev.clear()
+            for ck in self._chunk_index.keys():
+                self._chunk_mesh_rev[ck] = 1
+
+            self._dirty_chunks = set(self._chunk_index.keys())

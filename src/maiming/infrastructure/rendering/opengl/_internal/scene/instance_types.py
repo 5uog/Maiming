@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/scene/instance_types.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/instance_types.py
 from __future__ import annotations
 
 from dataclasses import dataclass

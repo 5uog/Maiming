@@ -1,6 +1,7 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/facade/gl_renderer.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/facade/gl_renderer.py
 from __future__ import annotations
 
+import math
 import numpy as np
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from maiming.core.math import mat4
 from maiming.core.math.view_angles import forward_from_yaw_pitch_deg, sun_dir_from_az_el_deg
 
 from maiming.domain.blocks.state_codec import parse_state
+from maiming.domain.blocks.block_definition import BlockDefinition
+from maiming.domain.world.chunking import chunk_key
 
 from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
 from .gl_resources import GLResources
@@ -25,8 +28,8 @@ from .._internal.passes.shadow_map_pass import ShadowMapPass
 from .._internal.passes.world_pass import WorldPass, WorldDrawInputs
 from .._internal.passes.sun_pass import SunPass
 from .._internal.passes.cloud_pass import CloudPass
-from .._internal.scene.world_face_builder import build_world_faces
 from .._internal.pipeline.light_space import compute_light_view_proj
+from maiming.domain.world.chunking import ChunkKey
 
 class GLRenderer:
     def __init__(self, params: GLRendererParams | None = None) -> None:
@@ -58,8 +61,8 @@ class GLRenderer:
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LESS)
 
-        self._shadow.initialize(self._res.shadow_prog, self._res.shadow_cube_mesh, int(self._cfg.shadow.size))
-        self._world.initialize(self._res.world_prog, self._res.world_meshes, self._res.atlas)
+        self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
+        self._world.initialize(self._res.world_prog, self._res.atlas)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
 
@@ -121,9 +124,6 @@ class GLRenderer:
     def sun_dir(self) -> Vec3:
         return self._sun_dir
 
-    def shadow_dark_mul(self) -> float:
-        return float(self._cfg.shadow.dark_mul)
-
     def shadow_info(self) -> tuple[bool, int]:
         if not bool(self._shadow_enabled):
             return (False, 0)
@@ -149,36 +149,47 @@ class GLRenderer:
             uv = self._res.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
         return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
 
-    def submit_world(self, world_revision: int, blocks: list[tuple[int, int, int, str]]) -> None:
+    def world_build_tools(self):
         if self._res is None:
-            return
+            return None
 
-        def def_lookup(base_id: str):
+        def def_lookup(base_id: str) -> BlockDefinition | None:
             return self._res.blocks.get(str(base_id))
 
-        faces_gpu, casters = build_world_faces(
-            blocks=blocks,
-            uv_lookup=self.atlas_uv_face,
-            def_lookup=def_lookup,
-            sun_dir=self._sun_dir.normalized(),
-            shadow_dark_mul=float(self._cfg.shadow.dark_mul),
-        )
+        return (self.atlas_uv_face, def_lookup)
 
-        faces_np: list[np.ndarray] = []
-        for face in faces_gpu:
-            if not face:
-                faces_np.append(np.zeros((0, 12), dtype=np.float32))
-                continue
-            arr = np.array(
-                [[i.mn_x, i.mn_y, i.mn_z, i.mx_x, i.mx_y, i.mx_z, i.u0, i.v0, i.u1, i.v1, i.shade, i.uv_rot] for i in face],
-                dtype=np.float32,
-            )
-            faces_np.append(arr)
+    def block_display_name(self, block_state_or_id: str) -> str:
+        raw = str(block_state_or_id)
+        base, _p = parse_state(raw)
+        if self._res is None:
+            return str(base)
+        d = self._res.blocks.get(str(base))
+        return str(d.display_name) if d is not None else str(base)
 
-        self._world.upload_faces(int(world_revision), faces_np)
-        self._shadow.set_casters(int(world_revision), casters)
+    def submit_chunk(
+        self,
+        *,
+        chunk_key: ChunkKey,
+        world_revision: int,
+        faces: list[np.ndarray],
+        casters: np.ndarray,
+    ) -> None:
+        if self._res is None:
+            return
+        self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
+        self._shadow.set_chunk_casters(chunk_key=chunk_key, world_revision=int(world_revision), casters=casters)
 
-    def render(self, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float) -> None:
+    def render(
+        self,
+        *,
+        w: int,
+        h: int,
+        eye: Vec3,
+        yaw_deg: float,
+        pitch_deg: float,
+        fov_deg: float,
+        render_distance_chunks: int,
+    ) -> None:
         if self._res is None:
             return
 
@@ -212,6 +223,12 @@ class GLRenderer:
         glDepthFunc(GL_LESS)
 
         shadow_info = self._shadow.info()
+
+        bx = int(math.floor(float(eye.x)))
+        by = int(math.floor(float(eye.y)))
+        bz = int(math.floor(float(eye.z)))
+        cam_ck = chunk_key(bx, by, bz)
+
         self._world.draw(
             WorldDrawInputs(
                 view_proj=vp,
@@ -222,6 +239,8 @@ class GLRenderer:
                 world_wireframe=bool(self._world_wireframe),
                 shadow=self._cfg.shadow,
                 shadow_info=shadow_info,
+                camera_chunk=cam_ck,
+                render_distance_chunks=int(render_distance_chunks),
             )
         )
 

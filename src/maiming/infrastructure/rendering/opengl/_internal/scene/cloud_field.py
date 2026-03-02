@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/scene/cloud_field.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/cloud_field.py
 from __future__ import annotations
 
 import math

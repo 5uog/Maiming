@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/passes/cloud_pass.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/cloud_pass.py
 from __future__ import annotations
 
 import time

@@ -4,11 +4,6 @@ from __future__ import annotations
 from pathlib import Path
 
 def _find_project_root(start: Path) -> Path:
-    """
-    This resolver walks upward from a known module location and selects the first directory
-    that plausibly represents the repository root. The heuristic prefers a pyproject.toml
-    anchor and preserves existing runtime expectations such as a top-level assets directory.
-    """
     p = Path(start).resolve()
     if p.is_file():
         p = p.parent

@@ -10,11 +10,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class SystemInfo:
-    """
-    SystemInfo captures coarse host metadata needed for a debug HUD.
-    The implementation is dependency-free and prefers OS-native sources while
-    providing conservative fallbacks that keep the overlay numerically stable.
-    """
     cpu_threads: int
     cpu_name: str
     cpu_speed_ghz: float | None
@@ -22,11 +17,6 @@ class SystemInfo:
 
 @dataclass(frozen=True)
 class ProcessMemorySnapshot:
-    """
-    ProcessMemorySnapshot reports resident memory and total system memory.
-    Values are best-effort; callers should expect partial availability but not
-    allow the UI contract to degrade into an unspecified state.
-    """
     rss_bytes: int | None
     total_bytes: int | None
 
@@ -37,10 +27,6 @@ def _safe_float(x: object) -> float | None:
         return None
 
 def _posix_total_mem_bytes_sysconf() -> int | None:
-    """
-    sysconf is a portable POSIX fallback when /proc or sysctl are unavailable.
-    It is preferred only as a fallback because some environments virtualize it.
-    """
     try:
         pg = os.sysconf("SC_PHYS_PAGES")
         sz = os.sysconf("SC_PAGE_SIZE")
@@ -93,10 +79,6 @@ def _linux_rss_bytes_proc() -> int | None:
     return None
 
 def _posix_rss_bytes_ps() -> int | None:
-    """
-    ps is a practical fallback when /proc is unavailable (containers, sandboxes, macOS).
-    rss is typically reported in KiB; this function converts to bytes.
-    """
     try:
         pid = str(os.getpid())
         out = subprocess.check_output(["ps", "-o", "rss=", "-p", pid], stderr=subprocess.DEVNULL, text=True, timeout=0.6)
@@ -200,10 +182,6 @@ def _windows_rss_bytes_psapi() -> int | None:
         return None
 
 def _windows_rss_bytes_tasklist() -> int | None:
-    """
-    tasklist is a last-resort fallback for environments where psapi probing fails.
-    Output is localized, so parsing is intentionally digit-oriented and unit-aware.
-    """
     try:
         pid = str(os.getpid())
         out = subprocess.check_output(
@@ -326,10 +304,6 @@ def _nvidia_smi_util_percent() -> float | None:
 
 @dataclass
 class GpuUtilizationSampler:
-    """
-    GpuUtilizationSampler uses a low-frequency external probe to avoid stalling the main loop.
-    When the probe is unavailable, the sampler returns None while keeping the HUD deterministic.
-    """
     min_interval_s: float = 1.0
     _last_t: float = 0.0
     _last: float | None = None

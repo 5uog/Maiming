@@ -21,10 +21,11 @@ from maiming.presentation.widgets.overlays.death_overlay import DeathOverlay
 from maiming.presentation.config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 
 from maiming.presentation.widgets.viewport.viewport_input import ViewportInput
-from maiming.presentation.widgets.viewport.viewport_hud import ViewportHud
 from maiming.presentation.widgets.viewport.viewport_overlays import ViewportOverlays, OverlayRefs
 from maiming.presentation.widgets.viewport.viewport_persistence import apply_persisted_state_if_present, save_state
 from maiming.presentation.widgets.viewport.viewport_world_upload import WorldUploadTracker
+
+from maiming.presentation.hud.hud_controller import HudController
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -45,7 +46,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud = None
 
         self._upload = WorldUploadTracker()
-        self._hud_ctl = ViewportHud()
+        self._hud_ctl = HudController()
 
         self._invert_x = False
         self._invert_y = False
@@ -64,6 +65,8 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._auto_jump_enabled = False
 
+        self._render_distance_chunks = 6
+
         az, el = self._renderer.sun_angles()
         self._sun_az_deg = float(az)
         self._sun_el_deg = float(el)
@@ -72,7 +75,6 @@ class GLViewportWidget(QOpenGLWidget):
         self._renderer.set_debug_shadow(self._debug_shadow)
 
         self._vsync_on: bool = False
-
         self._hud_visible: bool = True
 
         self._overlay = PauseOverlay(self)
@@ -92,6 +94,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
         self._overlay.build_mode_changed.connect(self._set_build_mode)
         self._overlay.auto_jump_changed.connect(self._set_auto_jump)
+        self._overlay.render_distance_changed.connect(self._set_render_distance)
 
         self._death = DeathOverlay(self)
         self._death.respawn_requested.connect(self._respawn)
@@ -152,6 +155,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._build_mode = bool(persisted.build_mode)
         self._auto_jump_enabled = bool(persisted.auto_jump_enabled)
 
+        self._render_distance_chunks = int(max(2, min(16, int(persisted.render_distance_chunks))))
+
         if not bool(self._build_mode):
             self._overlays.set_inventory_open(False)
 
@@ -171,6 +176,7 @@ class GLViewportWidget(QOpenGLWidget):
             shadow_enabled=self._shadow_enabled,
             sun_az_deg=self._sun_az_deg,
             sun_el_deg=self._sun_el_deg,
+            render_distance_chunks=int(self._render_distance_chunks),
         )
 
     def _effective_sim_timer_interval_ms(self) -> int:
@@ -210,6 +216,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._renderer.set_world_wireframe(self._world_wire)
         self._renderer.set_sun_angles(self._sun_az_deg, self._sun_el_deg)
 
+        eye0 = self._session.player.eye_pos()
+        self._upload.bootstrap_resident(
+            world=self._session.world,
+            renderer=self._renderer,
+            eye=eye0,
+            render_distance_chunks=int(self._render_distance_chunks),
+        )
+
         self._runner.start()
         self._sim_timer.start()
         self._render_timer.start()
@@ -238,7 +252,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud_ctl.on_render_frame()
 
         snap = self._session.make_snapshot()
-        self._upload.upload_if_needed(snap=snap, renderer=self._renderer)
+
+        eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
+        self._upload.upload_if_needed(
+            world=self._session.world,
+            renderer=self._renderer,
+            eye=eye,
+            render_distance_chunks=int(self._render_distance_chunks),
+        )
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
@@ -252,6 +273,7 @@ class GLViewportWidget(QOpenGLWidget):
             yaw_deg=cam.yaw_deg,
             pitch_deg=cam.pitch_deg,
             fov_deg=cam.fov_deg,
+            render_distance_chunks=int(self._render_distance_chunks),
         )
 
     def _tick_sim(self) -> None:
@@ -280,6 +302,7 @@ class GLViewportWidget(QOpenGLWidget):
             sun_el_deg=self._sun_el_deg,
             build_mode=self._build_mode,
             auto_jump_enabled=self._auto_jump_enabled,
+            render_distance_chunks=int(self._render_distance_chunks),
         )
 
     def _respawn(self) -> None:
@@ -315,7 +338,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_cloud_seed(self, v: int) -> None:
         self._cloud_seed = int(max(0, min(9999, int(v))))
-        self._renderer.set_cloud_seed(self._cloud_seed)
+        self._renderer.set_cloud_seed(int(self._cloud_seed))
 
     def _set_world_wire(self, on: bool) -> None:
         self._world_wire = bool(on)
@@ -340,6 +363,9 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_auto_jump(self, on: bool) -> None:
         self._auto_jump_enabled = bool(on)
+
+    def _set_render_distance(self, v: int) -> None:
+        self._render_distance_chunks = int(max(2, min(16, int(v))))
 
     def _on_inventory_selected(self, block_id: str) -> None:
         self._selected_block_id = str(block_id)
@@ -407,6 +433,7 @@ class GLViewportWidget(QOpenGLWidget):
             vsync_on=self._vsync_on,
             render_timer_interval_ms=int(self._render_timer.interval()),
             sim_hz=float(self._loop.sim_hz),
+            render_distance_chunks=int(self._render_distance_chunks),
         )
         self.hud_updated.emit(payload)
 

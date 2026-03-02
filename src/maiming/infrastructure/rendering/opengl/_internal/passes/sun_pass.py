@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/passes/sun_pass.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/sun_pass.py
 from __future__ import annotations
 
 import math

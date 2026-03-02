@@ -1,4 +1,4 @@
-# FILE: src/maiming/presentation/widgets/viewport/viewport_hud.py
+# FILE: src/maiming/presentation/hud/hud_controller.py
 from __future__ import annotations
 
 import math
@@ -17,10 +17,10 @@ from maiming.infrastructure.metrics import (
     read_system_info,
     read_process_memory,
 )
-from maiming.presentation.widgets.hud.hud_payload import HudPayload
+from maiming.presentation.hud.hud_payload import HudPayload
 from maiming.meta import __version__
 
-@dataclass
+@dataclass(frozen=True)
 class HudFps:
     render_fps: float
     sim_fps: float
@@ -40,7 +40,7 @@ class _ExternalMetrics:
     total_bytes: int | None
     updated_t: float
 
-class ViewportHud:
+class HudController:
     def __init__(self) -> None:
         self._fps_render: float = 0.0
         self._fps_sim: float = 0.0
@@ -49,10 +49,10 @@ class ViewportHud:
         self._fps_sim_steps: int = 0
 
         self._hud_emit_last_t: float = 0.0
-        self._hud_emit_interval_s: float = 0.10
+        self._hud_emit_interval_s: float = 0.12
 
         self._sys: SystemInfo = read_system_info()
-        self._gpu = GpuUtilizationSampler(min_interval_s=1.0)
+        self._gpu = GpuUtilizationSampler(min_interval_s=2.0)
 
         if not tracemalloc.is_tracing():
             tracemalloc.start()
@@ -66,6 +66,7 @@ class ViewportHud:
             last_bytes=int(cur),
             last_t=float(now),
         )
+        self._py_last_sample_t: float = float(now)
 
         self._ext_lock = threading.Lock()
         self._ext = _ExternalMetrics(
@@ -140,17 +141,20 @@ class ViewportHud:
 
     @staticmethod
     def _fmt_mib(x_bytes: int | None, digits: int = 0) -> str:
-        v = ViewportHud._mib(x_bytes)
+        v = HudController._mib(x_bytes)
         if v is None:
-            return ""
+            return "n/a"
         if digits <= 0:
             return f"{v:.0f} MiB"
         return f"{v:.{digits}f} MiB"
 
     def _update_py_alloc(self) -> None:
         now = time.perf_counter()
-        cur, peak = tracemalloc.get_traced_memory()
+        if (now - float(self._py_last_sample_t)) < 0.35:
+            return
+        self._py_last_sample_t = float(now)
 
+        cur, peak = tracemalloc.get_traced_memory()
         dt = float(now - float(self._py.last_t))
         dcur = float(int(cur) - int(self._py.last_bytes))
         rate = (dcur / (1024.0 * 1024.0)) / dt if dt > 1e-6 else 0.0
@@ -166,20 +170,14 @@ class ViewportHud:
         )
 
     @staticmethod
-    def _cardinal_and_towards(forward: Vec3) -> tuple[str, str]:
+    def _cardinal(forward: Vec3) -> str:
         fx = float(forward.x)
         fz = float(forward.z)
         ax = abs(fx)
         az = abs(fz)
-
         if ax >= az:
-            d = "E" if fx > 0.0 else "W"
-            t = "positive X" if fx > 0.0 else "negative X"
-            return d, t
-
-        d = "S" if fz > 0.0 else "N"
-        t = "positive Z" if fz > 0.0 else "negative Z"
-        return d, t
+            return "E" if fx > 0.0 else "W"
+        return "S" if fz > 0.0 else "N"
 
     @staticmethod
     def _chunk_coords(b: int) -> tuple[int, int]:
@@ -212,23 +210,17 @@ class ViewportHud:
         vsync_on: bool,
         render_timer_interval_ms: int,
         sim_hz: float,
+        render_distance_chunks: int,
     ) -> HudPayload:
         fps = self.fps()
-
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
-        vs = "vsync" if bool(vsync_on) else ""
-
-        top_left = (
-            f"FPS: {fps.render_fps:.1f} T: {t_txt} {vs}\n"
-            f"SIM: {fps.sim_fps:.1f} Hz: {float(sim_hz):.0f}\n"
-            "F4: shadow debug | F3: toggle HUD | ESC: pause/menu | Click: capture mouse"
-        ).strip()
+        vs = "vsync" if bool(vsync_on) else "nosync"
 
         with self._ext_lock:
             ext = self._ext
 
         gpu = ext.gpu_util_percent
-        gpu_line = f"GPU: {gpu:.0f}%" if gpu is not None else "GPU: n/a"
+        gpu_txt = "n/a" if gpu is None else f"{gpu:.0f}%"
 
         self._update_py_alloc()
 
@@ -241,72 +233,49 @@ class ViewportHud:
         total_bytes = ext.total_bytes
         if total_bytes is not None and int(total_bytes) > 0:
             pct = float(used_bytes) / float(total_bytes) * 100.0 if float(total_bytes) > 1.0 else 0.0
-            mem_line = f"Mem: {pct:.0f}% {self._fmt_mib(int(used_bytes))} / {self._fmt_mib(int(total_bytes))} ({used_label})"
+            mem_line = f"Mem {pct:.0f}% {self._fmt_mib(int(used_bytes))}/{self._fmt_mib(int(total_bytes))} ({used_label})"
         else:
-            mem_line = f"Mem: {self._fmt_mib(int(used_bytes))} ({used_label})"
-
-        ap = 0.0
-        if int(self._py.peak_bytes) > 0:
-            ap = float(self._py.cur_bytes) / float(self._py.peak_bytes) * 100.0
-
-        top_right = (
-            f"{gpu_line}\n\n"
-            f"{mem_line}\n"
-            f"Allocation rate: {self._py.rate_mib_s:.1f} MiB/s\n"
-            f"Allocated: {ap:.0f}% {self._fmt_mib(int(self._py.cur_bytes))}"
-        ).strip()
+            mem_line = f"Mem {self._fmt_mib(int(used_bytes))} ({used_label})"
 
         p = session.player
-
         px, py, pz = float(p.position.x), float(p.position.y), float(p.position.z)
         bx, by, bz = int(math.floor(px)), int(math.floor(py)), int(math.floor(pz))
-
         cx, rx = self._chunk_coords(bx)
-        cy, ry = self._chunk_coords(by)
+        cy, _ry = self._chunk_coords(by)
         cz, rz = self._chunk_coords(bz)
 
         fwd = p.view_forward()
-        d, t = self._cardinal_and_towards(fwd)
-
-        bottom_left = (
-            f"XYZ: {px:.2f} / {py:.2f} / {pz:.2f}\n"
-            f"Block: {bx} {by} {bz}\n"
-            f"Chunk: {cx} {cy} {cz} [{rx} {rz}]\n"
-            f"Facing: {d} (Towards {t}) ({p.yaw_deg:.1f} {p.pitch_deg:.1f})\n"
-            "DIM FC: overworld"
-        ).strip()
+        card = self._cardinal(fwd)
 
         shadow_ok, shadow_size = renderer.shadow_info()
-        mode = renderer.shadow_status_text()
+        shadow_ok = bool(shadow_ok) and bool(shadow_enabled)
 
-        cloud_mode = ""
-        if bool(cloud_enabled):
-            cloud_mode = "fancy-clouds" if int(cloud_density) >= 2 else ("fast-clouds" if int(cloud_density) == 1 else "")
-        filtering = "None"
+        sel_name = renderer.block_display_name(selected_block_id)
+        rd = int(max(2, min(16, int(render_distance_chunks))))
 
-        cpu_speed = ""
-        if self._sys.cpu_speed_ghz is not None and float(self._sys.cpu_speed_ghz) > 0.0:
-            cpu_speed = f" {float(self._sys.cpu_speed_ghz):.2f} GHz"
+        lines: list[str] = []
+        lines.append(f"FPS {fps.render_fps:.1f}  SIM {fps.sim_fps:.1f}  T {t_txt}  {vs}")
+        lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture")
+        lines.append("")
+        lines.append(f"GPU {gpu_txt}  {mem_line}  Alloc {self._py.rate_mib_s:.1f} MiB/s")
+        lines.append("")
+        lines.append(f"XYZ {px:.2f} {py:.2f} {pz:.2f}  Block {bx} {by} {bz}  Chunk {cx} {cy} {cz} [{rx} {rz}]")
+        lines.append(f"Facing {card}  Yaw {p.yaw_deg:.1f}  Pitch {p.pitch_deg:.1f}")
+        lines.append("")
+        lines.append(f"RenderDist {rd} chunks")
+        lines.append(f"Mode build={int(bool(build_mode))} inv={int(bool(inventory_open))} autoJump={int(bool(auto_jump_enabled))} reach={float(reach):.2f}")
+        lines.append(f"Select {str(sel_name)}  ({str(selected_block_id)})")
+        lines.append(f"Cloud en={int(bool(cloud_enabled))} den={int(cloud_density)} seed={int(cloud_seed)} wire={int(bool(cloud_wire))}")
+        lines.append(f"World wire={int(bool(world_wire))} shadow={int(bool(shadow_ok))} size={int(shadow_size)} dbg={int(bool(debug_shadow))} sun={float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}")
+        lines.append("")
+        lines.append(f"Maiming {__version__}  Display {int(fb_w)}x{int(fb_h)}  dpr {float(dpr):.2f}")
 
         gl_vendor, gl_rend, gl_ver, _glsl = renderer.gl_info()
+        if gl_rend:
+            lines.append(str(gl_rend))
+        if gl_ver:
+            lines.append(f"OpenGL {str(gl_ver)}")
+        if gl_vendor:
+            lines.append(str(gl_vendor))
 
-        bottom_right = (
-            f"C: {cloud_mode}\n"
-            f"Filtering: {filtering}\n"
-            f"shadow={int(bool(shadow_ok))} size={int(shadow_size)} mode={mode}\n"
-            f"worldWire={int(bool(world_wire))} cloudWire={int(bool(cloud_wire))} dbgShadow={int(bool(debug_shadow))}\n"
-            f"sunAz={float(sun_az_deg):.0f} sunEl={float(sun_el_deg):.0f}\n\n"
-            f"Maiming: {__version__}\n"
-            f"CPU: {int(self._sys.cpu_threads)} threads{cpu_speed} {str(self._sys.cpu_name)}\n"
-            f"Display: {int(fb_w)}x{int(fb_h)} (dpr={float(dpr):.2f})\n"
-            f"{str(gl_vendor)}\n"
-            f"{str(gl_rend)}\n"
-            f"OpenGL {str(gl_ver)}"
-        ).strip()
-
-        return HudPayload(
-            top_left=str(top_left),
-            top_right=str(top_right),
-            bottom_left=str(bottom_left),
-            bottom_right=str(bottom_right),
-        )
+        return HudPayload(text="\n".join(lines).rstrip())

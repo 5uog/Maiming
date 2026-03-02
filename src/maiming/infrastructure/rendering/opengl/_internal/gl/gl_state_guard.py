@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/gl/gl_state_guard.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/gl_state_guard.py
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,7 +1,9 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/passes/shadow_map_pass.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/shadow_map_pass.py
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Dict
+
 import numpy as np
 
 from OpenGL.GL import (
@@ -20,7 +22,7 @@ from ..gl.shader_program import ShaderProgram
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.gl_state_guard import GLStateGuard
 from ...facade.gl_renderer_params import ShadowParams
-from ..scene.instance_types import ShadowCasterGPU
+from maiming.domain.world.chunking import ChunkKey
 
 @dataclass
 class ShadowMapInfo:
@@ -29,70 +31,82 @@ class ShadowMapInfo:
     tex_id: int
     inst_count: int
 
+@dataclass
+class _ChunkCasters:
+    mesh: MeshBuffer
+    inst_count: int
+    last_rev: int
+
 class ShadowMapPass:
     def __init__(self, cfg: ShadowParams) -> None:
         self._cfg = cfg
 
         self._prog: ShaderProgram | None = None
-        self._mesh: MeshBuffer | None = None
 
         self._fbo: int = 0
         self._tex: int = 0
         self._size: int = int(cfg.size)
         self._ok: bool = False
 
-        self._inst_count: int = 0
+        self._chunks: Dict[ChunkKey, _ChunkCasters] = {}
+
+        self._inst_total: int = 0
         self._last_vp_rendered: np.ndarray | None = None
-        self._last_revision: int = -1
         self._dirty: bool = True
 
-    def initialize(self, prog: ShaderProgram, cube_mesh: MeshBuffer, size: int) -> None:
+    def initialize(self, prog: ShaderProgram, size: int) -> None:
         self._prog = prog
-        self._mesh = cube_mesh
         self._create_shadow_map(size)
 
     def destroy(self) -> None:
+        for ch in self._chunks.values():
+            ch.mesh.destroy()
+        self._chunks.clear()
         self._destroy_shadow_map()
         self._prog = None
-        self._mesh = None
         self._last_vp_rendered = None
-        self._last_revision = -1
         self._dirty = True
+        self._inst_total = 0
 
     def info(self) -> ShadowMapInfo:
         return ShadowMapInfo(
             ok=bool(self._ok),
             size=int(self._size),
             tex_id=int(self._tex),
-            inst_count=int(self._inst_count),
+            inst_count=int(self._inst_total),
         )
 
-    def set_casters(self, world_revision: int, casters: list[ShadowCasterGPU]) -> None:
-        if self._mesh is None:
-            return
+    def _ensure_chunk(self, k: ChunkKey) -> _ChunkCasters:
+        ch = self._chunks.get(k)
+        if ch is not None:
+            return ch
+        mesh = MeshBuffer.create_cube_instanced()
+        ch = _ChunkCasters(mesh=mesh, inst_count=0, last_rev=-1)
+        self._chunks[k] = ch
+        return ch
 
-        if int(world_revision) == int(self._last_revision):
+    def set_chunk_casters(self, *, chunk_key: ChunkKey, world_revision: int, casters: np.ndarray) -> None:
+        if self._prog is None:
             return
-        self._last_revision = int(world_revision)
-
-        if not casters:
-            data = np.zeros((0, 7), dtype=np.float32)
-            self._mesh.upload_instances(data)
-            self._inst_count = 0
-            self._dirty = False
-            self._last_vp_rendered = None
+        ch = self._ensure_chunk(chunk_key)
+        if int(world_revision) == int(ch.last_rev):
             return
+        ch.last_rev = int(world_revision)
 
-        data = np.array(
-            [[c.cx, c.cy, c.cz, c.sx, c.sy, c.sz, 0.0] for c in casters],
-            dtype=np.float32,
-        )
-        self._mesh.upload_instances(data)
-        self._inst_count = int(data.shape[0])
+        data = casters
+        if data.dtype != np.float32:
+            data = data.astype(np.float32, copy=False)
+        if not data.flags["C_CONTIGUOUS"]:
+            data = np.ascontiguousarray(data, dtype=np.float32)
+
+        ch.mesh.upload_instances(data)
+        ch.inst_count = int(data.shape[0])
+
+        self._inst_total = int(sum(int(c.inst_count) for c in self._chunks.values()))
         self._dirty = True
 
     def should_render(self, light_vp: np.ndarray) -> bool:
-        if int(self._inst_count) <= 0:
+        if int(self._inst_total) <= 0:
             return False
         if bool(self._dirty):
             return True
@@ -108,13 +122,13 @@ class ShadowMapPass:
         return diff > 1e-6
 
     def render(self, light_vp: np.ndarray) -> None:
-        if self._prog is None or self._mesh is None:
+        if self._prog is None:
             return
         if not bool(self._cfg.enabled):
             return
         if not bool(self._ok) or int(self._fbo) == 0 or int(self._tex) == 0:
             return
-        if int(self._inst_count) <= 0:
+        if int(self._inst_total) <= 0:
             return
 
         s = int(self._size)
@@ -146,9 +160,12 @@ class ShadowMapPass:
             self._prog.use()
             self._prog.set_mat4("u_lightViewProj", light_vp)
 
-            glBindVertexArray(self._mesh.vao)
-            glDrawArraysInstanced(GL_TRIANGLES, 0, self._mesh.vertex_count, int(self._inst_count))
-            glBindVertexArray(0)
+            for ch in self._chunks.values():
+                if int(ch.inst_count) <= 0:
+                    continue
+                glBindVertexArray(ch.mesh.vao)
+                glDrawArraysInstanced(GL_TRIANGLES, 0, ch.mesh.vertex_count, int(ch.inst_count))
+                glBindVertexArray(0)
 
             glDisable(GL_POLYGON_OFFSET_FILL)
             glDisable(GL_CULL_FACE)

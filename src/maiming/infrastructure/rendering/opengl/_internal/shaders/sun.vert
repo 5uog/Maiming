@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/sun.vert
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/sun.vert
 #version 330 core
 
 uniform mat4 u_viewProj;

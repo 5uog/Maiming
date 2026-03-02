@@ -1,4 +1,4 @@
-// FILE: src/maiming/infrastructure/rendering/opengl/shaders/world.frag
+// FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/world.frag
 #version 330 core
 
 in vec3 v_normal;

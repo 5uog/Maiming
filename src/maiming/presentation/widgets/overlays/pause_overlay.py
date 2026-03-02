@@ -30,6 +30,8 @@ class PauseOverlay(QWidget):
     build_mode_changed = pyqtSignal(bool)
     auto_jump_changed = pyqtSignal(bool)
 
+    render_distance_changed = pyqtSignal(int)
+
     def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
         self._params = params
@@ -89,6 +91,15 @@ class PauseOverlay(QWidget):
         sens_row.addWidget(self._lbl_sens)
         sens_row.addWidget(self._sld_sens)
         pv.addLayout(sens_row)
+
+        rd_row = QVBoxLayout()
+        self._lbl_rd = QLabel("Render distance: 6 chunks", panel)
+        self._sld_rd = QSlider(Qt.Orientation.Horizontal, panel)
+        self._sld_rd.setRange(int(self._params.render_dist_min), int(self._params.render_dist_max))
+        self._sld_rd.valueChanged.connect(self._on_rd)
+        rd_row.addWidget(self._lbl_rd)
+        rd_row.addWidget(self._sld_rd)
+        pv.addLayout(rd_row)
 
         sun_az_row = QVBoxLayout()
         self._lbl_sun_az = QLabel("Sun azimuth: 45 deg", panel)
@@ -194,6 +205,7 @@ class PauseOverlay(QWidget):
         sun_el_deg: float,
         build_mode: bool,
         auto_jump_enabled: bool,
+        render_distance_chunks: int,
     ) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
@@ -209,6 +221,12 @@ class PauseOverlay(QWidget):
         self._sld_sens.setValue(si)
         self._sld_sens.blockSignals(False)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
+
+        rd = int(max(int(self._params.render_dist_min), min(int(self._params.render_dist_max), int(render_distance_chunks))))
+        self._sld_rd.blockSignals(True)
+        self._sld_rd.setValue(rd)
+        self._sld_rd.blockSignals(False)
+        self._lbl_rd.setText(f"Render distance: {rd} chunks")
 
         az = float(sun_az_deg) % 360.0
         az_i = int(round(az))
@@ -277,6 +295,11 @@ class PauseOverlay(QWidget):
         s = float(v) / float(self._params.sens_scale)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
         self.sens_changed.emit(s)
+
+    def _on_rd(self, v: int) -> None:
+        rv = int(v)
+        self._lbl_rd.setText(f"Render distance: {rv} chunks")
+        self.render_distance_changed.emit(int(rv))
 
     def _on_sun_az(self, v: int) -> None:
         self._lbl_sun_az.setText(f"Sun azimuth: {int(v)} deg")

@@ -16,7 +16,7 @@ from maiming.domain.blocks.state_codec import parse_state, format_state
 from maiming.domain.blocks.default_registry import create_default_registry
 
 from maiming.application.session.session_settings import SessionSettings
-from maiming.application.ports.renderer_port import BlockInstanceDTO, CameraDTO, RenderSnapshotDTO
+from maiming.application.ports.renderer_port import CameraDTO, RenderSnapshotDTO
 
 @dataclass
 class SessionManager:
@@ -132,7 +132,6 @@ class SessionManager:
             self.player.auto_jump_pending = False
 
     def make_snapshot(self) -> RenderSnapshotDTO:
-        blocks = [BlockInstanceDTO(x, y, z, bid) for x, y, z, bid in self.world.iter_blocks()]
         eye = self.player.eye_pos()
         cam = CameraDTO(
             eye_x=eye.x,
@@ -142,7 +141,7 @@ class SessionManager:
             pitch_deg=self.player.pitch_deg,
             fov_deg=self.settings.fov_deg,
         )
-        return RenderSnapshotDTO(world_revision=self.world.revision, blocks=blocks, camera=cam)
+        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam)
 
     def break_block(self, reach: float = 5.0) -> bool:
         eye = self.player.eye_pos()

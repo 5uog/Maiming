@@ -5,13 +5,6 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class MovementParams:
-    """
-    This parameter set models Bedrock-style player locomotion in a way that is explicitly
-    tied to the 20 ticks-per-second reference rate while remaining stable under arbitrary
-    simulation sub-stepping. The implementation treats speeds as world-units per second
-    and expresses response rates as continuous-time coefficients so that dt partitioning
-    does not change steady-state outcomes.
-    """
     tick_hz: float = 20.0
 
     walk_speed: float = 4.317

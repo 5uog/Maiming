@@ -5,13 +5,6 @@ from dataclasses import dataclass
 from typing import Protocol
 
 @dataclass(frozen=True)
-class BlockInstanceDTO:
-    x: int
-    y: int
-    z: int
-    block_id: str
-
-@dataclass(frozen=True)
 class CameraDTO:
     eye_x: float
     eye_y: float
@@ -23,7 +16,6 @@ class CameraDTO:
 @dataclass(frozen=True)
 class RenderSnapshotDTO:
     world_revision: int
-    blocks: list[BlockInstanceDTO]
     camera: CameraDTO
 
 class RendererPort(Protocol):

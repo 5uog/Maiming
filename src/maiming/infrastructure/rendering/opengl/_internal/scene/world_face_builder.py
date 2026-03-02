@@ -1,7 +1,6 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/scene/world_face_builder.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/world_face_builder.py
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Callable, Iterable
 
 import numpy as np
@@ -11,14 +10,10 @@ from maiming.domain.blocks.models.api import render_boxes_for_block, LocalBox
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.core.math.vec3 import Vec3
 
-from .instance_types import BlockFaceInstanceGPU, ShadowCasterGPU
-
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
-
-def _overlap_1d(a0: float, a1: float, b0: float, b1: float) -> bool:
-    return (float(a1) > float(b0)) and (float(b1) > float(a0))
+GetState = Callable[[int, int, int], str | None]
 
 def _internal_face_mask(boxes: list[LocalBox]) -> set[tuple[int, int]]:
     eps = 1e-7
@@ -67,8 +62,8 @@ def _internal_face_mask(boxes: list[LocalBox]) -> set[tuple[int, int]]:
 def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
     uA0, vA0, uA1, vA1 = atlas
 
-    def lerp(a: float, b: float, t: float) -> float:
-        return float(a) + (float(b) - float(a)) * float(t)
+    def lerp(a: float, c: float, t: float) -> float:
+        return float(a) + (float(c) - float(a)) * float(t)
 
     def clamp01(x: float) -> float:
         v = float(x)
@@ -111,27 +106,17 @@ def _sub_uv_rect(atlas: UVRect, face_idx: int, b: LocalBox) -> UVRect:
         lerp(vA0, vA1, v1),
     )
 
-
-def build_world_faces(
+def build_chunk_mesh(
+    *,
     blocks: Iterable[tuple[int, int, int, str]],
+    get_state: GetState,
     uv_lookup: UVLookup,
     def_lookup: DefLookup,
-    sun_dir: Vec3,
-    shadow_dark_mul: float,
-) -> tuple[list[list[BlockFaceInstanceGPU]], list[ShadowCasterGPU]]:
-    b_list = list(blocks)
+) -> tuple[list[np.ndarray], np.ndarray]:
+    faces_rows: list[list[list[float]]] = [[], [], [], [], [], []]
+    caster_rows: list[list[float]] = []
 
-    state_at: dict[tuple[int, int, int], str] = {}
-    for (x, y, z, bid) in b_list:
-        state_at[(int(x), int(y), int(z))] = str(bid)
-
-    def get_state(x: int, y: int, z: int) -> str | None:
-        return state_at.get((int(x), int(y), int(z)))
-
-    faces: list[list[BlockFaceInstanceGPU]] = [[], [], [], [], [], []]
-    casters: list[ShadowCasterGPU] = []
-
-    for (x, y, z, state_str) in b_list:
+    for (x, y, z, state_str) in blocks:
         x = int(x)
         y = int(y)
         z = int(z)
@@ -159,7 +144,7 @@ def build_world_faces(
             sx = max(0.0, float(mxx - mnx))
             sy = max(0.0, float(mxy - mny))
             sz = max(0.0, float(mxz - mnz))
-            casters.append(ShadowCasterGPU(cx, cy, cz, sx, sy, sz))
+            caster_rows.append([cx, cy, cz, sx, sy, sz, 0.0])
 
             for fi in range(6):
                 if (bi, fi) in internal:
@@ -182,7 +167,7 @@ def build_world_faces(
 
                     nst = get_state(nx, ny, nz)
                     if nst is not None:
-                        nb, _np = parse_state(nst)
+                        nb, _np = parse_state(str(nst))
                         nd = def_lookup(str(nb))
                         if nd is None or (bool(nd.is_full_cube) and bool(nd.is_solid)):
                             continue
@@ -190,14 +175,22 @@ def build_world_faces(
                 atlas = uv_lookup(str(state_str), int(fi))
                 u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), b)
 
-                faces[fi].append(
-                    BlockFaceInstanceGPU(
-                        mn_x=mnx, mn_y=mny, mn_z=mnz,
-                        mx_x=mxx, mx_y=mxy, mx_z=mxz,
-                        u0=float(u0), v0=float(v0), u1=float(u1), v1=float(v1),
-                        shade=1.0,
-                        uv_rot=0.0,
-                    )
+                faces_rows[fi].append(
+                    [
+                        mnx, mny, mnz,
+                        mxx, mxy, mxz,
+                        float(u0), float(v0), float(u1), float(v1),
+                        1.0,
+                        0.0,
+                    ]
                 )
 
-    return faces, casters
+    faces_np: list[np.ndarray] = []
+    for rows in faces_rows:
+        if not rows:
+            faces_np.append(np.zeros((0, 12), dtype=np.float32))
+        else:
+            faces_np.append(np.asarray(rows, dtype=np.float32))
+
+    casters_np = np.zeros((0, 7), dtype=np.float32) if not caster_rows else np.asarray(caster_rows, dtype=np.float32)
+    return faces_np, casters_np

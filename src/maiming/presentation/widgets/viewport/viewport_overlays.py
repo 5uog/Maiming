@@ -18,11 +18,6 @@ class OverlayRefs:
     hud_getter: Callable[[], QWidget | None]
 
 class ViewportOverlays:
-    """
-    This controller centralizes pause, inventory, and death overlay state transitions.
-    The goal is to keep the viewport widget focused on orchestration while ensuring the
-    visibility, input reset, capture toggling, and Z-order behavior remain identical.
-    """
     def __init__(self, *, refs: OverlayRefs, runner: FixedStepRunner, inp: ViewportInput) -> None:
         self._r = refs
         self._runner = runner

@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/gl/mesh_buffer.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/mesh_buffer.py
 from __future__ import annotations
 
 from dataclasses import dataclass

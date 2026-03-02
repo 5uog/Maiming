@@ -1,4 +1,4 @@
-# FILE: src/maiming/infrastructure/rendering/opengl/gl/shader_program.py
+# FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/shader_program.py
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -12,10 +12,6 @@ from maiming.domain.blocks.state_codec import parse_state
 
 @dataclass(frozen=True)
 class PhotoPaths:
-    """
-    Thumbnails are treated as authored assets rather than generated geometry.
-    The code intentionally performs only deterministic lookups and minimal scaling.
-    """
     project_root: Path
 
     def thumbs_dir(self) -> Path:
@@ -25,15 +21,6 @@ class PhotoPaths:
         return self.project_root / "assets" / "minecraft" / "textures" / "item"
 
 class ItemPhotoProvider:
-    """
-    This provider loads a pre-authored thumbnail image for each block.
-    The lookup order is explicit and stable: first an application-owned thumbnail directory,
-    then Minecraft-style item textures. No geometric rendering is performed here because the user
-    requires photo-like thumbnails, not procedural icons.
-
-    The expected filenames are based on the base id without the namespace.
-    For example, minecraft:oak_planks resolves to oak_planks.png.
-    """
     def __init__(self, *, project_root: Path, registry: BlockRegistry, icon_size: int = 36) -> None:
         self._root = Path(project_root)
         self._reg = registry

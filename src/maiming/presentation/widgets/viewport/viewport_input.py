@@ -15,11 +15,6 @@ class MouseDelta:
     dy: float
 
 class ViewportInput:
-    """
-    This component isolates input sampling and pointer capture from the viewport wiring.
-    The intent is to keep the rendering widget free of low-level cursor bookkeeping while
-    preserving the exact event-to-simulation behavior required by the current control scheme.
-    """
     def __init__(self, *, widget: QOpenGLWidget, adapter: QtInputAdapter) -> None:
         self._w = widget
         self._a = adapter
