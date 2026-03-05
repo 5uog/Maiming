@@ -7,7 +7,6 @@ from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw, cardinal_turns_from_facing
 
 def _stairs_shape(
-    base_id: str,
     props: Dict[str, str],
     get_state: GetState,
     get_def: GetDef,
@@ -16,23 +15,34 @@ def _stairs_shape(
     z: int,
 ) -> str:
     facing = str(props.get("facing", "east"))
+    if facing not in ("north", "east", "south", "west"):
+        facing = "east"
+
     half = str(props.get("half", "bottom"))
     if half not in ("bottom", "top"):
         half = "bottom"
 
-    def _is_same_stair_at(nx: int, ny: int, nz: int) -> tuple[bool, str, str]:
+    def _is_connectable_stair_at(nx: int, ny: int, nz: int) -> tuple[bool, str]:
         s = get_state(nx, ny, nz)
         if s is None:
-            return (False, "east", "bottom")
+            return (False, "east")
+
         b, p = parse_state(s)
-        if str(b) != str(base_id):
-            return (False, "east", "bottom")
         d = get_def(str(b))
         if d is None or d.kind != "stairs":
-            return (False, "east", "bottom")
-        hf = str(p.get("half", "bottom"))
-        fc = str(p.get("facing", "east"))
-        return (hf == half, fc, hf)
+            return (False, "east")
+
+        nh = str(p.get("half", "bottom"))
+        if nh not in ("bottom", "top"):
+            nh = "bottom"
+        if nh != half:
+            return (False, "east")
+
+        nf = str(p.get("facing", "east"))
+        if nf not in ("north", "east", "south", "west"):
+            nf = "east"
+
+        return (True, nf)
 
     dir_vec: dict[str, tuple[int, int]] = {
         "east": (1, 0),
@@ -44,14 +54,15 @@ def _stairs_shape(
     right = {"east": "south", "south": "west", "west": "north", "north": "east"}[facing]
 
     fdx, fdz = dir_vec[facing]
-    ok_f, fc_f, _ = _is_same_stair_at(x + fdx, y, z + fdz)
+
+    ok_f, fc_f = _is_connectable_stair_at(x + fdx, y, z + fdz)
     if ok_f:
         if fc_f == left:
             return "outer_left"
         if fc_f == right:
             return "outer_right"
 
-    ok_b, fc_b, _ = _is_same_stair_at(x - fdx, y, z - fdz)
+    ok_b, fc_b = _is_connectable_stair_at(x - fdx, y, z - fdz)
     if ok_b:
         if fc_b == left:
             return "inner_left"
@@ -70,12 +81,14 @@ def boxes_for_stairs(
     y: int,
     z: int,
 ) -> List[LocalBox]:
+    _ = base_id
+
     facing = str(props.get("facing", "east"))
     half = str(props.get("half", "bottom"))
     if half not in ("bottom", "top"):
         half = "bottom"
 
-    shape = _stairs_shape(str(base_id), props, get_state, get_def, int(x), int(y), int(z))
+    shape = _stairs_shape(props, get_state, get_def, int(x), int(y), int(z))
 
     if half == "bottom":
         base_y0, base_y1 = 0.0, 0.5
