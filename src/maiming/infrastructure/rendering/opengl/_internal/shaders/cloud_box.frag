@@ -1,5 +1,5 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/cloud_box.frag
-#version 150
+#version 330 core
 
 in vec3 v_normal;
 in float v_alphaMul;

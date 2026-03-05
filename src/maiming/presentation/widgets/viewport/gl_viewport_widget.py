@@ -117,6 +117,12 @@ class GLViewportWidget(QOpenGLWidget):
         self._render_timer.setInterval(int(max(0, int(self._loop.render_timer_interval_ms))))
         self._render_timer.timeout.connect(self.update)
 
+        fmt = QSurfaceFormat()
+        fmt.setVersion(3, 3)
+        fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
+        fmt.setDepthBufferSize(24)
+        self.setFormat(fmt)
+
         self._state = apply_persisted_state_if_present(
             project_root=self._project_root,
             session=self._session,
@@ -221,26 +227,7 @@ class GLViewportWidget(QOpenGLWidget):
             self._hud.show()
             self._hud.raise_()
 
-    def _validate_current_gl_context(self) -> None:
-        ctx = self.context()
-        if ctx is None or (not ctx.isValid()):
-            raise RuntimeError("QOpenGLWidget failed to provide a valid OpenGL context.")
-
-        fmt = ctx.format()
-        if fmt.renderableType() != QSurfaceFormat.RenderableType.OpenGL:
-            raise RuntimeError(
-                "Maiming requires a desktop OpenGL context, but the current context is not desktop OpenGL."
-            )
-
-        major = int(fmt.majorVersion())
-        minor = int(fmt.minorVersion())
-        if (major, minor) < (3, 2):
-            raise RuntimeError(
-                f"Maiming requires OpenGL 3.2 or later, but the current context is {major}.{minor}."
-            )
-
     def initializeGL(self) -> None:
-        self._validate_current_gl_context()
         self._renderer.initialize(self._assets_dir)
 
         ctx = self.context()

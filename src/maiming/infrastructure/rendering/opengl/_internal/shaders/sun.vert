@@ -1,5 +1,5 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/sun.vert
-#version 150
+#version 330 core
 
 uniform mat4 u_viewProj;
 uniform vec3 u_center;

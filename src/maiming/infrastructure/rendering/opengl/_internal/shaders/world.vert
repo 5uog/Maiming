@@ -1,15 +1,15 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/world.vert
-#version 150
+#version 330 core
 
-in vec3 a_pos;
-in vec3 a_normal;
-in vec2 a_uv;
+layout(location = 0) in vec3 a_pos;
+layout(location = 1) in vec3 a_normal;
+layout(location = 2) in vec2 a_uv;
 
-in vec3 i_mn;
-in vec3 i_mx;
-in vec4 i_uvRect;
-in float i_shade;
-in float i_uvRot;
+layout(location = 3) in vec3 i_mn;
+layout(location = 4) in vec3 i_mx;
+layout(location = 5) in vec4 i_uvRect;
+layout(location = 6) in float i_shade;
+layout(location = 7) in float i_uvRot;
 
 uniform mat4 u_viewProj;
 uniform mat4 u_lightViewProj;

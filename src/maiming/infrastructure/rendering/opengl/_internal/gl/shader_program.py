@@ -13,7 +13,6 @@ from OpenGL.GL import (
     glGetShaderiv,
     glGetShaderInfoLog,
     glAttachShader,
-    glBindAttribLocation,
     glLinkProgram,
     glGetProgramiv,
     glGetProgramInfoLog,
@@ -52,23 +51,13 @@ class ShaderProgram:
     program: int
 
     @staticmethod
-    def from_files(
-        vert_path: Path,
-        frag_path: Path,
-        *,
-        attrib_bindings: dict[str, int] | None = None,
-    ) -> "ShaderProgram":
+    def from_files(vert_path: Path, frag_path: Path) -> "ShaderProgram":
         vs = _compile(GL_VERTEX_SHADER, _load_text(vert_path))
         fs = _compile(GL_FRAGMENT_SHADER, _load_text(frag_path))
 
         pid = glCreateProgram()
         glAttachShader(pid, vs)
         glAttachShader(pid, fs)
-
-        if attrib_bindings:
-            for name, loc in sorted(attrib_bindings.items(), key=lambda kv: int(kv[1])):
-                glBindAttribLocation(pid, int(loc), str(name))
-
         glLinkProgram(pid)
 
         ok = glGetProgramiv(pid, GL_LINK_STATUS)

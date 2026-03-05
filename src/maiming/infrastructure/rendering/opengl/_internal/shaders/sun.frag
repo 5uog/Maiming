@@ -1,5 +1,5 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/sun.frag
-#version 150
+#version 330 core
 
 in vec2 v_uv;
 out vec4 fragColor;

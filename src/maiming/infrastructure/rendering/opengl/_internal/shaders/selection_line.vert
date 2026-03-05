@@ -1,7 +1,7 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/selection_line.vert
-#version 150
+#version 330 core
 
-in vec3 a_pos;
+layout(location = 0) in vec3 a_pos;
 
 uniform mat4 u_viewProj;
 

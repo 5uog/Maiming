@@ -1,5 +1,5 @@
 // FILE: src/maiming/infrastructure/rendering/opengl/_internal/shaders/world.frag
-#version 150
+#version 330 core
 
 in vec3 v_normal;
 in vec2 v_uv;
@@ -9,18 +9,20 @@ in float v_shade;
 in float v_sel;
 
 uniform sampler2D u_atlas;
+
+// Depth-compare shadow map.
 uniform sampler2DShadow u_shadowMap;
 uniform int   u_shadowEnabled;
-uniform vec2  u_shadowTexel;
-uniform float u_shadowDarkMul;
+uniform vec2  u_shadowTexel;     // 1.0 / shadow_size
+uniform float u_shadowDarkMul;   // 0..1
 uniform float u_shadowBiasMin;
 uniform float u_shadowBiasSlope;
 
 uniform vec3 u_sunDir;
 uniform int u_debugShadow;
 
-uniform int   u_selMode;
-uniform float u_selTint;
+uniform int   u_selMode;   // 0 none, 1 outline, 2 tint
+uniform float u_selTint;   // 0..1
 
 out vec4 fragColor;
 

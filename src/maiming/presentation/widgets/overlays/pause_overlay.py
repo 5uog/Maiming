@@ -351,4 +351,4 @@ class PauseOverlay(QWidget):
     def _on_cloud_seed(self, v: int) -> None:
         sv = int(v)
         self._lbl_cloud_seed.setText(f"Cloud seed: {sv}")
-        self.cloud_seed_changed.emit(float(sv))
+        self.cloud_seed_changed.emit(int(sv))
