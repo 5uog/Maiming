@@ -23,6 +23,8 @@ class PlayerEntity:
     crouch_eye_drop: float = 0.25
     crouch_eye_offset: float = 0.0
 
+    step_eye_offset: float = 0.0
+
     hold_jump_queued: bool = False
 
     auto_jump_pending: bool = False
@@ -30,7 +32,11 @@ class PlayerEntity:
     auto_jump_cooldown_s: float = 0.0
 
     def eye_pos(self) -> Vec3:
-        return Vec3(self.position.x, self.position.y + (self.eye_height - self.crouch_eye_offset), self.position.z)
+        return Vec3(
+            self.position.x,
+            self.position.y + (self.eye_height - self.crouch_eye_offset) + self.step_eye_offset,
+            self.position.z,
+        )
 
     def view_forward(self) -> Vec3:
         return forward_from_yaw_pitch_deg(self.yaw_deg, self.pitch_deg)

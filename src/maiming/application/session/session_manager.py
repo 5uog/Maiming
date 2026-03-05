@@ -68,6 +68,7 @@ class SessionManager:
         p.on_ground = False
 
         p.crouch_eye_offset = 0.0
+        p.step_eye_offset = 0.0
         p.hold_jump_queued = False
         p.auto_jump_pending = False
         p.auto_jump_start_y = float(p.position.y)
@@ -92,6 +93,21 @@ class SessionManager:
         nxt = cur + (target - cur) * a
         nxt = max(0.0, min(float(p.crouch_eye_drop), float(nxt)))
         p.crouch_eye_offset = float(nxt)
+
+    def _update_step_eye(self, dt: float) -> None:
+        p = self.player
+        cur = float(p.step_eye_offset)
+        if abs(cur) <= 1e-6:
+            p.step_eye_offset = 0.0
+            return
+
+        rate = 18.0
+        a = self._exp_alpha(rate, float(dt))
+
+        nxt = cur + (0.0 - cur) * a
+        if abs(nxt) <= 1e-6:
+            nxt = 0.0
+        p.step_eye_offset = float(nxt)
 
     def step(
         self,
@@ -182,7 +198,22 @@ class SessionManager:
                 self.player.auto_jump_cooldown_s = float(self.settings.movement.auto_jump_cooldown_s)
             self.player.auto_jump_pending = False
 
+        dy_corr = float(report.y_correction_dy)
+        step_h = float(self.settings.collision.step_height)
+
+        if (
+            abs(dy_corr) > 1e-6
+            and abs(dy_corr) <= (step_h + 1e-3)
+            and bool(report.supported_before)
+            and bool(report.supported_after)
+            and (not bool(jump_pulse))
+            and abs(float(prev_vy)) <= 1e-6
+            and abs(float(self.player.velocity.y)) <= 1e-6
+        ):
+            self.player.step_eye_offset = float(self.player.step_eye_offset) - float(dy_corr)
+
         self._update_crouch_eye(float(dt), bool(crouch))
+        self._update_step_eye(float(dt))
 
     def make_snapshot(self) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()

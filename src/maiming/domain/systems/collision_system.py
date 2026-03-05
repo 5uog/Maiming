@@ -22,6 +22,7 @@ class CollisionReport:
     landed_now: bool
     stepped_up: bool
     step_up_dy: float
+    y_correction_dy: float
 
 def _iter_nearby_blocks(world: WorldState, aabb: AABB, params: CollisionParams):
     pxz = int(params.nearby_xz_pad)
@@ -227,10 +228,13 @@ def integrate_with_collisions(
     supported_before = bool(player.on_ground) or _ground_probe(player, world, params)
 
     delta = player.velocity * float(dt)
-    pos = player.position
+    pos0 = player.position
+    pos = pos0
 
     if supported_before and bool(crouch) and (not bool(jump_pressed)):
         delta = _apply_sneak_edge_clamp(player, world, pos, delta, params)
+
+    intended_y = float(pos0.y) + float(delta.y)
 
     allow_step = bool(supported_before) and (not bool(jump_pressed)) and float(delta.y) <= 1e-9
 
@@ -338,10 +342,13 @@ def integrate_with_collisions(
 
     landed_now = (not bool(supported_before)) and bool(supported_after)
 
+    y_correction = float(pos.y) - float(intended_y)
+
     return CollisionReport(
         supported_before=bool(supported_before),
         supported_after=bool(supported_after),
         landed_now=bool(landed_now),
         stepped_up=bool(stepped_up),
         step_up_dy=float(step_up_dy),
+        y_correction_dy=float(y_correction),
     )
