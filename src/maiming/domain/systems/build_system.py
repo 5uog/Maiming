@@ -15,6 +15,7 @@ from maiming.domain.blocks.default_registry import create_default_registry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
+from maiming.domain.blocks.block_definition import FACE_POS_Y
 
 _REG = create_default_registry()
 
@@ -75,6 +76,20 @@ def _pick_boxes_for_state(
                 uv_hint=str(b.uv_hint),
             )
         )
+
+    if kind == "fence_gate":
+        out.append(
+            LocalBox(
+                mn_x=0.0,
+                mn_y=0.0,
+                mn_z=0.0,
+                mx_x=1.0,
+                mx_y=1.5,
+                mx_z=1.0,
+                uv_hint="interact",
+            )
+        )
+
     return out
 
 def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -> BlockPick | None:
@@ -147,6 +162,15 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -
         face = int(best_face)
         if face < 0:
             face = int(h.enter_face)
+
+        base_id, _props = parse_state(str(st))
+        defn = get_def(str(base_id))
+        kind = str(defn.kind) if defn is not None else "cube"
+
+        if kind in ("fence", "wall"):
+            local_y = float(best_point.y) - float(cy)
+            if float(d.y) < -1e-6 and local_y >= (1.0 - 1e-6):
+                face = int(FACE_POS_Y)
 
         place: tuple[int, int, int] | None
         ox, oy, oz = _face_offset(face)
