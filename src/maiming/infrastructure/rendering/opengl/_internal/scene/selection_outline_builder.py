@@ -9,6 +9,7 @@ import numpy as np
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
+from maiming.domain.blocks.models.box_adjacency import internal_face_mask
 from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
 
 GetState = Callable[[int, int, int], str | None]
@@ -17,50 +18,6 @@ DefLookup = Callable[[str], BlockDefinition | None]
 @dataclass(frozen=True)
 class SelectionOutlineBuilder:
     def_lookup: DefLookup
-
-    @staticmethod
-    def _eq(a: float, b: float, eps: float = 1e-7) -> bool:
-        return abs(float(a) - float(b)) <= float(eps)
-
-    def _internal_face_mask(self, boxes: list[LocalBox]) -> set[tuple[int, int]]:
-        internal: set[tuple[int, int]] = set()
-
-        for i, a in enumerate(boxes):
-            for j, b in enumerate(boxes):
-                if i == j:
-                    continue
-
-                if self._eq(a.mx_x, b.mn_x):
-                    if self._eq(a.mn_y, b.mn_y) and self._eq(a.mx_y, b.mx_y) and self._eq(a.mn_z, b.mn_z) and self._eq(a.mx_z, b.mx_z):
-                        internal.add((i, 0))
-                        internal.add((j, 1))
-
-                if self._eq(a.mn_x, b.mx_x):
-                    if self._eq(a.mn_y, b.mn_y) and self._eq(a.mx_y, b.mx_y) and self._eq(a.mn_z, b.mn_z) and self._eq(a.mx_z, b.mx_z):
-                        internal.add((i, 1))
-                        internal.add((j, 0))
-
-                if self._eq(a.mx_y, b.mn_y):
-                    if self._eq(a.mn_x, b.mn_x) and self._eq(a.mx_x, b.mx_x) and self._eq(a.mn_z, b.mn_z) and self._eq(a.mx_z, b.mx_z):
-                        internal.add((i, 2))
-                        internal.add((j, 3))
-
-                if self._eq(a.mn_y, b.mx_y):
-                    if self._eq(a.mn_x, b.mn_x) and self._eq(a.mx_x, b.mx_x) and self._eq(a.mn_z, b.mn_z) and self._eq(a.mx_z, b.mx_z):
-                        internal.add((i, 3))
-                        internal.add((j, 2))
-
-                if self._eq(a.mx_z, b.mn_z):
-                    if self._eq(a.mn_x, b.mn_x) and self._eq(a.mx_x, b.mx_x) and self._eq(a.mn_y, b.mn_y) and self._eq(a.mx_y, b.mx_y):
-                        internal.add((i, 4))
-                        internal.add((j, 5))
-
-                if self._eq(a.mn_z, b.mx_z):
-                    if self._eq(a.mn_x, b.mn_x) and self._eq(a.mx_x, b.mx_x) and self._eq(a.mn_y, b.mn_y) and self._eq(a.mx_y, b.mx_y):
-                        internal.add((i, 5))
-                        internal.add((j, 4))
-
-        return internal
 
     @staticmethod
     def _quant(v: float, q: float = 1e-6) -> int:
@@ -138,7 +95,7 @@ class SelectionOutlineBuilder:
         if not boxes:
             return np.zeros((0, 3), dtype=np.float32)
 
-        internal = self._internal_face_mask(boxes)
+        internal = internal_face_mask(boxes)
         seen: set[tuple[int, ...]] = set()
         out: list[tuple[float, float, float]] = []
 

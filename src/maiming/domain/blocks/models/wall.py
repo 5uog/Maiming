@@ -3,10 +3,20 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef
+from maiming.domain.blocks.models.common import (
+    LocalBox,
+    GetState,
+    GetDef,
+    rotate_box_y_cw,
+    fence_gate_connects_to_side,
+)
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.common import fence_gate_connects_to_side, opposite_cardinal
+from maiming.domain.blocks.models.dimensions import (
+    WALL_POST,
+    WALL_ARM_LOW_NORTH,
+    WALL_ARM_TALL_NORTH,
+)
 
 def _norm_side(s: str) -> str:
     t = str(s)
@@ -79,8 +89,8 @@ def _derive_up(
 
 def _arm_north(kind: str) -> LocalBox:
     if str(kind) == "tall":
-        return LocalBox(5.0 / 16.0, 0.0, 0.0, 11.0 / 16.0, 1.0, 11.0 / 16.0)
-    return LocalBox(5.0 / 16.0, 0.0, 0.0, 11.0 / 16.0, 14.0 / 16.0, 11.0 / 16.0)
+        return WALL_ARM_TALL_NORTH
+    return WALL_ARM_LOW_NORTH
 
 def boxes_for_wall(
     *,
@@ -117,18 +127,18 @@ def boxes_for_wall(
     out: list[LocalBox] = []
 
     if bool(up):
-        out.append(LocalBox(4.0 / 16.0, 0.0, 4.0 / 16.0, 12.0 / 16.0, 1.0, 12.0 / 16.0))
+        out.append(WALL_POST)
 
     if north != "none":
         out.append(_arm_north(north))
     if east != "none":
-        out.append(LocalBox(5.0 / 16.0, 0.0, 5.0 / 16.0, 1.0, 1.0 if east == "tall" else 14.0 / 16.0, 11.0 / 16.0))
+        out.append(rotate_box_y_cw(_arm_north(east), 1))
     if south != "none":
-        out.append(LocalBox(5.0 / 16.0, 0.0, 5.0 / 16.0, 11.0 / 16.0, 1.0 if south == "tall" else 14.0 / 16.0, 1.0))
+        out.append(rotate_box_y_cw(_arm_north(south), 2))
     if west != "none":
-        out.append(LocalBox(0.0, 0.0, 5.0 / 16.0, 11.0 / 16.0, 1.0 if west == "tall" else 14.0 / 16.0, 11.0 / 16.0))
+        out.append(rotate_box_y_cw(_arm_north(west), 3))
 
     if not out:
-        out.append(LocalBox(4.0 / 16.0, 0.0, 4.0 / 16.0, 12.0 / 16.0, 1.0, 12.0 / 16.0))
+        out.append(WALL_POST)
 
     return out

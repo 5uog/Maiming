@@ -8,6 +8,7 @@ import numpy as np
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
+from maiming.domain.blocks.models.box_adjacency import internal_face_mask
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
 
@@ -15,50 +16,6 @@ UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]
 GetState = Callable[[int, int, int], str | None]
-
-def _internal_face_mask(boxes: list[LocalBox]) -> set[tuple[int, int]]:
-    eps = 1e-7
-    internal: set[tuple[int, int]] = set()
-
-    def eq(a: float, b: float) -> bool:
-        return abs(float(a) - float(b)) <= eps
-
-    for i, a in enumerate(boxes):
-        for j, b in enumerate(boxes):
-            if i == j:
-                continue
-
-            if eq(a.mx_x, b.mn_x):
-                if eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
-                    internal.add((i, 0))
-                    internal.add((j, 1))
-
-            if eq(a.mn_x, b.mx_x):
-                if eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
-                    internal.add((i, 1))
-                    internal.add((j, 0))
-
-            if eq(a.mx_y, b.mn_y):
-                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
-                    internal.add((i, 2))
-                    internal.add((j, 3))
-
-            if eq(a.mn_y, b.mx_y):
-                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_z, b.mn_z) and eq(a.mx_z, b.mx_z):
-                    internal.add((i, 3))
-                    internal.add((j, 2))
-
-            if eq(a.mx_z, b.mn_z):
-                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y):
-                    internal.add((i, 4))
-                    internal.add((j, 5))
-
-            if eq(a.mn_z, b.mx_z):
-                if eq(a.mn_x, b.mn_x) and eq(a.mx_x, b.mx_x) and eq(a.mn_y, b.mn_y) and eq(a.mx_y, b.mx_y):
-                    internal.add((i, 5))
-                    internal.add((j, 4))
-
-    return internal
 
 def _lerp(a: float, c: float, t: float) -> float:
     return float(a) + (float(c) - float(a)) * float(t)
@@ -144,7 +101,7 @@ def build_chunk_mesh(
         if not boxes:
             continue
 
-        internal = _internal_face_mask(boxes)
+        internal = internal_face_mask(boxes)
 
         for bi, b in enumerate(boxes):
             mnx = float(x) + float(b.mn_x)

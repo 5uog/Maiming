@@ -14,6 +14,11 @@ from maiming.domain.blocks.models.common import (
     fence_gate_connects_to_side,
     opposite_cardinal,
 )
+from maiming.domain.blocks.models.dimensions import (
+    FENCE_POST,
+    FENCE_ARM_LOW_NORTH,
+    FENCE_ARM_HIGH_NORTH,
+)
 
 def _is_wall_like(defn: BlockDefinition | None) -> bool:
     if defn is None:
@@ -50,6 +55,7 @@ def boxes_for_fence(
         s = get_state(int(x + dx), int(y), int(z + dz))
         if s is None:
             continue
+
         nb, np = parse_state(str(s))
         nd = get_def(str(nb))
         if nd is None:
@@ -66,23 +72,19 @@ def boxes_for_fence(
             if fence_gate_connects_to_side(facing=facing, side_from_gate=side_from_gate):
                 connections[d] = True
 
-    post = LocalBox(6.0 / 16.0, 0.0, 6.0 / 16.0, 10.0 / 16.0, 1.0, 10.0 / 16.0)
-    boxes = [post]
-
-    base_low = LocalBox(7.0 / 16.0, 6.0 / 16.0, 0.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0, 9.0 / 16.0)
-    base_high = LocalBox(7.0 / 16.0, 12.0 / 16.0, 0.0 / 16.0, 9.0 / 16.0, 15.0 / 16.0, 9.0 / 16.0)
+    boxes = [FENCE_POST]
 
     if connections["north"]:
-        boxes.append(base_low)
-        boxes.append(base_high)
+        boxes.append(FENCE_ARM_LOW_NORTH)
+        boxes.append(FENCE_ARM_HIGH_NORTH)
     if connections["east"]:
-        boxes.append(rotate_box_y_cw(base_low, 1))
-        boxes.append(rotate_box_y_cw(base_high, 1))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_LOW_NORTH, 1))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_HIGH_NORTH, 1))
     if connections["south"]:
-        boxes.append(rotate_box_y_cw(base_low, 2))
-        boxes.append(rotate_box_y_cw(base_high, 2))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_LOW_NORTH, 2))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_HIGH_NORTH, 2))
     if connections["west"]:
-        boxes.append(rotate_box_y_cw(base_low, 3))
-        boxes.append(rotate_box_y_cw(base_high, 3))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_LOW_NORTH, 3))
+        boxes.append(rotate_box_y_cw(FENCE_ARM_HIGH_NORTH, 3))
 
     return boxes
