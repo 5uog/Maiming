@@ -11,6 +11,36 @@ from maiming.domain.blocks.models.fence import boxes_for_fence
 from maiming.domain.blocks.models.fence_gate import boxes_for_fence_gate
 from maiming.domain.blocks.models.wall import boxes_for_wall
 
+def _raise_boxes_to_min_height(boxes: list[LocalBox], min_height: float) -> list[LocalBox]:
+    out: list[LocalBox] = []
+    h = float(min_height)
+
+    for b in boxes:
+        out.append(
+            LocalBox(
+                float(b.mn_x),
+                float(b.mn_y),
+                float(b.mn_z),
+                float(b.mx_x),
+                max(float(h), float(b.mx_y)),
+                float(b.mx_z),
+                uv_hint=str(b.uv_hint),
+            )
+        )
+
+    return out
+
+def _gate_interact_hull() -> LocalBox:
+    return LocalBox(
+        mn_x=0.0,
+        mn_y=0.0,
+        mn_z=0.0,
+        mx_x=1.0,
+        mx_y=1.5,
+        mx_z=1.0,
+        uv_hint="interact",
+    )
+
 def render_boxes_for_block(
     state_str: str,
     get_state: GetState,
@@ -75,24 +105,55 @@ def collision_boxes_for_block(
         is_open = open_s in ("1", "true", "yes", "on")
         if bool(is_open):
             return []
-        r = render_boxes_for_block(state_str, get_state, get_def, x, y, z)
-        out: list[LocalBox] = []
-        for b in r:
-            out.append(LocalBox(b.mn_x, b.mn_y, b.mn_z, b.mx_x, max(1.5, float(b.mx_y)), b.mx_z, uv_hint=str(b.uv_hint)))
+        return _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
+
+    if kind == "fence":
+        return _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
+
+    if kind == "wall":
+        return _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
+
+    return render_boxes_for_block(state_str, get_state, get_def, x, y, z)
+
+def pick_boxes_for_block(
+    state_str: str,
+    get_state: GetState,
+    get_def: GetDef,
+    x: int,
+    y: int,
+    z: int,
+) -> List[LocalBox]:
+    base, _props = parse_state(state_str)
+    defn = get_def(str(base))
+    kind = defn.kind if defn is not None else "cube"
+
+    if kind == "fence_gate":
+        out = _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
+        out.append(_gate_interact_hull())
         return out
 
     if kind == "fence":
-        r = render_boxes_for_block(state_str, get_state, get_def, x, y, z)
-        out: list[LocalBox] = []
-        for b in r:
-            out.append(LocalBox(b.mn_x, b.mn_y, b.mn_z, b.mx_x, 1.5, b.mx_z))
-        return out
+        return _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
 
     if kind == "wall":
-        r = render_boxes_for_block(state_str, get_state, get_def, x, y, z)
-        out: list[LocalBox] = []
-        for b in r:
-            out.append(LocalBox(b.mn_x, b.mn_y, b.mn_z, b.mx_x, 1.5, b.mx_z))
-        return out
+        return _raise_boxes_to_min_height(
+            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+            1.5,
+        )
 
     return render_boxes_for_block(state_str, get_state, get_def, x, y, z)

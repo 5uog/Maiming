@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Callable
 
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.state_codec import parse_state
 
 @dataclass(frozen=True)
 class LocalBox:
@@ -94,46 +93,3 @@ def gate_turns_from_facing(facing: str) -> int:
     if f == "east":
         return 3
     return 0
-
-def is_full_solid(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return bool(defn.is_full_cube and defn.is_solid)
-
-def is_fence_like(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    if defn.kind == "fence":
-        return True
-    if defn.kind == "fence_gate":
-        return True
-    return defn.has_tag("fence") or defn.has_tag("fence_gate")
-
-def get_neighbor_def(get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> BlockDefinition | None:
-    s = get_state(int(x), int(y), int(z))
-    if s is None:
-        return None
-    base, _p = parse_state(s)
-    return get_def(str(base))
-
-def opposite_cardinal(d: str) -> str:
-    s = str(d)
-    if s == "north":
-        return "south"
-    if s == "south":
-        return "north"
-    if s == "east":
-        return "west"
-    if s == "west":
-        return "east"
-    return "south"
-
-def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
-    f = str(facing)
-    s = str(side_from_gate)
-
-    if f in ("north", "south"):
-        return s in ("east", "west")
-    if f in ("east", "west"):
-        return s in ("north", "south")
-    return s in ("east", "west")

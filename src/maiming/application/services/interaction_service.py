@@ -8,6 +8,7 @@ from maiming.domain.entities.player_entity import PlayerEntity
 
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
+from maiming.domain.blocks.cardinal import opposite_cardinal, facing_vec_xz
 from maiming.domain.blocks.connectivity import (
     make_fence_gate_state,
     canonical_fence_gate_state,
@@ -63,32 +64,6 @@ class InteractionService:
         refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz))
         return True
 
-    @staticmethod
-    def _opposite_cardinal(f: str) -> str:
-        s = str(f)
-        if s == "north":
-            return "south"
-        if s == "south":
-            return "north"
-        if s == "east":
-            return "west"
-        if s == "west":
-            return "east"
-        return "south"
-
-    @staticmethod
-    def _facing_vec_xz(f: str) -> tuple[float, float]:
-        s = str(f)
-        if s == "north":
-            return (0.0, -1.0)
-        if s == "south":
-            return (0.0, 1.0)
-        if s == "east":
-            return (1.0, 0.0)
-        if s == "west":
-            return (-1.0, 0.0)
-        return (0.0, 1.0)
-
     def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
         k = (int(hit_cell[0]), int(hit_cell[1]), int(hit_cell[2]))
         st = self.world.blocks.get(k)
@@ -116,11 +91,11 @@ class InteractionService:
             dx = px - cx
             dz = pz - cz
 
-            fx, fz = self._facing_vec_xz(str(facing))
+            fx, fz = facing_vec_xz(str(facing))
             dot = float(dx) * float(fx) + float(dz) * float(fz)
 
             if dot > 1e-9:
-                next_facing = self._opposite_cardinal(str(facing))
+                next_facing = opposite_cardinal(str(facing))
 
         nxt = canonical_fence_gate_state(
             self.world,

@@ -13,8 +13,7 @@ from maiming.domain.world.world_state import WorldState
 
 from maiming.domain.blocks.default_registry import create_default_registry
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import render_boxes_for_block
-from maiming.domain.blocks.models.common import LocalBox
+from maiming.domain.blocks.models.api import pick_boxes_for_block
 from maiming.domain.blocks.block_definition import FACE_POS_Y
 
 _REG = create_default_registry()
@@ -42,55 +41,6 @@ def _face_offset(face: int) -> tuple[int, int, int]:
     if fi == 5:
         return (0, 0, -1)
     return (0, 0, 0)
-
-def _pick_boxes_for_state(
-    *,
-    state_str: str,
-    get_state,
-    get_def,
-    x: int,
-    y: int,
-    z: int,
-) -> list[LocalBox]:
-    boxes = render_boxes_for_block(str(state_str), get_state, get_def, int(x), int(y), int(z))
-    if not boxes:
-        return []
-
-    base, _p = parse_state(str(state_str))
-    defn = get_def(str(base))
-    kind = str(defn.kind) if defn is not None else "cube"
-
-    if kind not in ("fence", "wall", "fence_gate"):
-        return list(boxes)
-
-    out: list[LocalBox] = []
-    for b in boxes:
-        out.append(
-            LocalBox(
-                mn_x=float(b.mn_x),
-                mn_y=float(b.mn_y),
-                mn_z=float(b.mn_z),
-                mx_x=float(b.mx_x),
-                mx_y=max(1.5, float(b.mx_y)),
-                mx_z=float(b.mx_z),
-                uv_hint=str(b.uv_hint),
-            )
-        )
-
-    if kind == "fence_gate":
-        out.append(
-            LocalBox(
-                mn_x=0.0,
-                mn_y=0.0,
-                mn_z=0.0,
-                mx_x=1.0,
-                mx_y=1.5,
-                mx_z=1.0,
-                uv_hint="interact",
-            )
-        )
-
-    return out
 
 def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -> BlockPick | None:
     d = direction.normalized()
@@ -122,10 +72,10 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -
             prev_cell = k
             continue
 
-        boxes = _pick_boxes_for_state(
-            state_str=str(st),
-            get_state=get_state,
-            get_def=get_def,
+        boxes = pick_boxes_for_block(
+            str(st),
+            get_state,
+            get_def,
             x=cx,
             y=cy,
             z=cz,

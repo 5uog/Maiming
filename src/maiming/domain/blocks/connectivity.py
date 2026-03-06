@@ -4,6 +4,12 @@ from __future__ import annotations
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.default_registry import create_default_registry
 from maiming.domain.blocks.state_codec import parse_state, format_state
+from maiming.domain.blocks.structural_rules import (
+    is_wall,
+    is_fence_gate,
+    wall_side_from_neighbor_state,
+    wall_up_rule,
+)
 from maiming.domain.world.world_state import WorldState
 
 _REG = create_default_registry()
@@ -30,75 +36,6 @@ def _def_from_state(state_str: str | None) -> BlockDefinition | None:
     base, _props = parse_state(str(state_str))
     return _REG.get(str(base))
 
-def _is_full_solid(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return bool(defn.is_full_cube) and bool(defn.is_solid)
-
-def _is_wall(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return str(defn.kind) == "wall" or defn.has_tag("wall")
-
-def _is_fence(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return str(defn.kind) == "fence" or defn.has_tag("fence")
-
-def _is_fence_gate(defn: BlockDefinition | None) -> bool:
-    if defn is None:
-        return False
-    return str(defn.kind) == "fence_gate" or defn.has_tag("fence_gate")
-
-def _gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
-    f = str(facing)
-    s = str(side_from_gate)
-    if f in ("north", "south"):
-        return s in ("east", "west")
-    if f in ("east", "west"):
-        return s in ("north", "south")
-    return s in ("east", "west")
-
-def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str) -> str:
-    st = _state_at(world, int(nb_x), int(nb_y), int(nb_z))
-    d = _def_from_state(st)
-
-    if d is None:
-        return "none"
-    if _is_wall(d):
-        return "low"
-    if _is_fence(d):
-        return "low"
-    if _is_fence_gate(d):
-        _b, props = parse_state(str(st))
-        facing = str(props.get("facing", "south"))
-        if _gate_connects_to_side(facing=facing, side_from_gate=str(side_from_neighbor)):
-            return "low"
-        return "none"
-    if _is_full_solid(d):
-        return "tall"
-    return "none"
-
-def _wall_up_rule(
-    *,
-    north: str,
-    east: str,
-    south: str,
-    west: str,
-    above_def: BlockDefinition | None,
-) -> bool:
-    if _is_full_solid(above_def) or _is_wall(above_def):
-        return True
-
-    ns_line = (north != "none") and (south != "none") and (east == "none") and (west == "none")
-    ew_line = (east != "none") and (west != "none") and (north == "none") and (south == "none")
-
-    if ns_line and (str(north) == str(south)):
-        return False
-    if ew_line and (str(east) == str(west)):
-        return False
-    return True
-
 def make_wall_state(base_id: str, waterlogged: bool = False) -> str:
     return format_state(
         str(base_id),
@@ -112,10 +49,18 @@ def make_wall_state(base_id: str, waterlogged: bool = False) -> str:
         },
     )
 
+def _wall_side_from_neighbor(world: WorldState, nb_x: int, nb_y: int, nb_z: int, *, side_from_neighbor: str) -> str:
+    st = _state_at(world, int(nb_x), int(nb_y), int(nb_z))
+    return wall_side_from_neighbor_state(
+        st,
+        side_from_neighbor=str(side_from_neighbor),
+        get_def=_REG.get,
+    )
+
 def canonical_wall_state(world: WorldState, x: int, y: int, z: int) -> str | None:
     st = _state_at(world, int(x), int(y), int(z))
     d = _def_from_state(st)
-    if st is None or (not _is_wall(d)):
+    if st is None or (not is_wall(d)):
         return None
 
     base, props = parse_state(str(st))
@@ -127,7 +72,7 @@ def canonical_wall_state(world: WorldState, x: int, y: int, z: int) -> str | Non
     west = _wall_side_from_neighbor(world, int(x - 1), int(y), int(z), side_from_neighbor="east")
 
     above_def = _def_from_state(_state_at(world, int(x), int(y + 1), int(z)))
-    up = _wall_up_rule(
+    up = wall_up_rule(
         north=str(north),
         east=str(east),
         south=str(south),
@@ -170,12 +115,12 @@ def make_fence_gate_state(
 def _gate_in_wall(world: WorldState, x: int, y: int, z: int, facing: str) -> bool:
     f = str(facing)
     if f in ("north", "south"):
-        a = _is_wall(_def_from_state(_state_at(world, int(x - 1), int(y), int(z))))
-        b = _is_wall(_def_from_state(_state_at(world, int(x + 1), int(y), int(z))))
+        a = is_wall(_def_from_state(_state_at(world, int(x - 1), int(y), int(z))))
+        b = is_wall(_def_from_state(_state_at(world, int(x + 1), int(y), int(z))))
         return bool(a or b)
 
-    a = _is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z - 1))))
-    b = _is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z + 1))))
+    a = is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z - 1))))
+    b = is_wall(_def_from_state(_state_at(world, int(x), int(y), int(z + 1))))
     return bool(a or b)
 
 def canonical_fence_gate_state(
@@ -189,7 +134,7 @@ def canonical_fence_gate_state(
 ) -> str | None:
     st = _state_at(world, int(x), int(y), int(z))
     d = _def_from_state(st)
-    if st is None or (not _is_fence_gate(d)):
+    if st is None or (not is_fence_gate(d)):
         return None
 
     base, props = parse_state(str(st))
@@ -231,9 +176,9 @@ def refresh_structural_neighbors(world: WorldState, x: int, y: int, z: int) -> N
             continue
 
         nxt: str | None = None
-        if _is_wall(d):
+        if is_wall(d):
             nxt = canonical_wall_state(world, int(tx), int(ty), int(tz))
-        elif _is_fence_gate(d):
+        elif is_fence_gate(d):
             nxt = canonical_fence_gate_state(world, int(tx), int(ty), int(tz))
 
         if nxt is not None and str(nxt) != str(st):
