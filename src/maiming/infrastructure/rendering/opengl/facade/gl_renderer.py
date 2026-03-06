@@ -1,10 +1,10 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/gl_renderer.py
 from __future__ import annotations
-from __future__ import annotations
 
 from pathlib import Path
 
 from maiming.core.math.vec3 import Vec3
+from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.world.chunking import ChunkKey
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import (
     GLRendererParams,
@@ -36,8 +36,8 @@ class GLRenderer:
             sel_tint_strength=0.55,
         )
 
-    def initialize(self, assets_dir: Path) -> None:
-        self._backend.initialize(Path(assets_dir))
+    def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
+        self._backend.initialize(Path(assets_dir), block_registry=block_registry)
 
     def destroy(self) -> None:
         self._backend.destroy()

@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
 )
 
 from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.default_registry import create_default_registry
 from maiming.presentation.widgets.overlays.item_photo_provider import ItemPhotoProvider
 
 class _SlotButton(QPushButton):
@@ -63,11 +62,11 @@ class InventoryOverlay(QWidget):
         *,
         parent: QWidget | None = None,
         project_root: Path,
-        registry: BlockRegistry | None = None,
+        registry: BlockRegistry,
     ) -> None:
         super().__init__(parent)
 
-        self._reg = registry or create_default_registry()
+        self._reg = registry
         self._project_root = Path(project_root)
         self._photos = ItemPhotoProvider(project_root=self._project_root, registry=self._reg, icon_size=36)
 
@@ -219,7 +218,6 @@ class InventoryOverlay(QWidget):
 
     def showEvent(self, e) -> None:
         super().showEvent(e)
-
         self._schedule_icon_loading()
 
     def _set_selected_block(self, block_id: str | None) -> None:

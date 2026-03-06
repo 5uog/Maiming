@@ -52,6 +52,7 @@ class InteractionService:
             origin=eye,
             direction=direction,
             reach=float(reach),
+            block_registry=self.block_registry,
         )
 
     def break_block(self, reach: float = 5.0) -> bool:
@@ -61,7 +62,13 @@ class InteractionService:
 
         hx, hy, hz = hit.hit
         self.world.remove_block(int(hx), int(hy), int(hz))
-        refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz))
+        refresh_structural_neighbors(
+            self.world,
+            int(hx),
+            int(hy),
+            int(hz),
+            block_registry=self.block_registry,
+        )
         return True
 
     def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
@@ -102,6 +109,7 @@ class InteractionService:
             int(k[0]),
             int(k[1]),
             int(k[2]),
+            block_registry=self.block_registry,
             facing_override=str(next_facing),
             open_override=bool(next_open),
         )
@@ -117,7 +125,13 @@ class InteractionService:
             )
 
         self.world.set_block(int(k[0]), int(k[1]), int(k[2]), str(nxt))
-        refresh_structural_neighbors(self.world, int(k[0]), int(k[1]), int(k[2]))
+        refresh_structural_neighbors(
+            self.world,
+            int(k[0]),
+            int(k[1]),
+            int(k[2]),
+            block_registry=self.block_registry,
+        )
         return True
 
     def _apply_place_state(self, *, cell: tuple[int, int, int], place_state: str) -> bool:
@@ -134,7 +148,13 @@ class InteractionService:
             return False
 
         self.world.set_block(int(px), int(py), int(pz), str(place_state))
-        refresh_structural_neighbors(self.world, int(px), int(py), int(pz))
+        refresh_structural_neighbors(
+            self.world,
+            int(px),
+            int(py),
+            int(pz),
+            block_registry=self.block_registry,
+        )
         return True
 
     def place_block(self, block_id: str, reach: float = 5.0) -> bool:

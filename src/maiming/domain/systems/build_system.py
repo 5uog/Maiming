@@ -10,13 +10,10 @@ from maiming.core.geometry.ray import Ray
 from maiming.core.geometry.intersection import ray_aabb_face
 
 from maiming.domain.world.world_state import WorldState
-
-from maiming.domain.blocks.default_registry import create_default_registry
+from maiming.domain.blocks.block_definition import FACE_POS_Y
+from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import pick_boxes_for_block
-from maiming.domain.blocks.block_definition import FACE_POS_Y
-
-_REG = create_default_registry()
 
 @dataclass(frozen=True)
 class BlockPick:
@@ -42,7 +39,14 @@ def _face_offset(face: int) -> tuple[int, int, int]:
         return (0, 0, -1)
     return (0, 0, 0)
 
-def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -> BlockPick | None:
+def pick_block(
+    world: WorldState,
+    origin: Vec3,
+    direction: Vec3,
+    reach: float,
+    *,
+    block_registry: BlockRegistry,
+) -> BlockPick | None:
     d = direction.normalized()
     if d.length() <= 1e-12:
         return None
@@ -59,7 +63,7 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -
         return world.blocks.get((int(x), int(y), int(z)))
 
     def get_def(base_id: str):
-        return _REG.get(str(base_id))
+        return block_registry.get(str(base_id))
 
     prev_cell: tuple[int, int, int] | None = None
 
@@ -122,9 +126,7 @@ def pick_block(world: WorldState, origin: Vec3, direction: Vec3, reach: float) -
             if float(d.y) < -1e-6 and local_y >= (1.0 - 1e-6):
                 face = int(FACE_POS_Y)
 
-        place: tuple[int, int, int] | None
         ox, oy, oz = _face_offset(face)
-
         if ox == 0 and oy == 0 and oz == 0:
             place = prev_cell
         else:

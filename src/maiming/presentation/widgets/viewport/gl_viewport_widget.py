@@ -88,7 +88,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
 
-        self._inventory = InventoryOverlay(parent=self, project_root=self._project_root)
+        self._inventory = InventoryOverlay(
+            parent=self,
+            project_root=self._project_root,
+            registry=self._session.block_registry,
+        )
         self._inventory.block_selected.connect(self._on_inventory_selected)
         self._inventory.closed.connect(self._on_inventory_closed)
 
@@ -228,7 +232,10 @@ class GLViewportWidget(QOpenGLWidget):
             self._hud.raise_()
 
     def initializeGL(self) -> None:
-        self._renderer.initialize(self._assets_dir)
+        self._renderer.initialize(
+            self._assets_dir,
+            block_registry=self._session.block_registry,
+        )
 
         ctx = self.context()
         if ctx is not None:
@@ -283,6 +290,7 @@ class GLViewportWidget(QOpenGLWidget):
             origin=eye,
             direction=self._session.player.view_forward(),
             reach=float(self._state.reach),
+            block_registry=self._session.block_registry,
         )
         if hit is None:
             self._renderer.clear_selection()

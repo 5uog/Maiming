@@ -12,6 +12,7 @@ from OpenGL.GL import (
 )
 
 from maiming.core.math.vec3 import Vec3
+from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.world.chunking import ChunkKey
 from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
@@ -55,8 +56,8 @@ class RendererBackend:
         self._selection: SelectionController | None = None
         self._pipeline: FramePipeline | None = None
 
-    def initialize(self, assets_dir: Path) -> None:
-        self._res = GLResources.load(assets_dir)
+    def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
+        self._res = GLResources.load(assets_dir, blocks=block_registry)
         self._visuals = BlockVisualResolver(
             atlas=self._res.atlas,
             blocks=self._res.blocks,

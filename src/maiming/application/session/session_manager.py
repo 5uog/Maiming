@@ -159,6 +159,7 @@ class SessionManager:
                             self.world,
                             dx=dx,
                             dz=dz,
+                            block_registry=self.block_registry,
                             params=self.settings.collision,
                         ):
                             jump_pulse = True
@@ -182,6 +183,7 @@ class SessionManager:
             self.player,
             self.world,
             float(dt),
+            block_registry=self.block_registry,
             params=self.settings.collision,
             crouch=bool(crouch),
             jump_pressed=bool(jump_pulse),

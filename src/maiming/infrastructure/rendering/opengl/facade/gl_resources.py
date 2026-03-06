@@ -7,7 +7,6 @@ from pathlib import Path
 from OpenGL.GL import glGenVertexArrays, glDeleteVertexArrays
 
 from maiming.domain.blocks.block_registry import BlockRegistry
-from maiming.domain.blocks.default_registry import create_default_registry
 
 from .._internal.gl.shader_program import ShaderProgram
 from .._internal.gl.mesh_buffer import MeshBuffer
@@ -29,7 +28,7 @@ class GLResources:
     blocks: BlockRegistry
 
     @staticmethod
-    def load(assets_dir: Path) -> "GLResources":
+    def load(assets_dir: Path, *, blocks: BlockRegistry) -> "GLResources":
         shader_dir = Path(__file__).resolve().parents[1] / "_internal" / "shaders"
 
         world_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world.frag")
@@ -43,7 +42,6 @@ class GLResources:
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
 
-        blocks = create_default_registry()
         tex_names = blocks.required_texture_names()
 
         atlas = TextureAtlas.build_from_dir(
