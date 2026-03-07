@@ -96,6 +96,49 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
 
     return out
 
+def _local_cover_rects(
+    face_idx: int,
+    box: LocalBox,
+    boxes: list[LocalBox],
+) -> list[tuple[float, float, float, float]]:
+    fi = int(face_idx)
+    out: list[tuple[float, float, float, float]] = []
+
+    for other in boxes:
+        if other is box:
+            continue
+
+        if fi == 0:
+            if _eq(float(other.mn_x), float(box.mx_x)):
+                out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
+            continue
+
+        if fi == 1:
+            if _eq(float(other.mx_x), float(box.mn_x)):
+                out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
+            continue
+
+        if fi == 2:
+            if _eq(float(other.mn_y), float(box.mx_y)):
+                out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
+            continue
+
+        if fi == 3:
+            if _eq(float(other.mx_y), float(box.mn_y)):
+                out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
+            continue
+
+        if fi == 4:
+            if _eq(float(other.mn_z), float(box.mx_z)):
+                out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
+            continue
+
+        if fi == 5:
+            if _eq(float(other.mx_z), float(box.mn_z)):
+                out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
+
+    return out
+
 def _sorted_unique(values: list[float]) -> list[float]:
     q: dict[int, float] = {}
     for v in values:
@@ -171,6 +214,18 @@ def _fully_covered(
                 return False
 
     return True
+
+def is_local_face_occluded(
+    *,
+    box: LocalBox,
+    face_idx: int,
+    boxes: list[LocalBox],
+) -> bool:
+    target = _face_rect(int(face_idx), box)
+    rects = _local_cover_rects(int(face_idx), box, boxes)
+    if not rects:
+        return False
+    return _fully_covered(target, rects)
 
 def is_block_face_occluded(
     *,

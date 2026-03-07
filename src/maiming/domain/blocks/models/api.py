@@ -33,14 +33,43 @@ def _raise_boxes_to_min_height(boxes: list[LocalBox], min_height: float) -> list
 
     return out
 
-def _gate_interact_hull() -> LocalBox:
+def _gate_interact_hull(props: dict[str, str]) -> LocalBox:
+    """
+    The fence-gate interaction volume is intentionally decoupled from both the
+    rendered bars and the closed-state collision barrier. The prior full-block
+    hull solved usability at the cost of semantic corruption: right-click rays
+    were captured by an artificial one-block-thick slab of space, so the user
+    could target regions that are visually and mechanically too distant from the
+    actual gate plane. The correct engineering compromise is to preserve the
+    actionable central opening while constraining capture thickness to a narrow
+    planar band aligned with the gate's own axis.
+
+    The hull therefore spans the central aperture in width and the practical
+    interaction height of the gate, yet remains thin along the gate plane. This
+    retains the required behavior that the gate reacts when the player aims at
+    the central air region, including the opened state, while preventing the
+    exaggerated front/back reach introduced by the previous 1×1×1.5 proxy.
+    """
+    facing = str(props.get("facing", "south"))
+
+    if facing in ("north", "south"):
+        return LocalBox(
+            mn_x=2.0 / 16.0,
+            mn_y=0.0,
+            mn_z=6.0 / 16.0,
+            mx_x=14.0 / 16.0,
+            mx_y=24.0 / 16.0,
+            mx_z=10.0 / 16.0,
+            uv_hint="interact",
+        )
+
     return LocalBox(
-        mn_x=0.0,
+        mn_x=6.0 / 16.0,
         mn_y=0.0,
-        mn_z=0.0,
-        mx_x=1.0,
-        mx_y=1.5,
-        mx_z=1.0,
+        mn_z=2.0 / 16.0,
+        mx_x=10.0 / 16.0,
+        mx_y=24.0 / 16.0,
+        mx_z=14.0 / 16.0,
         uv_hint="interact",
     )
 
@@ -112,8 +141,14 @@ def _fence_gate_pick_boxes(
     y: int,
     z: int,
 ) -> List[LocalBox]:
-    out = _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
-    out.append(_gate_interact_hull())
+    _base, props = parse_state(state_str)
+
+    if prop_as_bool(props, "open", False):
+        out = list(render_boxes_for_block(state_str, get_state, get_def, x, y, z))
+    else:
+        out = list(_tall_structural_boxes(state_str, get_state, get_def, x, y, z))
+
+    out.append(_gate_interact_hull(props))
     return out
 
 def collision_boxes_for_block(

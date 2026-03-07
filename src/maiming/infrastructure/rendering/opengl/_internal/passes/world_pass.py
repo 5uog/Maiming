@@ -32,7 +32,7 @@ from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas
 from ...facade.gl_renderer_params import ShadowParams
 from .shadow_map_pass import ShadowMapInfo
-from maiming.domain.world.chunking import ChunkKey
+from maiming.domain.world.chunking import ChunkKey, chunk_bounds
 
 @dataclass(frozen=True)
 class WorldDrawInputs:
@@ -56,11 +56,13 @@ class WorldDrawInputs:
     sel_z: int
     sel_tint: float
 
+
 @dataclass
 class _ChunkFaces:
     meshes: list[MeshBuffer]
     counts: list[int]
     last_rev: int
+
 
 class WorldPass:
     def __init__(self) -> None:
@@ -129,12 +131,52 @@ class WorldPass:
         dy = abs(int(ck[1]) - int(cam[1]))
         return (dx <= int(rd)) and (dz <= int(rd)) and (dy <= 1)
 
+    @staticmethod
+    def _chunk_intersects_view_volume(chunk_key: ChunkKey, view_proj: np.ndarray) -> bool:
+        x0, x1, y0, y1, z0, z1 = chunk_bounds(chunk_key)
+
+        corners = np.asarray(
+            [
+                [float(x0), float(y0), float(z0), 1.0],
+                [float(x1), float(y0), float(z0), 1.0],
+                [float(x0), float(y1), float(z0), 1.0],
+                [float(x1), float(y1), float(z0), 1.0],
+                [float(x0), float(y0), float(z1), 1.0],
+                [float(x1), float(y0), float(z1), 1.0],
+                [float(x0), float(y1), float(z1), 1.0],
+                [float(x1), float(y1), float(z1), 1.0],
+            ],
+            dtype=np.float32,
+        )
+
+        clip = (view_proj @ corners.T).T
+        xs = clip[:, 0]
+        ys = clip[:, 1]
+        zs = clip[:, 2]
+        ws = clip[:, 3]
+
+        if bool(np.all(xs < (-ws))):
+            return False
+        if bool(np.all(xs > ws)):
+            return False
+        if bool(np.all(ys < (-ws))):
+            return False
+        if bool(np.all(ys > ws)):
+            return False
+        if bool(np.all(zs < (-ws))):
+            return False
+        if bool(np.all(zs > ws)):
+            return False
+
+        return True
+
     def draw(self, inp: WorldDrawInputs) -> None:
         if self._prog is None or self._atlas is None:
             return
 
         rd = int(max(2, min(16, int(inp.render_distance_chunks))))
         cam = inp.camera_chunk
+        view_proj = inp.view_proj.astype(np.float32, copy=False)
 
         with GLStateGuard(
             capture_framebuffer=False,
@@ -147,7 +189,7 @@ class WorldPass:
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
             self._prog.use()
-            self._prog.set_mat4("u_viewProj", inp.view_proj)
+            self._prog.set_mat4("u_viewProj", view_proj)
             self._prog.set_mat4("u_lightViewProj", inp.light_view_proj)
             self._prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
             self._prog.set_int("u_atlas", 0)
@@ -183,6 +225,8 @@ class WorldPass:
 
             for ck, ch in self._chunks.items():
                 if not self._within_render_distance(ck, cam, rd):
+                    continue
+                if not self._chunk_intersects_view_volume(ck, view_proj):
                     continue
 
                 for fi, (mesh, cnt) in enumerate(zip(ch.meshes, ch.counts)):

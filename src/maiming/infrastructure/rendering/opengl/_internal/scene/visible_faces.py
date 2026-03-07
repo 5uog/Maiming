@@ -6,17 +6,15 @@ from typing import Callable, Iterator
 
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.api import render_boxes_for_block
-from maiming.domain.blocks.models.box_adjacency import internal_face_mask
-from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
+from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded, is_local_face_occluded
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
 
 @dataclass(frozen=True)
 class VisibleFace:
-    box: LocalBox
+    box: object
     face_idx: int
     mn: tuple[float, float, float]
     mx: tuple[float, float, float]
@@ -80,9 +78,7 @@ def iter_visible_faces(
     if not boxes:
         return
 
-    internal = internal_face_mask(boxes)
-
-    for bi, box in enumerate(boxes):
+    for box in boxes:
         mn = (
             float(x) + float(box.mn_x),
             float(y) + float(box.mn_y),
@@ -95,7 +91,11 @@ def iter_visible_faces(
         )
 
         for fi in range(6):
-            if (bi, fi) in internal:
+            if is_local_face_occluded(
+                box=box,
+                face_idx=int(fi),
+                boxes=boxes,
+            ):
                 continue
 
             if defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid):
