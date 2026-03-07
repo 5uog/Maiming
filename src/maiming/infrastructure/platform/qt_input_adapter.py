@@ -34,6 +34,9 @@ class QtInputAdapter(QObject):
         self._mdx = 0.0
         self._mdy = 0.0
 
+    def crouch_held(self) -> bool:
+        return int(Qt.Key.Key_Shift) in self._keys
+
     def on_key_press(self, e: QKeyEvent) -> None:
         if bool(e.isAutoRepeat()):
             return

@@ -26,6 +26,9 @@ class ViewportInput:
     def captured(self) -> bool:
         return bool(self._captured)
 
+    def crouch_held(self) -> bool:
+        return bool(self._a.crouch_held())
+
     def _center_global(self) -> QPoint:
         c = QPoint(self._w.width() // 2, self._w.height() // 2)
         return self._w.mapToGlobal(c)

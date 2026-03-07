@@ -643,6 +643,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._session.place_block(
                     block_id=self._state.selected_block_id,
                     reach=float(self._state.reach),
+                    crouching=bool(self._inp.crouch_held()),
                 )
 
         super().mousePressEvent(e)

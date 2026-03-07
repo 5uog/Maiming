@@ -156,13 +156,15 @@ class InteractionService:
         )
         return True
 
-    def place_block(self, block_id: str, reach: float = 5.0) -> bool:
-        hit = self._pick_target(reach=float(reach))
-        if hit is None:
+    def _has_selected_placeable_block(self, block_id: str) -> bool:
+        bid = str(block_id).strip()
+        if not bid:
             return False
+        return self.block_registry.get(str(bid)) is not None
 
-        if self._toggle_fence_gate_if_hit(hit.hit):
-            return True
+    def _place_from_hit(self, *, hit: BlockPick, block_id: str) -> bool:
+        if not self._has_selected_placeable_block(str(block_id)):
+            return False
 
         hx, hy, hz = hit.hit
         hit_cell = (int(hx), int(hy), int(hz))
@@ -214,4 +216,29 @@ class InteractionService:
         return self._apply_place_state(
             cell=place_cell,
             place_state=str(place_state),
+        )
+
+    def place_block(
+        self,
+        block_id: str,
+        reach: float = 5.0,
+        *,
+        crouching: bool = False,
+    ) -> bool:
+        hit = self._pick_target(reach=float(reach))
+        if hit is None:
+            return False
+
+        if bool(crouching):
+            return self._place_from_hit(
+                hit=hit,
+                block_id=str(block_id),
+            )
+
+        if self._toggle_fence_gate_if_hit(hit.hit):
+            return True
+
+        return self._place_from_hit(
+            hit=hit,
+            block_id=str(block_id),
         )
