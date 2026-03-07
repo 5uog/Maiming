@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
+from maiming.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from maiming.infrastructure.persistence.json_file_store import JsonFileStore
 
 @dataclass(frozen=True)
@@ -31,9 +32,14 @@ class PersistedSettings:
     auto_jump_enabled: bool = False
     auto_sprint_enabled: bool = False
 
+    gravity: float = float(DEFAULT_MOVEMENT_PARAMS.gravity)
+    walk_speed: float = float(DEFAULT_MOVEMENT_PARAMS.walk_speed)
+    sprint_speed: float = float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)
+    jump_v0: float = float(DEFAULT_MOVEMENT_PARAMS.jump_v0)
+    auto_jump_cooldown_s: float = float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)
+
     render_distance_chunks: int = 6
 
-    # This value may be persisted, but startup policy may still force HUD off.
     hud_visible: bool = True
 
     def to_dict(self) -> dict[str, Any]:
@@ -53,6 +59,11 @@ class PersistedSettings:
             "build_mode": bool(self.build_mode),
             "auto_jump_enabled": bool(self.auto_jump_enabled),
             "auto_sprint_enabled": bool(self.auto_sprint_enabled),
+            "gravity": float(self.gravity),
+            "walk_speed": float(self.walk_speed),
+            "sprint_speed": float(self.sprint_speed),
+            "jump_v0": float(self.jump_v0),
+            "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
             "render_distance_chunks": int(self.render_distance_chunks),
             "hud_visible": bool(self.hud_visible),
         }
@@ -96,6 +107,11 @@ class PersistedSettings:
             build_mode=g_bool("build_mode", False),
             auto_jump_enabled=g_bool("auto_jump_enabled", False),
             auto_sprint_enabled=g_bool("auto_sprint_enabled", False),
+            gravity=g_float("gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)),
+            walk_speed=g_float("walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)),
+            sprint_speed=g_float("sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)),
+            jump_v0=g_float("jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)),
+            auto_jump_cooldown_s=g_float("auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)),
             render_distance_chunks=int(rd),
             hud_visible=g_bool("hud_visible", True),
         )
@@ -223,7 +239,7 @@ class AppState:
     @staticmethod
     def default() -> "AppState":
         return AppState(
-            version=3,
+            version=4,
             settings=PersistedSettings(),
             player=PersistedPlayer(),
             world=PersistedWorld(revision=0, blocks={}),

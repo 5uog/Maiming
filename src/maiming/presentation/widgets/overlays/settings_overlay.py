@@ -14,12 +14,132 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QStackedWidget,
     QScrollArea,
+    QDoubleSpinBox,
 )
 
+from maiming.domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from maiming.presentation.config.pause_overlay_params import (
     PauseOverlayParams,
     DEFAULT_PAUSE_OVERLAY_PARAMS,
 )
+
+class AdvancedScalarControl(QWidget):
+    value_changed = pyqtSignal(float)
+
+    def __init__(
+        self,
+        *,
+        title: str,
+        min_value: float,
+        max_value: float,
+        slider_scale: float,
+        decimals: int,
+        default_value: float,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+
+        self._title = str(title)
+        self._min = float(min_value)
+        self._max = float(max_value)
+        self._scale = float(max(1.0, slider_scale))
+        self._decimals = int(max(0, decimals))
+        self._default = float(default_value)
+        self._guard = False
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(6)
+
+        self._label = QLabel(self._title, self)
+        self._label.setObjectName("valueLabel")
+        root.addWidget(self._label)
+
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+
+        self._slider = QSlider(Qt.Orientation.Horizontal, self)
+        self._slider.setRange(
+            int(round(float(self._min) * float(self._scale))),
+            int(round(float(self._max) * float(self._scale))),
+        )
+        row.addWidget(self._slider, stretch=1)
+
+        self._spin = QDoubleSpinBox(self)
+        self._spin.setDecimals(int(self._decimals))
+        self._spin.setRange(float(self._min), float(self._max))
+        self._spin.setSingleStep(max(10.0 ** (-int(self._decimals)), 1.0 / float(self._scale)))
+        self._spin.setKeyboardTracking(False)
+        self._spin.setMinimumWidth(110)
+        row.addWidget(self._spin)
+
+        self._btn_reset = QPushButton("Reset", self)
+        self._btn_reset.setObjectName("menuBtn")
+        self._btn_reset.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        row.addWidget(self._btn_reset)
+
+        root.addLayout(row)
+
+        self._slider.valueChanged.connect(self._on_slider)
+        self._spin.valueChanged.connect(self._on_spin)
+        self._btn_reset.clicked.connect(self.reset_to_default)
+
+        self.set_value(float(self._default))
+
+    def _slider_to_value(self, slider_value: int) -> float:
+        return float(slider_value) / float(self._scale)
+
+    def _value_to_slider(self, value: float) -> int:
+        v = max(float(self._min), min(float(self._max), float(value)))
+        return int(round(v * float(self._scale)))
+
+    def set_value(self, value: float) -> None:
+        v = max(float(self._min), min(float(self._max), float(value)))
+        sv = self._value_to_slider(float(v))
+
+        self._guard = True
+        try:
+            self._slider.setValue(int(sv))
+            self._spin.setValue(float(v))
+        finally:
+            self._guard = False
+
+        self._label.setText(f"{self._title}: {float(v):.{int(self._decimals)}f}")
+
+    def reset_to_default(self) -> None:
+        self.set_value(float(self._default))
+        self.value_changed.emit(float(self._default))
+
+    def _on_slider(self, slider_value: int) -> None:
+        if bool(self._guard):
+            return
+
+        v = self._slider_to_value(int(slider_value))
+        self._guard = True
+        try:
+            self._spin.setValue(float(v))
+        finally:
+            self._guard = False
+
+        self._label.setText(f"{self._title}: {float(v):.{int(self._decimals)}f}")
+        self.value_changed.emit(float(v))
+
+    def _on_spin(self, spin_value: float) -> None:
+        if bool(self._guard):
+            return
+
+        v = max(float(self._min), min(float(self._max), float(spin_value)))
+        sv = self._value_to_slider(float(v))
+
+        self._guard = True
+        try:
+            self._slider.setValue(int(sv))
+        finally:
+            self._guard = False
+
+        self._label.setText(f"{self._title}: {float(v):.{int(self._decimals)}f}")
+        self.value_changed.emit(float(v))
 
 class SettingsOverlay(QWidget):
     back_requested = pyqtSignal()
@@ -45,6 +165,13 @@ class SettingsOverlay(QWidget):
     build_mode_changed = pyqtSignal(bool)
     auto_jump_changed = pyqtSignal(bool)
     auto_sprint_changed = pyqtSignal(bool)
+
+    gravity_changed = pyqtSignal(float)
+    walk_speed_changed = pyqtSignal(float)
+    sprint_speed_changed = pyqtSignal(float)
+    jump_v0_changed = pyqtSignal(float)
+    auto_jump_cooldown_changed = pyqtSignal(float)
+    advanced_reset_requested = pyqtSignal()
 
     render_distance_changed = pyqtSignal(int)
 
@@ -332,6 +459,79 @@ class SettingsOverlay(QWidget):
         self._cb_auto_sprint.toggled.connect(self.auto_sprint_changed.emit)
         lay.addWidget(self._cb_auto_sprint)
 
+        lay.addWidget(self._sep(host))
+        lay.addWidget(self._section(host, "Movement Parameters"))
+
+        self._ctl_gravity = AdvancedScalarControl(
+            title="Gravity",
+            min_value=float(self._params.gravity_milli_min) / float(self._params.gravity_scale),
+            max_value=float(self._params.gravity_milli_max) / float(self._params.gravity_scale),
+            slider_scale=float(self._params.gravity_scale),
+            decimals=int(self._params.gravity_decimals),
+            default_value=float(DEFAULT_MOVEMENT_PARAMS.gravity),
+            parent=host,
+        )
+        self._ctl_gravity.value_changed.connect(self.gravity_changed.emit)
+        lay.addWidget(self._ctl_gravity)
+
+        self._ctl_walk_speed = AdvancedScalarControl(
+            title="Walk speed",
+            min_value=float(self._params.walk_speed_milli_min) / float(self._params.walk_speed_scale),
+            max_value=float(self._params.walk_speed_milli_max) / float(self._params.walk_speed_scale),
+            slider_scale=float(self._params.walk_speed_scale),
+            decimals=int(self._params.walk_speed_decimals),
+            default_value=float(DEFAULT_MOVEMENT_PARAMS.walk_speed),
+            parent=host,
+        )
+        self._ctl_walk_speed.value_changed.connect(self.walk_speed_changed.emit)
+        lay.addWidget(self._ctl_walk_speed)
+
+        self._ctl_sprint_speed = AdvancedScalarControl(
+            title="Sprint speed",
+            min_value=float(self._params.sprint_speed_milli_min) / float(self._params.sprint_speed_scale),
+            max_value=float(self._params.sprint_speed_milli_max) / float(self._params.sprint_speed_scale),
+            slider_scale=float(self._params.sprint_speed_scale),
+            decimals=int(self._params.sprint_speed_decimals),
+            default_value=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed),
+            parent=host,
+        )
+        self._ctl_sprint_speed.value_changed.connect(self.sprint_speed_changed.emit)
+        lay.addWidget(self._ctl_sprint_speed)
+
+        self._ctl_jump_v0 = AdvancedScalarControl(
+            title="Jump velocity",
+            min_value=float(self._params.jump_v0_milli_min) / float(self._params.jump_v0_scale),
+            max_value=float(self._params.jump_v0_milli_max) / float(self._params.jump_v0_scale),
+            slider_scale=float(self._params.jump_v0_scale),
+            decimals=int(self._params.jump_v0_decimals),
+            default_value=float(DEFAULT_MOVEMENT_PARAMS.jump_v0),
+            parent=host,
+        )
+        self._ctl_jump_v0.value_changed.connect(self.jump_v0_changed.emit)
+        lay.addWidget(self._ctl_jump_v0)
+
+        self._ctl_auto_jump_cooldown = AdvancedScalarControl(
+            title="Auto-jump cooldown",
+            min_value=float(self._params.auto_jump_cooldown_milli_min) / float(self._params.auto_jump_cooldown_scale),
+            max_value=float(self._params.auto_jump_cooldown_milli_max) / float(self._params.auto_jump_cooldown_scale),
+            slider_scale=float(self._params.auto_jump_cooldown_scale),
+            decimals=int(self._params.auto_jump_cooldown_decimals),
+            default_value=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s),
+            parent=host,
+        )
+        self._ctl_auto_jump_cooldown.value_changed.connect(self.auto_jump_cooldown_changed.emit)
+        lay.addWidget(self._ctl_auto_jump_cooldown)
+
+        row_reset = QHBoxLayout()
+        row_reset.addStretch(1)
+
+        btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
+        btn_reset_adv.setObjectName("menuBtn")
+        btn_reset_adv.clicked.connect(self.advanced_reset_requested.emit)
+        row_reset.addWidget(btn_reset_adv)
+
+        lay.addLayout(row_reset)
+
         lay.addStretch(1)
         self._stack.addWidget(scroll)
 
@@ -362,6 +562,11 @@ class SettingsOverlay(QWidget):
         build_mode: bool,
         auto_jump_enabled: bool,
         auto_sprint_enabled: bool,
+        gravity: float,
+        walk_speed: float,
+        sprint_speed: float,
+        jump_v0: float,
+        auto_jump_cooldown_s: float,
         render_distance_chunks: int,
     ) -> None:
         fov_i = int(round(float(fov_deg)))
@@ -459,6 +664,12 @@ class SettingsOverlay(QWidget):
         self._cb_auto_sprint.blockSignals(True)
         self._cb_auto_sprint.setChecked(bool(auto_sprint_enabled))
         self._cb_auto_sprint.blockSignals(False)
+
+        self._ctl_gravity.set_value(float(gravity))
+        self._ctl_walk_speed.set_value(float(walk_speed))
+        self._ctl_sprint_speed.set_value(float(sprint_speed))
+        self._ctl_jump_v0.set_value(float(jump_v0))
+        self._ctl_auto_jump_cooldown.set_value(float(auto_jump_cooldown_s))
 
     def _on_fov(self, v: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(v)}")

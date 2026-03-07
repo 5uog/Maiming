@@ -33,6 +33,11 @@ def apply_persisted_state_if_present(
         ps = st.settings
         session.settings.set_fov(float(ps.fov_deg))
         session.settings.set_mouse_sens(float(ps.mouse_sens_deg_per_px))
+        session.settings.set_gravity(float(ps.gravity))
+        session.settings.set_walk_speed(float(ps.walk_speed))
+        session.settings.set_sprint_speed(float(ps.sprint_speed))
+        session.settings.set_jump_v0(float(ps.jump_v0))
+        session.settings.set_auto_jump_cooldown_s(float(ps.auto_jump_cooldown_s))
 
         runtime.invert_x = bool(ps.invert_x)
         runtime.invert_y = bool(ps.invert_y)
@@ -79,7 +84,6 @@ def apply_persisted_state_if_present(
 
     runtime.normalize()
 
-    # Startup policy requirement: HUD must be hidden until F3 is pressed.
     runtime.hud_visible = False
 
     renderer.set_outline_selection_enabled(bool(runtime.outline_selection))
@@ -235,6 +239,11 @@ def save_state(
         build_mode=bool(state_runtime.build_mode),
         auto_jump_enabled=bool(state_runtime.auto_jump_enabled),
         auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled),
+        gravity=float(session.settings.movement.gravity),
+        walk_speed=float(session.settings.movement.walk_speed),
+        sprint_speed=float(session.settings.movement.sprint_speed),
+        jump_v0=float(session.settings.movement.jump_v0),
+        auto_jump_cooldown_s=float(session.settings.movement.auto_jump_cooldown_s),
         render_distance_chunks=int(state_runtime.render_distance_chunks),
         hud_visible=bool(state_runtime.hud_visible),
     )
@@ -260,5 +269,5 @@ def save_state(
         blocks={k: str(v) for (k, v) in snap.items()},
     )
 
-    state = AppState(version=3, settings=settings, player=player, world=world)
+    state = AppState(version=4, settings=settings, player=player, world=world)
     store.save(state)

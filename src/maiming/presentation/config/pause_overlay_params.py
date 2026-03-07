@@ -25,4 +25,29 @@ class PauseOverlayParams:
     render_dist_min: int = 2
     render_dist_max: int = 16
 
+    gravity_milli_min: int = int(SessionSettings.GRAVITY_MIN * 100.0)
+    gravity_milli_max: int = int(SessionSettings.GRAVITY_MAX * 100.0)
+    gravity_scale: float = 100.0
+    gravity_decimals: int = 2
+
+    walk_speed_milli_min: int = int(SessionSettings.WALK_SPEED_MIN * 1000.0)
+    walk_speed_milli_max: int = int(SessionSettings.WALK_SPEED_MAX * 1000.0)
+    walk_speed_scale: float = 1000.0
+    walk_speed_decimals: int = 3
+
+    sprint_speed_milli_min: int = int(SessionSettings.SPRINT_SPEED_MIN * 1000.0)
+    sprint_speed_milli_max: int = int(SessionSettings.SPRINT_SPEED_MAX * 1000.0)
+    sprint_speed_scale: float = 1000.0
+    sprint_speed_decimals: int = 3
+
+    jump_v0_milli_min: int = int(SessionSettings.JUMP_V0_MIN * 1000.0)
+    jump_v0_milli_max: int = int(SessionSettings.JUMP_V0_MAX * 1000.0)
+    jump_v0_scale: float = 1000.0
+    jump_v0_decimals: int = 3
+
+    auto_jump_cooldown_milli_min: int = int(SessionSettings.AUTO_JUMP_COOLDOWN_MIN * 1000.0)
+    auto_jump_cooldown_milli_max: int = int(SessionSettings.AUTO_JUMP_COOLDOWN_MAX * 1000.0)
+    auto_jump_cooldown_scale: float = 1000.0
+    auto_jump_cooldown_decimals: int = 3
+
 DEFAULT_PAUSE_OVERLAY_PARAMS = PauseOverlayParams()

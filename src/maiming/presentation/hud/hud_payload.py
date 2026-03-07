@@ -5,4 +5,9 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class HudPayload:
-    text: str
+    left_text: str
+    right_text: str = ""
+
+    @property
+    def text(self) -> str:
+        return str(self.left_text)

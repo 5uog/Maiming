@@ -121,7 +121,7 @@ class SessionManager:
         mdx: float,
         mdy: float,
         auto_jump_enabled: bool,
-    ) -> None:
+    ) -> bool:
         prev_on_ground = bool(self.player.on_ground)
         prev_vy = float(self.player.velocity.y)
 
@@ -216,6 +216,7 @@ class SessionManager:
 
         self._update_crouch_eye(float(dt), bool(crouch))
         self._update_step_eye(float(dt))
+        return bool(jump_pulse)
 
     def make_snapshot(self) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()

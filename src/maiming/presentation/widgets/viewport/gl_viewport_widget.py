@@ -85,6 +85,12 @@ class GLViewportWidget(QOpenGLWidget):
         self._settings.build_mode_changed.connect(self._set_build_mode)
         self._settings.auto_jump_changed.connect(self._set_auto_jump)
         self._settings.auto_sprint_changed.connect(self._set_auto_sprint)
+        self._settings.gravity_changed.connect(self._set_gravity)
+        self._settings.walk_speed_changed.connect(self._set_walk_speed)
+        self._settings.sprint_speed_changed.connect(self._set_sprint_speed)
+        self._settings.jump_v0_changed.connect(self._set_jump_v0)
+        self._settings.auto_jump_cooldown_changed.connect(self._set_auto_jump_cooldown_s)
+        self._settings.advanced_reset_requested.connect(self._reset_advanced_defaults)
         self._settings.render_distance_changed.connect(self._set_render_distance)
 
         self._death = DeathOverlay(self)
@@ -363,6 +369,11 @@ class GLViewportWidget(QOpenGLWidget):
             build_mode=self._state.build_mode,
             auto_jump_enabled=self._state.auto_jump_enabled,
             auto_sprint_enabled=self._state.auto_sprint_enabled,
+            gravity=float(self._session.settings.movement.gravity),
+            walk_speed=float(self._session.settings.movement.walk_speed),
+            sprint_speed=float(self._session.settings.movement.sprint_speed),
+            jump_v0=float(self._session.settings.movement.jump_v0),
+            auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s),
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
 
@@ -450,6 +461,25 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_auto_sprint(self, on: bool) -> None:
         self._state.auto_sprint_enabled = bool(on)
 
+    def _set_gravity(self, gravity: float) -> None:
+        self._session.settings.set_gravity(float(gravity))
+
+    def _set_walk_speed(self, walk_speed: float) -> None:
+        self._session.settings.set_walk_speed(float(walk_speed))
+
+    def _set_sprint_speed(self, sprint_speed: float) -> None:
+        self._session.settings.set_sprint_speed(float(sprint_speed))
+
+    def _set_jump_v0(self, jump_v0: float) -> None:
+        self._session.settings.set_jump_v0(float(jump_v0))
+
+    def _set_auto_jump_cooldown_s(self, cooldown_s: float) -> None:
+        self._session.settings.set_auto_jump_cooldown_s(float(cooldown_s))
+
+    def _reset_advanced_defaults(self) -> None:
+        self._session.settings.reset_advanced_movement_defaults()
+        self._sync_settings_values()
+
     def _set_render_distance(self, v: int) -> None:
         self._state.render_distance_chunks = int(v)
         self._state.normalize()
@@ -462,8 +492,6 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlays.set_inventory_open(False)
 
     def _on_step(self, dt: float) -> None:
-        self._hud_ctl.on_sim_step()
-
         self._inp.poll_relative_mouse_delta()
         fr, md = self._inp.consume(
             invert_x=self._state.invert_x,
@@ -479,7 +507,7 @@ class GLViewportWidget(QOpenGLWidget):
             if float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
                 sprint = True
 
-        self._session.step(
+        jump_started = self._session.step(
             dt=float(dt),
             move_f=fr.move_f,
             move_s=fr.move_s,
@@ -490,6 +518,11 @@ class GLViewportWidget(QOpenGLWidget):
             mdx=float(md.dx),
             mdy=float(md.dy),
             auto_jump_enabled=bool(self._state.auto_jump_enabled),
+        )
+        self._hud_ctl.on_sim_step(
+            dt=float(dt),
+            player=self._session.player,
+            jump_started=bool(jump_started),
         )
 
         if float(self._session.player.position.y) < -64.0:

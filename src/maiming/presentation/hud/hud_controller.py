@@ -18,6 +18,7 @@ from maiming.infrastructure.metrics import (
     read_process_memory,
 )
 from maiming.presentation.hud.hud_payload import HudPayload
+from maiming.presentation.hud.player_metrics import PlayerMetricsTracker
 from maiming.meta import __version__
 
 @dataclass(frozen=True)
@@ -53,6 +54,7 @@ class HudController:
 
         self._sys: SystemInfo = read_system_info()
         self._gpu = GpuUtilizationSampler(min_interval_s=2.0)
+        self._metrics = PlayerMetricsTracker(recent_window_s=3.0)
 
         if not tracemalloc.is_tracing():
             tracemalloc.start()
@@ -106,9 +108,14 @@ class HudController:
         self._fps_render_frames += 1
         self._maybe_update_fps()
 
-    def on_sim_step(self) -> None:
+    def on_sim_step(self, *, dt: float, player, jump_started: bool) -> None:
         self._fps_sim_steps += 1
         self._maybe_update_fps()
+        self._metrics.observe_step(
+            dt_s=float(dt),
+            player=player,
+            jump_started=bool(jump_started),
+        )
 
     def _maybe_update_fps(self) -> None:
         now = time.perf_counter()
@@ -148,6 +155,12 @@ class HudController:
             return f"{v:.0f} MiB"
         return f"{v:.{digits}f} MiB"
 
+    @staticmethod
+    def _fmt_optional(v: float | None, digits: int = 3) -> str:
+        if v is None:
+            return "n/a"
+        return f"{float(v):.{digits}f}"
+
     def _update_py_alloc(self) -> None:
         now = time.perf_counter()
         if (now - float(self._py_last_sample_t)) < 0.35:
@@ -185,7 +198,7 @@ class HudController:
         r = int(b - c * 16)
         return c, r
 
-    def build_payload(
+    def _build_left_text(
         self,
         *,
         session: SessionManager,
@@ -210,9 +223,8 @@ class HudController:
         dpr: float,
         vsync_on: bool,
         render_timer_interval_ms: int,
-        sim_hz: float,
         render_distance_chunks: int,
-    ) -> HudPayload:
+    ) -> str:
         fps = self.fps()
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
         vs = "vsync" if bool(vsync_on) else "nosync"
@@ -282,4 +294,85 @@ class HudController:
         if gl_vendor:
             lines.append(str(gl_vendor))
 
-        return HudPayload(text="\n".join(lines).rstrip())
+        return "\n".join(lines).rstrip()
+
+    def _build_right_text(self, *, session: SessionManager) -> str:
+        metrics = self._metrics.snapshot(settings=session.settings)
+        recent = float(metrics.recent_window_s)
+
+        lines: list[str] = []
+        lines.append("PLAYER METRICS")
+        lines.append(f"HSpeed blk/s  cur {metrics.horiz_speed.current:.3f}  avg {metrics.horiz_speed.mean:.3f}  recent{recent:.1f}s {metrics.horiz_speed.recent_mean:.3f}")
+        lines.append(f"VSpeed blk/s  cur {metrics.vert_speed.current:.3f}  avg {metrics.vert_speed.mean:.3f}  recent{recent:.1f}s {metrics.vert_speed.recent_mean:.3f}")
+        lines.append(
+            "JumpInt s     "
+            f"cur {self._fmt_optional(metrics.jump_interval.current)}  "
+            f"avg {self._fmt_optional(metrics.jump_interval.mean)}  "
+            f"recent{recent:.1f}s {self._fmt_optional(metrics.jump_interval.recent_mean)}"
+        )
+        lines.append("")
+        lines.append("APPLIED PARAMS")
+        lines.append(f"gravity               {metrics.applied.gravity:.3f}")
+        lines.append(f"walk_speed            {metrics.applied.walk_speed:.3f}")
+        lines.append(f"sprint_speed          {metrics.applied.sprint_speed:.3f}")
+        lines.append(f"jump_v0               {metrics.applied.jump_v0:.3f}")
+        lines.append(f"auto_jump_cooldown_s  {metrics.applied.auto_jump_cooldown_s:.3f}")
+        return "\n".join(lines).rstrip()
+
+    def build_payload(
+        self,
+        *,
+        session: SessionManager,
+        renderer: GLRenderer,
+        auto_jump_enabled: bool,
+        auto_sprint_enabled: bool,
+        build_mode: bool,
+        inventory_open: bool,
+        selected_block_id: str,
+        reach: float,
+        sun_az_deg: float,
+        sun_el_deg: float,
+        shadow_enabled: bool,
+        world_wire: bool,
+        cloud_wire: bool,
+        cloud_enabled: bool,
+        cloud_density: int,
+        cloud_seed: int,
+        debug_shadow: bool,
+        fb_w: int,
+        fb_h: int,
+        dpr: float,
+        vsync_on: bool,
+        render_timer_interval_ms: int,
+        sim_hz: float,
+        render_distance_chunks: int,
+    ) -> HudPayload:
+        _ = float(sim_hz)
+
+        left = self._build_left_text(
+            session=session,
+            renderer=renderer,
+            auto_jump_enabled=bool(auto_jump_enabled),
+            auto_sprint_enabled=bool(auto_sprint_enabled),
+            build_mode=bool(build_mode),
+            inventory_open=bool(inventory_open),
+            selected_block_id=str(selected_block_id),
+            reach=float(reach),
+            sun_az_deg=float(sun_az_deg),
+            sun_el_deg=float(sun_el_deg),
+            shadow_enabled=bool(shadow_enabled),
+            world_wire=bool(world_wire),
+            cloud_wire=bool(cloud_wire),
+            cloud_enabled=bool(cloud_enabled),
+            cloud_density=int(cloud_density),
+            cloud_seed=int(cloud_seed),
+            debug_shadow=bool(debug_shadow),
+            fb_w=int(fb_w),
+            fb_h=int(fb_h),
+            dpr=float(dpr),
+            vsync_on=bool(vsync_on),
+            render_timer_interval_ms=int(render_timer_interval_ms),
+            render_distance_chunks=int(render_distance_chunks),
+        )
+        right = self._build_right_text(session=session)
+        return HudPayload(left_text=str(left), right_text=str(right))
