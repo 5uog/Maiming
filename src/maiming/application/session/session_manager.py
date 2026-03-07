@@ -1,19 +1,16 @@
 # FILE: src/maiming/application/session/session_manager.py
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 
 from maiming.core.math.vec3 import Vec3, clampf
+from maiming.core.math.smoothing import exp_alpha
 
 from maiming.domain.world.world_state import WorldState
 from maiming.domain.world.world_gen import generate_test_map
 from maiming.domain.entities.player_entity import PlayerEntity
 from maiming.domain.systems.movement_system import MoveInput, step_bedrock
-from maiming.domain.systems.collision_system import (
-    integrate_with_collisions,
-    can_auto_jump_one_block,
-)
+from maiming.domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block
 
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.default_registry import create_default_registry
@@ -74,21 +71,13 @@ class SessionManager:
         p.auto_jump_start_y = float(p.position.y)
         p.auto_jump_cooldown_s = 0.0
 
-    @staticmethod
-    def _exp_alpha(rate: float, dt: float) -> float:
-        r = float(max(0.0, rate))
-        t = float(max(0.0, dt))
-        if r <= 1e-9 or t <= 1e-9:
-            return 0.0
-        return 1.0 - math.exp(-r * t)
-
     def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
         p = self.player
         target = float(p.crouch_eye_drop) if bool(crouch) else 0.0
         cur = float(p.crouch_eye_offset)
 
         rate = 18.0
-        a = self._exp_alpha(rate, float(dt))
+        a = exp_alpha(rate, float(dt))
 
         nxt = cur + (target - cur) * a
         nxt = max(0.0, min(float(p.crouch_eye_drop), float(nxt)))
@@ -102,7 +91,7 @@ class SessionManager:
             return
 
         rate = 18.0
-        a = self._exp_alpha(rate, float(dt))
+        a = exp_alpha(rate, float(dt))
 
         nxt = cur + (0.0 - cur) * a
         if abs(nxt) <= 1e-6:

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import math
 
 from maiming.core.math.vec3 import Vec3, clampf
+from maiming.core.math.smoothing import exp_alpha
 from maiming.domain.entities.player_entity import PlayerEntity
 from maiming.domain.config.movement_params import MovementParams, DEFAULT_MOVEMENT_PARAMS
 
@@ -22,13 +23,6 @@ class MoveInput:
     yaw_delta_deg: float
     pitch_delta_deg: float
 
-def _exp_alpha(rate: float, dt: float) -> float:
-    r = float(max(0.0, rate))
-    t = float(max(0.0, dt))
-    if r <= 1e-9 or t <= 1e-9:
-        return 0.0
-    return 1.0 - math.exp(-r * t)
-
 def _basis_from_yaw_deg(yaw_deg: float) -> tuple[Vec3, Vec3]:
     yaw = math.radians(float(yaw_deg))
     fwd = Vec3(-math.sin(yaw), 0.0, math.cos(yaw))
@@ -42,7 +36,12 @@ def _wish_dir(player: PlayerEntity, forward: float, strafe: float) -> Vec3:
         return Vec3(0.0, 0.0, 0.0)
     return v.normalized()
 
-def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: MovementParams = DEFAULT_MOVEMENT_PARAMS) -> None:
+def step_bedrock(
+    player: PlayerEntity,
+    inp: MoveInput,
+    dt: float,
+    params: MovementParams = DEFAULT_MOVEMENT_PARAMS,
+) -> None:
     player.yaw_deg += float(inp.yaw_delta_deg)
     player.pitch_deg += float(inp.pitch_delta_deg)
     player.clamp_pitch()
@@ -66,9 +65,9 @@ def step_bedrock(player: PlayerEntity, inp: MoveInput, dt: float, params: Moveme
     vx, vy, vz = float(player.velocity.x), float(player.velocity.y), float(player.velocity.z)
 
     if bool(player.on_ground):
-        a = _exp_alpha(float(params.accel_ground), dt)
+        a = exp_alpha(float(params.accel_ground), dt)
     else:
-        a = _exp_alpha(float(params.accel_air), dt)
+        a = exp_alpha(float(params.accel_air), dt)
 
     vx = vx + (float(target.x) - vx) * a
     vz = vz + (float(target.z) - vz) * a

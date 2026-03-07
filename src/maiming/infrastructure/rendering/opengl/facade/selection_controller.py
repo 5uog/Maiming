@@ -6,10 +6,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from maiming.infrastructure.rendering.opengl._internal.passes.selection_pass import SelectionPass
-from maiming.infrastructure.rendering.opengl._internal.scene.selection_outline_builder import (
-    GetState,
-    SelectionOutlineBuilder,
-)
+from maiming.infrastructure.rendering.opengl._internal.scene.selection_outline_builder import GetState, SelectionOutlineBuilder
 
 @dataclass
 class SelectionController:
@@ -18,14 +15,10 @@ class SelectionController:
     outline_enabled: bool = True
 
     _selected_block: tuple[int, int, int] | None = field(default=None, init=False, repr=False)
-    _selected_state: str = field(default="", init=False, repr=False)
-    _selected_world_rev: int = field(default=-1, init=False, repr=False)
     _outline_key: tuple[int, int, int, str, int] | None = field(default=None, init=False, repr=False)
 
     def clear(self) -> None:
         self._selected_block = None
-        self._selected_state = ""
-        self._selected_world_rev = -1
         self._outline_key = None
         self.outline_pass.clear()
 
@@ -48,10 +41,7 @@ class SelectionController:
         world_revision: int,
     ) -> None:
         cell = (int(x), int(y), int(z))
-
         self._selected_block = cell
-        self._selected_state = str(state_str)
-        self._selected_world_rev = int(world_revision)
 
         if not bool(self.outline_enabled):
             self.outline_pass.clear()

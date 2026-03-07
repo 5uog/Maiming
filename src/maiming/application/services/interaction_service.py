@@ -8,9 +8,10 @@ from maiming.domain.entities.player_entity import PlayerEntity
 
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.cardinal import opposite_cardinal, facing_vec_xz
+from maiming.domain.blocks.cardinal import normalize_cardinal, opposite_cardinal, facing_vec_xz
 from maiming.domain.blocks.connectivity import make_fence_gate_state, canonical_fence_gate_state, refresh_structural_neighbors
 from maiming.domain.blocks.structural_rules import is_fence_gate
+from maiming.domain.blocks.state_values import prop_as_bool
 
 from maiming.domain.systems.build_system import BlockPick, pick_block
 
@@ -79,10 +80,11 @@ class InteractionService:
         if d is None or (not is_fence_gate(d)):
             return False
 
-        is_open = str(props.get("open", "false")).strip().lower() in ("1", "true", "yes", "on")
-        facing = str(props.get("facing", "south"))
-        powered = str(props.get("powered", "false")).strip().lower() in ("1", "true", "yes", "on")
-        waterlogged = str(props.get("waterlogged", "false")).strip().lower() in ("1", "true", "yes", "on")
+        is_open = prop_as_bool(props, "open", False)
+        facing = normalize_cardinal(str(props.get("facing", "south")), default="south")
+        powered = prop_as_bool(props, "powered", False)
+        waterlogged = prop_as_bool(props, "waterlogged", False)
+        in_wall = prop_as_bool(props, "in_wall", False)
 
         next_open = not bool(is_open)
         next_facing = str(facing)
@@ -117,7 +119,7 @@ class InteractionService:
                 str(next_facing),
                 open_state=bool(next_open),
                 powered=bool(powered),
-                in_wall=str(props.get("in_wall", "false")).strip().lower() in ("1", "true", "yes", "on"),
+                in_wall=bool(in_wall),
                 waterlogged=bool(waterlogged),
             )
 

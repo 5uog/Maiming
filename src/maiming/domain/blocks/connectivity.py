@@ -3,27 +3,11 @@ from __future__ import annotations
 
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.block_registry import BlockRegistry
+from maiming.domain.blocks.cardinal import normalize_cardinal
 from maiming.domain.blocks.state_codec import parse_state, format_state
-from maiming.domain.blocks.structural_rules import (
-    is_wall,
-    is_fence_gate,
-    wall_side_from_neighbor_state,
-    wall_up_rule,
-)
+from maiming.domain.blocks.state_values import bool_str, str_as_bool
+from maiming.domain.blocks.structural_rules import is_wall, is_fence_gate, wall_side_from_neighbor_state, wall_up_rule
 from maiming.domain.world.world_state import WorldState
-
-def _bool_str(v: bool) -> str:
-    return "true" if bool(v) else "false"
-
-def _as_bool(s: str | None, default: bool = False) -> bool:
-    if s is None:
-        return bool(default)
-    t = str(s).strip().lower()
-    if t in ("1", "true", "yes", "on"):
-        return True
-    if t in ("0", "false", "no", "off"):
-        return False
-    return bool(default)
 
 def _state_at(world: WorldState, x: int, y: int, z: int) -> str | None:
     return world.blocks.get((int(x), int(y), int(z)))
@@ -42,7 +26,7 @@ def make_wall_state(base_id: str, waterlogged: bool = False) -> str:
             "north": "none",
             "south": "none",
             "up": "true",
-            "waterlogged": _bool_str(bool(waterlogged)),
+            "waterlogged": bool_str(bool(waterlogged)),
             "west": "none",
         },
     )
@@ -77,7 +61,7 @@ def canonical_wall_state(
         return None
 
     base, props = parse_state(str(st))
-    waterlogged = _as_bool(props.get("waterlogged"), False)
+    waterlogged = str_as_bool(props.get("waterlogged"), False)
 
     north = _wall_side_from_neighbor(
         world,
@@ -127,8 +111,8 @@ def canonical_wall_state(
             "east": str(east),
             "north": str(north),
             "south": str(south),
-            "up": _bool_str(bool(up)),
-            "waterlogged": _bool_str(bool(waterlogged)),
+            "up": bool_str(bool(up)),
+            "waterlogged": bool_str(bool(waterlogged)),
             "west": str(west),
         },
     )
@@ -146,10 +130,10 @@ def make_fence_gate_state(
         str(base_id),
         {
             "facing": str(facing),
-            "in_wall": _bool_str(bool(in_wall)),
-            "open": _bool_str(bool(open_state)),
-            "powered": _bool_str(bool(powered)),
-            "waterlogged": _bool_str(bool(waterlogged)),
+            "in_wall": bool_str(bool(in_wall)),
+            "open": bool_str(bool(open_state)),
+            "powered": bool_str(bool(powered)),
+            "waterlogged": bool_str(bool(waterlogged)),
         },
     )
 
@@ -189,13 +173,14 @@ def canonical_fence_gate_state(
 
     base, props = parse_state(str(st))
 
-    facing = str(facing_override) if facing_override is not None else str(props.get("facing", "south"))
-    if facing not in ("north", "east", "south", "west"):
-        facing = "south"
+    if facing_override is not None:
+        facing = normalize_cardinal(str(facing_override), default="south")
+    else:
+        facing = normalize_cardinal(str(props.get("facing", "south")), default="south")
 
-    open_state = bool(open_override) if open_override is not None else _as_bool(props.get("open"), False)
-    powered = _as_bool(props.get("powered"), False)
-    waterlogged = _as_bool(props.get("waterlogged"), False)
+    open_state = bool(open_override) if open_override is not None else str_as_bool(props.get("open"), False)
+    powered = str_as_bool(props.get("powered"), False)
+    waterlogged = str_as_bool(props.get("waterlogged"), False)
     in_wall = _gate_in_wall(
         world,
         int(x),

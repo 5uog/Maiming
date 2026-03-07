@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import List
 
 from maiming.domain.blocks.state_codec import parse_state
+from maiming.domain.blocks.state_values import prop_as_bool
 from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef
 from maiming.domain.blocks.models.slab import boxes_for_slab
 from maiming.domain.blocks.models.stairs import boxes_for_stairs
@@ -42,17 +43,6 @@ def _gate_interact_hull() -> LocalBox:
         mx_z=1.0,
         uv_hint="interact",
     )
-
-def _prop_as_bool(props: dict[str, str], key: str, default: bool = False) -> bool:
-    raw = props.get(str(key))
-    if raw is None:
-        return bool(default)
-    s = str(raw).strip().lower()
-    if s in ("1", "true", "yes", "on"):
-        return True
-    if s in ("0", "false", "no", "off"):
-        return False
-    return bool(default)
 
 def render_boxes_for_block(
     state_str: str,
@@ -139,7 +129,7 @@ def collision_boxes_for_block(
     kind = defn.kind if defn is not None else "cube"
 
     if kind == "fence_gate":
-        if _prop_as_bool(props, "open", False):
+        if prop_as_bool(props, "open", False):
             return []
         return _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
 
