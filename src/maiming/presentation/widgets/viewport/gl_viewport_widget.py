@@ -14,6 +14,7 @@ from maiming.infrastructure.platform.qt_input_adapter import QtInputAdapter
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 
 from maiming.presentation.widgets.overlays.pause_overlay import PauseOverlay
+from maiming.presentation.widgets.overlays.settings_overlay import SettingsOverlay
 from maiming.presentation.widgets.hud.crosshair_widget import CrosshairWidget
 from maiming.presentation.widgets.overlays.inventory_overlay import InventoryOverlay
 from maiming.presentation.widgets.overlays.death_overlay import DeathOverlay
@@ -64,23 +65,27 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._overlay = PauseOverlay(self)
         self._overlay.resume_requested.connect(self._resume_from_overlay)
-        self._overlay.fov_changed.connect(self._set_fov)
-        self._overlay.sens_changed.connect(self._set_sens)
-        self._overlay.invert_x_changed.connect(self._set_invert_x)
-        self._overlay.invert_y_changed.connect(self._set_invert_y)
-        self._overlay.outline_selection_changed.connect(self._set_outline_selection)
-        self._overlay.cloud_wireframe_changed.connect(self._set_cloud_wire)
-        self._overlay.clouds_enabled_changed.connect(self._set_cloud_enabled)
-        self._overlay.cloud_density_changed.connect(self._set_cloud_density)
-        self._overlay.cloud_seed_changed.connect(self._set_cloud_seed)
-        self._overlay.world_wireframe_changed.connect(self._set_world_wire)
-        self._overlay.shadow_enabled_changed.connect(self._set_shadow_enabled)
-        self._overlay.sun_azimuth_changed.connect(self._set_sun_azimuth)
-        self._overlay.sun_elevation_changed.connect(self._set_sun_elevation)
-        self._overlay.build_mode_changed.connect(self._set_build_mode)
-        self._overlay.auto_jump_changed.connect(self._set_auto_jump)
-        self._overlay.auto_sprint_changed.connect(self._set_auto_sprint)
-        self._overlay.render_distance_changed.connect(self._set_render_distance)
+        self._overlay.settings_requested.connect(self._open_settings_from_pause)
+
+        self._settings = SettingsOverlay(self)
+        self._settings.back_requested.connect(self._back_from_settings)
+        self._settings.fov_changed.connect(self._set_fov)
+        self._settings.sens_changed.connect(self._set_sens)
+        self._settings.invert_x_changed.connect(self._set_invert_x)
+        self._settings.invert_y_changed.connect(self._set_invert_y)
+        self._settings.outline_selection_changed.connect(self._set_outline_selection)
+        self._settings.cloud_wireframe_changed.connect(self._set_cloud_wire)
+        self._settings.clouds_enabled_changed.connect(self._set_cloud_enabled)
+        self._settings.cloud_density_changed.connect(self._set_cloud_density)
+        self._settings.cloud_seed_changed.connect(self._set_cloud_seed)
+        self._settings.world_wireframe_changed.connect(self._set_world_wire)
+        self._settings.shadow_enabled_changed.connect(self._set_shadow_enabled)
+        self._settings.sun_azimuth_changed.connect(self._set_sun_azimuth)
+        self._settings.sun_elevation_changed.connect(self._set_sun_elevation)
+        self._settings.build_mode_changed.connect(self._set_build_mode)
+        self._settings.auto_jump_changed.connect(self._set_auto_jump)
+        self._settings.auto_sprint_changed.connect(self._set_auto_sprint)
+        self._settings.render_distance_changed.connect(self._set_render_distance)
 
         self._death = DeathOverlay(self)
         self._death.respawn_requested.connect(self._respawn)
@@ -99,6 +104,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlays = ViewportOverlays(
             refs=OverlayRefs(
                 pause=self._overlay,
+                settings=self._settings,
                 inventory=self._inventory,
                 death=self._death,
                 crosshair=self._crosshair,
@@ -147,17 +153,13 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
 
         self._renderer.set_debug_shadow(bool(self._state.debug_shadow))
-
         self._renderer.set_outline_selection_enabled(bool(self._state.outline_selection))
-
         self._renderer.set_cloud_wireframe(bool(self._state.cloud_wire))
         self._renderer.set_cloud_enabled(bool(self._state.cloud_enabled))
         self._renderer.set_cloud_density(int(self._state.cloud_density))
         self._renderer.set_cloud_seed(int(self._state.cloud_seed))
-
         self._renderer.set_shadow_enabled(bool(self._state.shadow_enabled))
         self._renderer.set_world_wireframe(bool(self._state.world_wire))
-
         self._renderer.set_sun_angles(
             float(self._state.sun_az_deg),
             float(self._state.sun_el_deg),
@@ -257,12 +259,15 @@ class GLViewportWidget(QOpenGLWidget):
                 self._hud.raise_()
 
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
+        self._settings.setGeometry(0, 0, max(1, w), max(1, h))
         self._crosshair.setGeometry(0, 0, max(1, w), max(1, h))
         self._inventory.setGeometry(0, 0, max(1, w), max(1, h))
         self._death.setGeometry(0, 0, max(1, w), max(1, h))
 
         if self._overlays.dead():
             self._death.raise_()
+        elif self._overlays.settings_open():
+            self._settings.raise_()
         elif self._overlays.paused():
             self._overlay.raise_()
         elif self._overlays.inventory_open():
@@ -330,13 +335,18 @@ class GLViewportWidget(QOpenGLWidget):
     def _tick_sim(self) -> None:
         if self._overlays.dead():
             return
-        if (not self._overlays.paused()) and (not self._overlays.inventory_open()):
-            self._runner.update()
+        if self._overlays.paused():
+            return
+        if self._overlays.inventory_open():
+            return
+        if self._overlays.settings_open():
+            return
+        self._runner.update()
 
-    def _sync_overlay_values(self) -> None:
+    def _sync_settings_values(self) -> None:
         self._sync_state_from_renderer_sun()
 
-        self._overlay.sync_values(
+        self._settings.sync_values(
             fov_deg=self._session.settings.fov_deg,
             sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px,
             inv_x=self._state.invert_x,
@@ -362,6 +372,14 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _resume_from_overlay(self) -> None:
         self._overlays.set_paused(False)
+
+    def _open_settings_from_pause(self) -> None:
+        self._sync_settings_values()
+        self._overlays.set_settings_open(True)
+
+    def _back_from_settings(self) -> None:
+        self._sync_settings_values()
+        self._overlays.set_settings_open(False)
 
     def _set_fov(self, fov: float) -> None:
         self._session.settings.set_fov(float(fov))
@@ -538,16 +556,20 @@ class GLViewportWidget(QOpenGLWidget):
                 self._overlays.set_inventory_open(False)
                 return
 
+            if self._overlays.settings_open():
+                self._back_from_settings()
+                return
+
             if self._overlays.paused():
                 self._overlays.set_paused(False)
             else:
-                self._sync_overlay_values()
+                self._sync_settings_values()
                 self._overlays.set_paused(True)
             return
 
         if int(e.key()) == int(Qt.Key.Key_B) and (not self._overlays.paused()) and (not self._overlays.dead()):
             self._set_build_mode(not self._state.build_mode)
-            self._sync_overlay_values()
+            self._sync_settings_values()
             return
 
         if (
