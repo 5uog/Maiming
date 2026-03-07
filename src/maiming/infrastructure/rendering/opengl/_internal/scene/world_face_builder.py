@@ -5,12 +5,10 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import render_boxes_for_block
-from maiming.domain.blocks.models.common import LocalBox
-from maiming.domain.blocks.models.box_adjacency import internal_face_mask
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
+from maiming.domain.blocks.models.common import LocalBox
+from maiming.domain.blocks.state_codec import parse_state
+from maiming.infrastructure.rendering.opengl._internal.scene.visible_faces import iter_visible_faces
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]
@@ -97,73 +95,33 @@ def build_chunk_mesh(
         base, _p = parse_state(str(state_str))
         defn = def_lookup(str(base))
 
-        boxes = render_boxes_for_block(str(state_str), get_state, def_lookup, x, y, z)
-        if not boxes:
-            continue
+        for face in iter_visible_faces(
+            x=int(x),
+            y=int(y),
+            z=int(z),
+            state_str=str(state_str),
+            get_state=get_state,
+            def_lookup=def_lookup,
+        ):
+            mnx, mny, mnz = face.mn
+            mxx, mxy, mxz = face.mx
 
-        internal = internal_face_mask(boxes)
+            atlas = uv_lookup(str(state_str), int(face.face_idx))
 
-        for bi, b in enumerate(boxes):
-            mnx = float(x) + float(b.mn_x)
-            mny = float(y) + float(b.mn_y)
-            mnz = float(z) + float(b.mn_z)
-            mxx = float(x) + float(b.mx_x)
-            mxy = float(y) + float(b.mx_y)
-            mxz = float(z) + float(b.mx_z)
+            if defn is not None and str(defn.kind) == "fence_gate" and str(face.box.uv_hint):
+                u0, v0, u1, v1 = _fence_gate_uv_rect(atlas, int(face.face_idx), face.box)
+            else:
+                u0, v0, u1, v1 = _sub_uv_rect(atlas, int(face.face_idx), face.box)
 
-            for fi in range(6):
-                if (bi, fi) in internal:
-                    continue
-
-                if defn is not None and bool(defn.is_full_cube) and bool(defn.is_solid):
-                    nx, ny, nz = x, y, z
-                    if fi == 0:
-                        nx += 1
-                    elif fi == 1:
-                        nx -= 1
-                    elif fi == 2:
-                        ny += 1
-                    elif fi == 3:
-                        ny -= 1
-                    elif fi == 4:
-                        nz += 1
-                    else:
-                        nz -= 1
-
-                    nst = get_state(nx, ny, nz)
-                    if nst is not None:
-                        nb, _np = parse_state(str(nst))
-                        nd = def_lookup(str(nb))
-                        if nd is not None and bool(nd.is_full_cube) and bool(nd.is_solid):
-                            continue
-
-                if is_block_face_occluded(
-                    x=int(x),
-                    y=int(y),
-                    z=int(z),
-                    box=b,
-                    face_idx=int(fi),
-                    get_state=get_state,
-                    def_lookup=def_lookup,
-                ):
-                    continue
-
-                atlas = uv_lookup(str(state_str), int(fi))
-
-                if defn is not None and str(defn.kind) == "fence_gate" and str(b.uv_hint):
-                    u0, v0, u1, v1 = _fence_gate_uv_rect(atlas, int(fi), b)
-                else:
-                    u0, v0, u1, v1 = _sub_uv_rect(atlas, int(fi), b)
-
-                faces_rows[fi].append(
-                    [
-                        mnx, mny, mnz,
-                        mxx, mxy, mxz,
-                        float(u0), float(v0), float(u1), float(v1),
-                        1.0,
-                        0.0,
-                    ]
-                )
+            faces_rows[int(face.face_idx)].append(
+                [
+                    mnx, mny, mnz,
+                    mxx, mxy, mxz,
+                    float(u0), float(v0), float(u1), float(v1),
+                    1.0,
+                    0.0,
+                ]
+            )
 
     faces_np: list[np.ndarray] = []
     for rows in faces_rows:

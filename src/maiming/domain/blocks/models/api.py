@@ -11,6 +11,8 @@ from maiming.domain.blocks.models.fence import boxes_for_fence
 from maiming.domain.blocks.models.fence_gate import boxes_for_fence_gate
 from maiming.domain.blocks.models.wall import boxes_for_wall
 
+_TALL_STRUCTURAL_MIN_HEIGHT = 1.5
+
 def _raise_boxes_to_min_height(boxes: list[LocalBox], min_height: float) -> list[LocalBox]:
     out: list[LocalBox] = []
     h = float(min_height)
@@ -40,6 +42,17 @@ def _gate_interact_hull() -> LocalBox:
         mx_z=1.0,
         uv_hint="interact",
     )
+
+def _prop_as_bool(props: dict[str, str], key: str, default: bool = False) -> bool:
+    raw = props.get(str(key))
+    if raw is None:
+        return bool(default)
+    s = str(raw).strip().lower()
+    if s in ("1", "true", "yes", "on"):
+        return True
+    if s in ("0", "false", "no", "off"):
+        return False
+    return bool(default)
 
 def render_boxes_for_block(
     state_str: str,
@@ -88,6 +101,31 @@ def render_boxes_for_block(
 
     return [LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)]
 
+def _tall_structural_boxes(
+    state_str: str,
+    get_state: GetState,
+    get_def: GetDef,
+    x: int,
+    y: int,
+    z: int,
+) -> List[LocalBox]:
+    return _raise_boxes_to_min_height(
+        render_boxes_for_block(state_str, get_state, get_def, x, y, z),
+        _TALL_STRUCTURAL_MIN_HEIGHT,
+    )
+
+def _fence_gate_pick_boxes(
+    state_str: str,
+    get_state: GetState,
+    get_def: GetDef,
+    x: int,
+    y: int,
+    z: int,
+) -> List[LocalBox]:
+    out = _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
+    out.append(_gate_interact_hull())
+    return out
+
 def collision_boxes_for_block(
     state_str: str,
     get_state: GetState,
@@ -101,26 +139,12 @@ def collision_boxes_for_block(
     kind = defn.kind if defn is not None else "cube"
 
     if kind == "fence_gate":
-        open_s = str(props.get("open", "false")).lower()
-        is_open = open_s in ("1", "true", "yes", "on")
-        if bool(is_open):
+        if _prop_as_bool(props, "open", False):
             return []
-        return _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
+        return _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
 
-    if kind == "fence":
-        return _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
-
-    if kind == "wall":
-        return _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
+    if kind in ("fence", "wall"):
+        return _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
 
     return render_boxes_for_block(state_str, get_state, get_def, x, y, z)
 
@@ -137,23 +161,9 @@ def pick_boxes_for_block(
     kind = defn.kind if defn is not None else "cube"
 
     if kind == "fence_gate":
-        out = _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
-        out.append(_gate_interact_hull())
-        return out
+        return _fence_gate_pick_boxes(state_str, get_state, get_def, x, y, z)
 
-    if kind == "fence":
-        return _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
-
-    if kind == "wall":
-        return _raise_boxes_to_min_height(
-            render_boxes_for_block(state_str, get_state, get_def, x, y, z),
-            1.5,
-        )
+    if kind in ("fence", "wall"):
+        return _tall_structural_boxes(state_str, get_state, get_def, x, y, z)
 
     return render_boxes_for_block(state_str, get_state, get_def, x, y, z)

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import List
 
-from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.cardinal import opposite_cardinal
 from maiming.domain.blocks.models.common import LocalBox, GetState, GetDef, rotate_box_y_cw
 from maiming.domain.blocks.models.dimensions import (
@@ -11,12 +10,7 @@ from maiming.domain.blocks.models.dimensions import (
     FENCE_ARM_LOW_NORTH,
     FENCE_ARM_HIGH_NORTH,
 )
-from maiming.domain.blocks.structural_rules import (
-    is_full_solid,
-    is_fence,
-    is_fence_gate,
-    fence_gate_connects_to_side,
-)
+from maiming.domain.blocks.structural_rules import fence_connects_to_neighbor_state
 
 def boxes_for_fence(
     *,
@@ -30,27 +24,11 @@ def boxes_for_fence(
 
     for d, (dx, dz) in (("north", (0, -1)), ("south", (0, 1)), ("east", (1, 0)), ("west", (-1, 0))):
         s = get_state(int(x + dx), int(y), int(z + dz))
-        if s is None:
-            continue
-
-        nb, np = parse_state(str(s))
-        nd = get_def(str(nb))
-        if nd is None:
-            connections[d] = True
-            continue
-
-        if is_full_solid(nd) or is_fence(nd):
-            connections[d] = True
-            continue
-
-        if is_fence_gate(nd):
-            side_from_gate = opposite_cardinal(str(d))
-            facing = str(np.get("facing", "south"))
-            if fence_gate_connects_to_side(
-                facing=str(facing),
-                side_from_gate=str(side_from_gate),
-            ):
-                connections[d] = True
+        connections[d] = fence_connects_to_neighbor_state(
+            s,
+            side_from_neighbor=opposite_cardinal(str(d)),
+            get_def=get_def,
+        )
 
     boxes = [FENCE_POST]
 

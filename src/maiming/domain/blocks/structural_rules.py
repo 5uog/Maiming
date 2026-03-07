@@ -43,6 +43,32 @@ def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
         return s in ("north", "south")
     return s in ("east", "west")
 
+def fence_connects_to_neighbor_state(
+    state_str: str | None,
+    *,
+    side_from_neighbor: str,
+    get_def: DefLookup,
+) -> bool:
+    if state_str is None:
+        return False
+
+    base, props = parse_state(str(state_str))
+    nd = get_def(str(base))
+    if nd is None:
+        return True
+
+    if is_full_solid(nd) or is_fence(nd):
+        return True
+
+    if is_fence_gate(nd):
+        facing = str(props.get("facing", "south"))
+        return fence_gate_connects_to_side(
+            facing=str(facing),
+            side_from_gate=str(side_from_neighbor),
+        )
+
+    return False
+
 def wall_side_from_neighbor_state(
     state_str: str | None,
     *,

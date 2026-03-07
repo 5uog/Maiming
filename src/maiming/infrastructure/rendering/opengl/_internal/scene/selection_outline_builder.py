@@ -7,10 +7,7 @@ from typing import Callable
 import numpy as np
 
 from maiming.domain.blocks.block_definition import BlockDefinition
-from maiming.domain.blocks.models.api import render_boxes_for_block
-from maiming.domain.blocks.models.common import LocalBox
-from maiming.domain.blocks.models.box_adjacency import internal_face_mask
-from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import is_block_face_occluded
+from maiming.infrastructure.rendering.opengl._internal.scene.visible_faces import iter_visible_faces
 
 GetState = Callable[[int, int, int], str | None]
 DefLookup = Callable[[str], BlockDefinition | None]
@@ -84,70 +81,39 @@ class SelectionOutlineBuilder:
         state_str: str,
         get_state: GetState,
     ) -> np.ndarray:
-        boxes = render_boxes_for_block(
-            str(state_str),
-            get_state,
-            self.def_lookup,
-            int(x),
-            int(y),
-            int(z),
-        )
-        if not boxes:
-            return np.zeros((0, 3), dtype=np.float32)
-
-        internal = internal_face_mask(boxes)
         seen: set[tuple[int, ...]] = set()
         out: list[tuple[float, float, float]] = []
 
         eps = 0.002
 
-        for bi, box in enumerate(boxes):
-            mn = (
-                float(x) + float(box.mn_x),
-                float(y) + float(box.mn_y),
-                float(z) + float(box.mn_z),
+        for face in iter_visible_faces(
+            x=int(x),
+            y=int(y),
+            z=int(z),
+            state_str=str(state_str),
+            get_state=get_state,
+            def_lookup=self.def_lookup,
+        ):
+            pts, normal = self._face_points(face.mn, face.mx, int(face.face_idx))
+            ox = float(normal[0]) * eps
+            oy = float(normal[1]) * eps
+            oz = float(normal[2]) * eps
+
+            pushed = [(px + ox, py + oy, pz + oz) for (px, py, pz) in pts]
+            edges = (
+                (pushed[0], pushed[1]),
+                (pushed[1], pushed[2]),
+                (pushed[2], pushed[3]),
+                (pushed[3], pushed[0]),
             )
-            mx = (
-                float(x) + float(box.mx_x),
-                float(y) + float(box.mx_y),
-                float(z) + float(box.mx_z),
-            )
 
-            for fi in range(6):
-                if (bi, fi) in internal:
+            for a, b in edges:
+                key = self._edge_key(a, b)
+                if key in seen:
                     continue
-
-                if is_block_face_occluded(
-                    x=int(x),
-                    y=int(y),
-                    z=int(z),
-                    box=box,
-                    face_idx=int(fi),
-                    get_state=get_state,
-                    def_lookup=self.def_lookup,
-                ):
-                    continue
-
-                pts, normal = self._face_points(mn, mx, int(fi))
-                ox = float(normal[0]) * eps
-                oy = float(normal[1]) * eps
-                oz = float(normal[2]) * eps
-
-                pushed = [(px + ox, py + oy, pz + oz) for (px, py, pz) in pts]
-                edges = (
-                    (pushed[0], pushed[1]),
-                    (pushed[1], pushed[2]),
-                    (pushed[2], pushed[3]),
-                    (pushed[3], pushed[0]),
-                )
-
-                for a, b in edges:
-                    key = self._edge_key(a, b)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    out.append(a)
-                    out.append(b)
+                seen.add(key)
+                out.append(a)
+                out.append(b)
 
         if not out:
             return np.zeros((0, 3), dtype=np.float32)
