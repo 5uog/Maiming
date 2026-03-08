@@ -16,11 +16,6 @@ from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.world.chunking import ChunkKey
 from maiming.infrastructure.rendering.opengl._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
-from maiming.infrastructure.rendering.opengl._internal.compute.chunk_payload_validator import (
-    ChunkPayloadMismatchError,
-    ChunkPayloadValidationReport,
-    validate_chunk_payloads,
-)
 from maiming.infrastructure.rendering.opengl._internal.passes.cloud_pass import CloudPass
 from maiming.infrastructure.rendering.opengl._internal.passes.selection_pass import SelectionPass
 from maiming.infrastructure.rendering.opengl._internal.passes.shadow_map_pass import ShadowMapPass
@@ -101,7 +96,7 @@ class RendererBackend:
 
         self._selection: SelectionController | None = None
         self._pipeline: FramePipeline | None = None
-        self._last_payload_validation: ChunkPayloadValidationReport | None = None
+        self._last_payload_validation: object | None = None
 
     def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
         self._gl_info = probe_gl_info()
@@ -203,7 +198,7 @@ class RendererBackend:
             return (False, 0)
         return self._pipeline.shadow_info()
 
-    def payload_validation_report(self) -> ChunkPayloadValidationReport | None:
+    def payload_validation_report(self) -> object | None:
         return self._last_payload_validation
 
     def atlas_uv_face(self, block_state_id: str, face_idx: int) -> tuple[float, float, float, float]:
@@ -258,16 +253,16 @@ class RendererBackend:
         *,
         chunk_key: ChunkKey,
         world_revision: int,
-        faces: list[np.ndarray],
-        shadow_faces: list[np.ndarray],
+        faces: list[np.ndarray] | None = None,
+        shadow_faces: list[np.ndarray] | None = None,
         gpu_face_sources: np.ndarray | None = None,
         gpu_bucket_counts: BucketCounts | None = None,
     ) -> None:
         if self._res is None:
             return
 
-        authoritative_world_faces = faces
-        authoritative_shadow_faces = shadow_faces
+        authoritative_world_faces: list[np.ndarray] | None = None
+        authoritative_shadow_faces: list[np.ndarray] | None = None
 
         if gpu_face_sources is not None and gpu_bucket_counts is not None:
             gpu_payload = self._gpu_payload_builder.build_and_store(
@@ -276,25 +271,14 @@ class RendererBackend:
                 face_sources=gpu_face_sources,
                 bucket_counts=gpu_bucket_counts,
             )
-
-            try:
-                report = validate_chunk_payloads(
-                    chunk_key=chunk_key,
-                    world_revision=int(world_revision),
-                    cpu_world_faces=faces,
-                    cpu_shadow_faces=shadow_faces,
-                    gpu_world_faces=gpu_payload.world_faces,
-                    gpu_shadow_faces=gpu_payload.shadow_faces,
-                )
-            except ChunkPayloadMismatchError as exc:
-                self._last_payload_validation = exc.report
-                raise
-            else:
-                self._last_payload_validation = report
-
-            authoritative_world_faces = gpu_payload.world_faces
-            authoritative_shadow_faces = gpu_payload.shadow_faces
+            authoritative_world_faces = gpu_payload.face_buckets
+            authoritative_shadow_faces = authoritative_world_faces
+            self._last_payload_validation = None
         else:
+            if faces is None:
+                return
+            authoritative_world_faces = faces
+            authoritative_shadow_faces = shadow_faces if shadow_faces is not None else faces
             self._last_payload_validation = None
 
         self._world.upload_chunk(

@@ -22,8 +22,7 @@ from maiming.infrastructure.rendering.opengl._internal.scene.world_face_source_b
 
 @dataclass(frozen=True)
 class ChunkFacePayloadSnapshot:
-    world_faces: list[np.ndarray]
-    shadow_faces: list[np.ndarray]
+    face_buckets: list[np.ndarray]
     last_rev: int
 
 class ChunkFacePayloadBuilder:
@@ -169,18 +168,13 @@ class ChunkFacePayloadBuilder:
         if prev is not None and int(prev.last_rev) == int(world_revision):
             return prev
 
-        world_faces = self._build_faces(
+        face_buckets = self._build_faces(
             face_sources=face_sources,
             bucket_counts=bucket_counts,
         )
-        shadow_faces = [
-            np.ascontiguousarray(arr, dtype=np.float32).copy() if arr.size > 0 else np.zeros((0, 12), dtype=np.float32)
-            for arr in world_faces
-        ]
 
         snap = ChunkFacePayloadSnapshot(
-            world_faces=world_faces,
-            shadow_faces=shadow_faces,
+            face_buckets=face_buckets,
             last_rev=int(world_revision),
         )
         self._chunks[ck] = snap

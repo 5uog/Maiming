@@ -13,14 +13,14 @@ from maiming.core.math.vec3 import Vec3
 from maiming.domain.world.chunking import ChunkKey, chunk_key
 from maiming.domain.world.world_state import WorldState
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import build_chunk_mesh_cpu_with_gpu_sources
+from maiming.infrastructure.rendering.opengl.facade.world_mesh_builder import (
+    build_chunk_face_payload_sources,
+)
 
 @dataclass(frozen=True)
 class _BuildResult:
     chunk: ChunkKey
     chunk_rev: int
-    faces: list[np.ndarray]
-    shadow_faces: list[np.ndarray]
     gpu_face_sources: np.ndarray
     gpu_bucket_counts: tuple[int, int, int, int, int, int]
 
@@ -48,8 +48,6 @@ class WorldUploadTracker:
             renderer.submit_chunk(
                 chunk_key=r.chunk,
                 world_revision=int(r.chunk_rev),
-                faces=r.faces,
-                shadow_faces=r.shadow_faces,
                 gpu_face_sources=r.gpu_face_sources,
                 gpu_bucket_counts=r.gpu_bucket_counts,
             )
@@ -124,7 +122,7 @@ class WorldUploadTracker:
         uv_lookup,
         def_lookup,
     ) -> _BuildResult:
-        faces, shadow_faces, gpu_face_sources, gpu_bucket_counts = build_chunk_mesh_cpu_with_gpu_sources(
+        gpu_face_sources, gpu_bucket_counts = build_chunk_face_payload_sources(
             blocks=blocks_local,
             get_state=get_state,
             uv_lookup=uv_lookup,
@@ -133,8 +131,6 @@ class WorldUploadTracker:
         return _BuildResult(
             chunk=chunk_key,
             chunk_rev=int(chunk_rev),
-            faces=faces,
-            shadow_faces=shadow_faces,
             gpu_face_sources=gpu_face_sources,
             gpu_bucket_counts=gpu_bucket_counts,
         )
