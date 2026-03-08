@@ -1,8 +1,8 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/world_pass.py
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -12,25 +12,23 @@ from OpenGL.GL import (
     glEnable,
     glDisable,
     glCullFace,
-    glBindVertexArray,
-    glDrawArraysInstanced,
     glPolygonMode,
     GL_TEXTURE0,
     GL_TEXTURE1,
     GL_TEXTURE_2D,
     GL_CULL_FACE,
     GL_BACK,
-    GL_TRIANGLES,
     GL_FRONT_AND_BACK,
     GL_LINE,
 )
 
 from maiming.core.math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
-from ..gl.mesh_buffer import MeshBuffer
 from ..gl.gl_state_guard import GLStateGuard
 from ..resources.texture_atlas import TextureAtlas
 from ...facade.gl_renderer_params import ShadowParams
+from ...facade.render_metrics import PassFrameMetrics
+from .aggregated_face_batch import AggregatedFaceBatch
 from .shadow_map_pass import ShadowMapInfo
 from maiming.domain.world.chunking import ChunkKey, chunk_bounds
 
@@ -56,73 +54,36 @@ class WorldDrawInputs:
     sel_z: int
     sel_tint: float
 
-
-@dataclass
-class _ChunkFaces:
-    meshes: list[MeshBuffer]
-    counts: list[int]
-    last_rev: int
-
-
 class WorldPass:
     def __init__(self) -> None:
         self._prog: ShaderProgram | None = None
         self._atlas: TextureAtlas | None = None
-        self._chunks: Dict[ChunkKey, _ChunkFaces] = {}
+        self._batch = AggregatedFaceBatch()
+        self._last_metrics = PassFrameMetrics()
 
     def initialize(self, prog: ShaderProgram, atlas: TextureAtlas) -> None:
         self._prog = prog
         self._atlas = atlas
+        self._batch.initialize()
 
     def destroy(self) -> None:
-        for ch in self._chunks.values():
-            for m in ch.meshes:
-                m.destroy()
-        self._chunks.clear()
+        self._batch.destroy()
         self._prog = None
         self._atlas = None
-
-    def _ensure_chunk(self, k: ChunkKey) -> _ChunkFaces:
-        ch = self._chunks.get(k)
-        if ch is not None:
-            return ch
-
-        meshes = [MeshBuffer.create_quad_instanced(i) for i in range(6)]
-        counts = [0, 0, 0, 0, 0, 0]
-        ch = _ChunkFaces(meshes=meshes, counts=counts, last_rev=-1)
-        self._chunks[k] = ch
-        return ch
+        self._last_metrics = PassFrameMetrics()
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
-        ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
-        ch = self._chunks.pop(ck, None)
-        if ch is None:
-            return
-        for mesh in ch.meshes:
-            mesh.destroy()
+        self._batch.remove_chunk(chunk_key)
 
     def evict_except(self, keep: set[ChunkKey]) -> None:
-        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
-        doomed = [ck for ck in self._chunks.keys() if ck not in keep_n]
-        for ck in doomed:
-            self.remove_chunk(ck)
+        self._batch.evict_except(keep)
 
     def upload_chunk(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
-        if len(faces) != 6:
-            return
-        ch = self._ensure_chunk(chunk_key)
-        if int(world_revision) == int(ch.last_rev):
-            return
-        ch.last_rev = int(world_revision)
-
-        for fi in range(6):
-            data = faces[fi]
-            if data.dtype != np.float32:
-                data = data.astype(np.float32, copy=False)
-            if not data.flags["C_CONTIGUOUS"]:
-                data = np.ascontiguousarray(data, dtype=np.float32)
-            ch.meshes[fi].upload_instances(data)
-            ch.counts[fi] = int(data.shape[0])
+        self._batch.set_chunk_faces(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            faces=faces,
+        )
 
     @staticmethod
     def _within_render_distance(ck: ChunkKey, cam: ChunkKey, rd: int) -> bool:
@@ -170,13 +131,39 @@ class WorldPass:
 
         return True
 
-    def draw(self, inp: WorldDrawInputs) -> None:
+    def draw(self, inp: WorldDrawInputs) -> PassFrameMetrics:
+        t0 = time.perf_counter()
+
         if self._prog is None or self._atlas is None:
-            return
+            self._last_metrics = PassFrameMetrics()
+            return self._last_metrics
+
+        self._batch.prepare()
 
         rd = int(max(2, min(16, int(inp.render_distance_chunks))))
         cam = inp.camera_chunk
         view_proj = inp.view_proj.astype(np.float32, copy=False)
+
+        visible_chunks: list[ChunkKey] = []
+        for ck in self._batch.chunk_keys():
+            if not self._within_render_distance(ck, cam, rd):
+                continue
+            if not self._chunk_intersects_view_volume(ck, view_proj):
+                continue
+            visible_chunks.append(ck)
+
+        commands = self._batch.build_commands(visible_chunks)
+        if not any(int(cmd.shape[0]) > 0 for cmd in commands):
+            self._last_metrics = PassFrameMetrics(
+                cpu_ms=float((time.perf_counter() - t0) * 1000.0),
+                draw_calls=0,
+                instances=0,
+                rendered=False,
+            )
+            return self._last_metrics
+
+        draw_calls = 0
+        instances = 0
 
         with GLStateGuard(
             capture_framebuffer=False,
@@ -223,19 +210,10 @@ class WorldPass:
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
 
-            for ck, ch in self._chunks.items():
-                if not self._within_render_distance(ck, cam, rd):
-                    continue
-                if not self._chunk_intersects_view_volume(ck, view_proj):
-                    continue
-
-                for fi, (mesh, cnt) in enumerate(zip(ch.meshes, ch.counts)):
-                    if int(cnt) <= 0:
-                        continue
-                    self._prog.set_int("u_face", int(fi))
-                    glBindVertexArray(mesh.vao)
-                    glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
-                    glBindVertexArray(0)
+            draw_calls, instances = self._batch.draw(
+                commands,
+                before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)),
+            )
 
             glDisable(GL_CULL_FACE)
 
@@ -243,3 +221,11 @@ class WorldPass:
             glBindTexture(GL_TEXTURE_2D, 0)
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, 0)
+
+        self._last_metrics = PassFrameMetrics(
+            cpu_ms=float((time.perf_counter() - t0) * 1000.0),
+            draw_calls=int(draw_calls),
+            instances=int(instances),
+            rendered=bool(draw_calls > 0),
+        )
+        return self._last_metrics

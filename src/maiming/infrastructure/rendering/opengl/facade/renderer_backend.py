@@ -28,6 +28,7 @@ from maiming.infrastructure.rendering.opengl.facade.block_visual_resolver import
 from maiming.infrastructure.rendering.opengl.facade.gl_info_probe import GLInfoSnapshot, probe_gl_info
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams
 from maiming.infrastructure.rendering.opengl.facade.gl_resources import GLResources
+from maiming.infrastructure.rendering.opengl.facade.render_metrics import RendererFrameMetrics
 from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
 from maiming.infrastructure.rendering.opengl.facade.selection_controller import SelectionController
 
@@ -97,6 +98,7 @@ class RendererBackend:
         self._selection: SelectionController | None = None
         self._pipeline: FramePipeline | None = None
         self._last_payload_validation: object | None = None
+        self._last_frame_metrics = RendererFrameMetrics()
 
     def initialize(self, assets_dir: Path, *, block_registry: BlockRegistry) -> None:
         self._gl_info = probe_gl_info()
@@ -160,6 +162,7 @@ class RendererBackend:
         self._selection = None
         self._pipeline = None
         self._last_payload_validation = None
+        self._last_frame_metrics = RendererFrameMetrics()
         self._gl_info = GLInfoSnapshot(
             vendor="",
             renderer="",
@@ -200,6 +203,9 @@ class RendererBackend:
 
     def payload_validation_report(self) -> object | None:
         return self._last_payload_validation
+
+    def frame_metrics(self) -> RendererFrameMetrics:
+        return self._last_frame_metrics
 
     def atlas_uv_face(self, block_state_id: str, face_idx: int) -> tuple[float, float, float, float]:
         if self._visuals is None:
@@ -304,9 +310,10 @@ class RendererBackend:
         render_distance_chunks: int,
     ) -> None:
         if self._pipeline is None:
+            self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._pipeline.render(
+        self._last_frame_metrics = self._pipeline.render(
             w=int(w),
             h=int(h),
             eye=eye,

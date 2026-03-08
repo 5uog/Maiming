@@ -9,6 +9,7 @@ from maiming.core.math.vec3 import Vec3
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.world.chunking import ChunkKey
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams, default_gl_renderer_params
+from maiming.infrastructure.rendering.opengl.facade.render_metrics import RendererFrameMetrics
 from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
 from maiming.infrastructure.rendering.opengl.facade.renderer_backend import RendererBackend
 
@@ -44,6 +45,9 @@ class GLRenderer:
 
     def gl_info(self) -> tuple[str, str, str, str]:
         return self._backend.gl_info()
+
+    def frame_metrics(self) -> RendererFrameMetrics:
+        return self._backend.frame_metrics()
 
     def set_cloud_wireframe(self, on: bool) -> None:
         self._state.cloud_wireframe = bool(on)

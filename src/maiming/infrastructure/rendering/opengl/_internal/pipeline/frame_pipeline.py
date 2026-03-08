@@ -30,6 +30,10 @@ from maiming.infrastructure.rendering.opengl._internal.passes.world_pass import 
 )
 from maiming.infrastructure.rendering.opengl._internal.pipeline.light_space import compute_light_view_proj
 from maiming.infrastructure.rendering.opengl.facade.gl_renderer_params import GLRendererParams
+from maiming.infrastructure.rendering.opengl.facade.render_metrics import (
+    PassFrameMetrics,
+    RendererFrameMetrics,
+)
 from maiming.infrastructure.rendering.opengl.facade.render_state import RendererRuntimeState
 from maiming.infrastructure.rendering.opengl.facade.selection_controller import SelectionController
 
@@ -67,7 +71,7 @@ class FramePipeline:
         pitch_deg: float,
         fov_deg: float,
         render_distance_chunks: int,
-    ) -> None:
+    ) -> RendererFrameMetrics:
         shadow_info_pre = self.shadow_pass.info()
         light_vp = compute_light_view_proj(
             center=eye,
@@ -77,8 +81,9 @@ class FramePipeline:
             shadow_size=int(max(1, int(shadow_info_pre.size))),
         )
 
+        shadow_metrics = PassFrameMetrics()
         if bool(self.state.shadow_enabled) and self.shadow_pass.should_render(light_vp):
-            self.shadow_pass.render(light_vp)
+            shadow_metrics = self.shadow_pass.render(light_vp)
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -115,7 +120,7 @@ class FramePipeline:
 
         sel_mode, sx, sy, sz = self.selection.world_inputs()
 
-        self.world_pass.draw(
+        world_metrics = self.world_pass.draw(
             WorldDrawInputs(
                 view_proj=vp,
                 light_view_proj=light_vp,
@@ -145,3 +150,4 @@ class FramePipeline:
         )
 
         self.selection.draw(view_proj=vp)
+        return RendererFrameMetrics(world=world_metrics, shadow=shadow_metrics)

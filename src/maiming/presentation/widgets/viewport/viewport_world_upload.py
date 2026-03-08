@@ -28,13 +28,23 @@ class WorldUploadTracker:
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="WorldMeshBuild")
         self._pending: Dict[ChunkKey, Future] = {}
+        self._pending_rev: Dict[ChunkKey, int] = {}
 
         self._want_rev: Dict[ChunkKey, int] = {}
         self._resident_rev: Dict[ChunkKey, int] = {}
 
         self._results: "queue.Queue[_BuildResult]" = queue.Queue()
 
+    def _retire_finished(self) -> None:
+        for ck, fut in list(self._pending.items()):
+            if not fut.done():
+                continue
+            self._pending.pop(ck, None)
+            self._pending_rev.pop(ck, None)
+
     def _drain_results(self, renderer: GLRenderer) -> None:
+        self._retire_finished()
+
         while True:
             try:
                 r = self._results.get_nowait()
@@ -45,6 +55,9 @@ class WorldUploadTracker:
             if want is None or int(want) != int(r.chunk_rev):
                 continue
 
+            if int(self._resident_rev.get(r.chunk, -1)) == int(r.chunk_rev):
+                continue
+
             renderer.submit_chunk(
                 chunk_key=r.chunk,
                 world_revision=int(r.chunk_rev),
@@ -52,6 +65,8 @@ class WorldUploadTracker:
                 gpu_bucket_counts=r.gpu_bucket_counts,
             )
             self._resident_rev[r.chunk] = int(r.chunk_rev)
+
+        self._retire_finished()
 
     @staticmethod
     def _center_chunk(eye: Vec3) -> ChunkKey:
@@ -101,6 +116,7 @@ class WorldUploadTracker:
         for ck in list(self._pending.keys()):
             if ck not in keep_n:
                 fut = self._pending.pop(ck)
+                self._pending_rev.pop(ck, None)
                 try:
                     fut.cancel()
                 except Exception:
@@ -151,8 +167,15 @@ class WorldUploadTracker:
         if int(chunk_rev) <= 0:
             return
 
+        if int(self._resident_rev.get(ck, -1)) == int(chunk_rev):
+            self._want_rev[ck] = int(chunk_rev)
+            return
+
         f = self._pending.get(ck)
         if f is not None and (not f.done()):
+            self._want_rev[ck] = int(chunk_rev)
+            if int(self._pending_rev.get(ck, -1)) == int(chunk_rev):
+                return
             return
 
         self._want_rev[ck] = int(chunk_rev)
@@ -179,6 +202,7 @@ class WorldUploadTracker:
 
         fut.add_done_callback(_on_done)
         self._pending[ck] = fut
+        self._pending_rev[ck] = int(chunk_rev)
 
     def upload_if_needed(
         self,

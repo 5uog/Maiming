@@ -7,6 +7,10 @@ from maiming.core.math.vec3 import Vec3
 from maiming.core.math import mat4
 from ...facade.gl_renderer_params import SunParams, ShadowParams
 
+def _snap(value: float, quantum: float) -> float:
+    q = float(max(1e-9, float(quantum)))
+    return float(np.round(float(value) / q) * q)
+
 def compute_light_view_proj(
     *,
     center: Vec3,
@@ -18,33 +22,56 @@ def compute_light_view_proj(
     sdir = sun_dir.normalized()
     light_forward = Vec3(-sdir.x, -sdir.y, -sdir.z).normalized()
 
+    anchor_center = Vec3(float(center.x), float(center.y), float(center.z))
+
+    if bool(shadow.stabilize):
+        ld = float(sun.light_distance)
+        probe_eye = Vec3(
+            float(center.x) + float(sdir.x) * ld,
+            float(center.y) + float(sdir.y) * ld,
+            float(center.z) + float(sdir.z) * ld,
+        )
+        probe_view = mat4.look_dir(probe_eye, light_forward).astype(np.float32, copy=False)
+
+        right = Vec3(
+            float(probe_view[0, 0]),
+            float(probe_view[0, 1]),
+            float(probe_view[0, 2]),
+        )
+        up = Vec3(
+            float(probe_view[1, 0]),
+            float(probe_view[1, 1]),
+            float(probe_view[1, 2]),
+        )
+        light_axis = Vec3(
+            float(probe_view[2, 0]),
+            float(probe_view[2, 1]),
+            float(probe_view[2, 2]),
+        )
+
+        r = float(sun.ortho_radius)
+        s = float(max(1, int(shadow_size)))
+        texel = (2.0 * r) / s
+        depth_quantum = float(max(16.0, texel))
+
+        cx = right.dot(center)
+        cy = up.dot(center)
+        cz = light_axis.dot(center)
+
+        sx = _snap(float(cx), float(texel))
+        sy = _snap(float(cy), float(texel))
+        sz = _snap(float(cz), float(depth_quantum))
+
+        anchor_center = (right * float(sx)) + (up * float(sy)) + (light_axis * float(sz))
+
     ld = float(sun.light_distance)
     light_pos = Vec3(
-        float(center.x) + float(sdir.x) * ld,
-        float(center.y) + float(sdir.y) * ld,
-        float(center.z) + float(sdir.z) * ld,
+        float(anchor_center.x) + float(sdir.x) * ld,
+        float(anchor_center.y) + float(sdir.y) * ld,
+        float(anchor_center.z) + float(sdir.z) * ld,
     )
 
     view = mat4.look_dir(light_pos, light_forward)
-
     r = float(sun.ortho_radius)
     proj = mat4.ortho(-r, r, -r, r, float(sun.ortho_near), float(sun.ortho_far))
-
-    if bool(shadow.stabilize):
-        c4 = np.array([float(center.x), float(center.y), float(center.z), 1.0], dtype=np.float32)
-        ls = (view @ c4).astype(np.float32)
-
-        s = float(max(1, int(shadow_size)))
-        texel = (2.0 * r) / s
-
-        snap_x = np.round(float(ls[0]) / texel) * texel
-        snap_y = np.round(float(ls[1]) / texel) * texel
-
-        dx = float(snap_x) - float(ls[0])
-        dy = float(snap_y) - float(ls[1])
-
-        view = view.copy().astype(np.float32)
-        view[0, 3] += dx
-        view[1, 3] += dy
-
     return mat4.mul(proj, view).astype(np.float32)

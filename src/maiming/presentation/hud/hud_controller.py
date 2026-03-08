@@ -224,6 +224,8 @@ class HudController:
         vsync_on: bool,
         render_timer_interval_ms: int,
         render_distance_chunks: int,
+        paint_ms: float,
+        selection_pick_ms: float,
     ) -> str:
         fps = self.fps()
         t_txt = "inf" if int(render_timer_interval_ms) <= 0 else f"{(1000.0 / float(render_timer_interval_ms)):.0f}"
@@ -250,6 +252,10 @@ class HudController:
         else:
             mem_line = f"Mem {self._fmt_mib(int(used_bytes))} ({used_label})"
 
+        perf = renderer.frame_metrics()
+        world_perf = perf.world
+        shadow_perf = perf.shadow
+
         p = session.player
         px, py, pz = float(p.position.x), float(p.position.y), float(p.position.z)
         bx, by, bz = int(math.floor(px)), int(math.floor(py)), int(math.floor(pz))
@@ -271,6 +277,14 @@ class HudController:
         lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture")
         lines.append("")
         lines.append(f"GPU {gpu_txt}  {mem_line}  Alloc {self._py.rate_mib_s:.1f} MiB/s")
+        lines.append(
+            f"CPU paint {float(paint_ms):.2f} ms  world {float(world_perf.cpu_ms):.2f} ms  "
+            f"shadow {float(shadow_perf.cpu_ms):.2f} ms  pick {float(selection_pick_ms):.2f} ms"
+        )
+        lines.append(
+            f"Draw W/S {int(world_perf.draw_calls)}/{int(shadow_perf.draw_calls)}  "
+            f"Inst W/S {int(world_perf.instances)}/{int(shadow_perf.instances)}"
+        )
         lines.append("")
         lines.append(f"XYZ {px:.2f} {py:.2f} {pz:.2f}  Block {bx} {by} {bz}  Chunk {cx} {cy} {cz} [{rx} {rz}]")
         lines.append(f"Facing {card}  Yaw {p.yaw_deg:.1f}  Pitch {p.pitch_deg:.1f}")
@@ -346,6 +360,8 @@ class HudController:
         render_timer_interval_ms: int,
         sim_hz: float,
         render_distance_chunks: int,
+        paint_ms: float,
+        selection_pick_ms: float,
     ) -> HudPayload:
         _ = float(sim_hz)
 
@@ -373,6 +389,8 @@ class HudController:
             vsync_on=bool(vsync_on),
             render_timer_interval_ms=int(render_timer_interval_ms),
             render_distance_chunks=int(render_distance_chunks),
+            paint_ms=float(paint_ms),
+            selection_pick_ms=float(selection_pick_ms),
         )
         right = self._build_right_text(session=session)
         return HudPayload(left_text=str(left), right_text=str(right))

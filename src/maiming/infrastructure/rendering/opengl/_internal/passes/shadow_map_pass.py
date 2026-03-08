@@ -1,27 +1,64 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/shadow_map_pass.py
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
 from OpenGL.GL import (
-    glGenFramebuffers, glDeleteFramebuffers, glBindFramebuffer, glCheckFramebufferStatus, glGenTextures,
-    glDeleteTextures, glBindTexture, glTexImage2D, glTexParameteri, glTexParameterfv, glFramebufferTexture2D,
-    glDrawBuffer, glReadBuffer, glViewport, glClear, glEnable, glDisable, glDepthMask, glDepthFunc,
-    glPolygonOffset, glBindVertexArray, glDrawArraysInstanced,
-    GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, GL_DEPTH_COMPONENT24,
-    GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR,
-    GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER, GL_TEXTURE_BORDER_COLOR, GL_TEXTURE_COMPARE_MODE,
-    GL_TEXTURE_COMPARE_FUNC, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL, GL_NONE, GL_BLEND, GL_DEPTH_TEST, GL_LESS,
-    GL_DEPTH_BUFFER_BIT, GL_CULL_FACE, GL_POLYGON_OFFSET_FILL, GL_TRIANGLES,
+    glGenFramebuffers,
+    glDeleteFramebuffers,
+    glBindFramebuffer,
+    glCheckFramebufferStatus,
+    glGenTextures,
+    glDeleteTextures,
+    glBindTexture,
+    glTexImage2D,
+    glTexParameteri,
+    glTexParameterfv,
+    glFramebufferTexture2D,
+    glDrawBuffer,
+    glReadBuffer,
+    glViewport,
+    glClear,
+    glEnable,
+    glDisable,
+    glDepthMask,
+    glDepthFunc,
+    glPolygonOffset,
+    GL_FRAMEBUFFER,
+    GL_FRAMEBUFFER_COMPLETE,
+    GL_DEPTH_ATTACHMENT,
+    GL_TEXTURE_2D,
+    GL_DEPTH_COMPONENT24,
+    GL_DEPTH_COMPONENT,
+    GL_UNSIGNED_INT,
+    GL_TEXTURE_MIN_FILTER,
+    GL_TEXTURE_MAG_FILTER,
+    GL_LINEAR,
+    GL_TEXTURE_WRAP_S,
+    GL_TEXTURE_WRAP_T,
+    GL_CLAMP_TO_BORDER,
+    GL_TEXTURE_BORDER_COLOR,
+    GL_TEXTURE_COMPARE_MODE,
+    GL_TEXTURE_COMPARE_FUNC,
+    GL_COMPARE_REF_TO_TEXTURE,
+    GL_LEQUAL,
+    GL_NONE,
+    GL_BLEND,
+    GL_DEPTH_TEST,
+    GL_LESS,
+    GL_DEPTH_BUFFER_BIT,
+    GL_CULL_FACE,
+    GL_POLYGON_OFFSET_FILL,
 )
 
 from ..gl.shader_program import ShaderProgram
-from ..gl.mesh_buffer import MeshBuffer
 from ..gl.gl_state_guard import GLStateGuard
 from ...facade.gl_renderer_params import ShadowParams
+from ...facade.render_metrics import PassFrameMetrics
+from .aggregated_face_batch import AggregatedFaceBatch
 from maiming.domain.world.chunking import ChunkKey, chunk_bounds
 
 @dataclass
@@ -30,12 +67,6 @@ class ShadowMapInfo:
     size: int
     tex_id: int
     inst_count: int
-
-@dataclass
-class _ChunkShadowFaces:
-    meshes: list[MeshBuffer]
-    counts: list[int]
-    last_rev: int
 
 class ShadowMapPass:
     def __init__(self, cfg: ShadowParams) -> None:
@@ -48,116 +79,64 @@ class ShadowMapPass:
         self._size: int = int(cfg.size)
         self._ok: bool = False
 
-        self._chunks: Dict[ChunkKey, _ChunkShadowFaces] = {}
+        self._batch = AggregatedFaceBatch()
 
-        self._inst_total: int = 0
         self._last_vp_rendered: np.ndarray | None = None
         self._dirty: bool = True
+        self._last_metrics = PassFrameMetrics()
 
     def initialize(self, prog: ShaderProgram, size: int) -> None:
         self._prog = prog
         self._create_shadow_map(size)
+        self._batch.initialize()
 
     def destroy(self) -> None:
-        for ch in self._chunks.values():
-            for mesh in ch.meshes:
-                mesh.destroy()
-        self._chunks.clear()
+        self._batch.destroy()
         self._destroy_shadow_map()
         self._prog = None
         self._last_vp_rendered = None
         self._dirty = True
-        self._inst_total = 0
+        self._last_metrics = PassFrameMetrics()
 
     def info(self) -> ShadowMapInfo:
         return ShadowMapInfo(
             ok=bool(self._ok),
             size=int(self._size),
             tex_id=int(self._tex),
-            inst_count=int(self._inst_total),
+            inst_count=int(self._batch.total_instances()),
         )
 
-    def _ensure_chunk(self, k: ChunkKey) -> _ChunkShadowFaces:
-        ch = self._chunks.get(k)
-        if ch is not None:
-            return ch
-
-        meshes = [MeshBuffer.create_quad_instanced(i) for i in range(6)]
-        counts = [0, 0, 0, 0, 0, 0]
-        ch = _ChunkShadowFaces(meshes=meshes, counts=counts, last_rev=-1)
-        self._chunks[k] = ch
-        return ch
-
-    def _recalc_inst_total(self) -> None:
-        total = 0
-        for ch in self._chunks.values():
-            total += int(sum(int(c) for c in ch.counts))
-        self._inst_total = int(total)
-
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
-        ck = (int(chunk_key[0]), int(chunk_key[1]), int(chunk_key[2]))
-        ch = self._chunks.pop(ck, None)
-        if ch is None:
-            return
-
-        for mesh in ch.meshes:
-            mesh.destroy()
-
-        self._recalc_inst_total()
+        self._batch.remove_chunk(chunk_key)
         self._dirty = True
 
     def evict_except(self, keep: set[ChunkKey]) -> None:
-        keep_n = {(int(k[0]), int(k[1]), int(k[2])) for k in keep}
-        doomed = [ck for ck in self._chunks.keys() if ck not in keep_n]
-
-        if not doomed:
-            return
-
-        for ck in doomed:
-            self.remove_chunk(ck)
-
-        self._recalc_inst_total()
+        self._batch.evict_except(keep)
         self._dirty = True
 
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
-        if self._prog is None:
-            return
-        if len(faces) != 6:
-            return
-
-        ch = self._ensure_chunk(chunk_key)
-        if int(world_revision) == int(ch.last_rev):
-            return
-        ch.last_rev = int(world_revision)
-
-        for fi in range(6):
-            data = faces[fi]
-            if data.dtype != np.float32:
-                data = data.astype(np.float32, copy=False)
-            if not data.flags["C_CONTIGUOUS"]:
-                data = np.ascontiguousarray(data, dtype=np.float32)
-
-            ch.meshes[fi].upload_instances(data)
-            ch.counts[fi] = int(data.shape[0])
-
-        self._recalc_inst_total()
+        self._batch.set_chunk_faces(
+            chunk_key=chunk_key,
+            world_revision=int(world_revision),
+            faces=faces,
+        )
         self._dirty = True
 
     def should_render(self, light_vp: np.ndarray) -> bool:
-        if int(self._inst_total) <= 0:
+        if int(self._batch.total_instances()) <= 0:
             return False
         if bool(self._dirty):
             return True
         if self._last_vp_rendered is None:
             return True
 
-        a = light_vp.astype(np.float32)
-        b = self._last_vp_rendered.astype(np.float32)
+        a = light_vp.astype(np.float32, copy=False)
+        b = self._last_vp_rendered.astype(np.float32, copy=False)
+
         if a.shape != b.shape:
             return True
 
-        diff = float(np.max(np.abs(a - b)))
-        return diff > 1e-6
+        return not bool(np.array_equal(a, b))
 
     @staticmethod
     def _chunk_intersects_light_volume(chunk_key: ChunkKey, light_vp: np.ndarray) -> bool:
@@ -198,18 +177,37 @@ class ShadowMapPass:
 
         return True
 
-    def render(self, light_vp: np.ndarray) -> None:
+    def render(self, light_vp: np.ndarray) -> PassFrameMetrics:
+        t0 = time.perf_counter()
+
         if self._prog is None:
-            return
+            self._last_metrics = PassFrameMetrics()
+            return self._last_metrics
         if not bool(self._cfg.enabled):
-            return
+            self._last_metrics = PassFrameMetrics()
+            return self._last_metrics
         if not bool(self._ok) or int(self._fbo) == 0 or int(self._tex) == 0:
-            return
-        if int(self._inst_total) <= 0:
-            return
+            self._last_metrics = PassFrameMetrics()
+            return self._last_metrics
+        if int(self._batch.total_instances()) <= 0:
+            self._last_metrics = PassFrameMetrics()
+            return self._last_metrics
+
+        self._batch.prepare()
 
         s = int(self._size)
         vp = light_vp.astype(np.float32, copy=False)
+
+        visible_chunks: list[ChunkKey] = []
+        for ck in self._batch.chunk_keys():
+            if not self._chunk_intersects_light_volume(ck, vp):
+                continue
+            visible_chunks.append(ck)
+
+        commands = self._batch.build_commands(visible_chunks)
+
+        draw_calls = 0
+        instances = 0
 
         with GLStateGuard(
             capture_framebuffer=True,
@@ -236,23 +234,22 @@ class ShadowMapPass:
             self._prog.use()
             self._prog.set_mat4("u_lightViewProj", vp)
 
-            for ck, ch in self._chunks.items():
-                if not self._chunk_intersects_light_volume(ck, vp):
-                    continue
-
-                for fi, (mesh, cnt) in enumerate(zip(ch.meshes, ch.counts)):
-                    if int(cnt) <= 0:
-                        continue
-
-                    self._prog.set_int("u_face", int(fi))
-                    glBindVertexArray(mesh.vao)
-                    glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertex_count, int(cnt))
-                    glBindVertexArray(0)
+            draw_calls, instances = self._batch.draw(
+                commands,
+                before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)),
+            )
 
             glDisable(GL_POLYGON_OFFSET_FILL)
 
         self._last_vp_rendered = vp.copy()
         self._dirty = False
+        self._last_metrics = PassFrameMetrics(
+            cpu_ms=float((time.perf_counter() - t0) * 1000.0),
+            draw_calls=int(draw_calls),
+            instances=int(instances),
+            rendered=True,
+        )
+        return self._last_metrics
 
     def _destroy_shadow_map(self) -> None:
         if int(self._tex) != 0:

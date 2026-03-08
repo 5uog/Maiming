@@ -1,6 +1,7 @@
 # FILE: src/maiming/presentation/widgets/viewport/gl_viewport_widget.py
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -61,6 +62,9 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._selection_target: tuple[int, int, int, str] | None = None
         self._selection_cache_key: tuple[float, float, float, float, float, int, float] | None = None
+
+        self._last_paint_ms: float = 0.0
+        self._last_selection_pick_ms: float = 0.0
 
         self._shutdown_done = False
 
@@ -257,11 +261,16 @@ class GLViewportWidget(QOpenGLWidget):
             round(float(self._state.reach), 3),
         )
 
-    def _update_selection_target(self, *, force: bool = False) -> None:
+    def _invalidate_selection_target(self) -> None:
+        self._selection_cache_key = None
+        self._selection_target = None
+
+    def _update_selection_target(self, *, force: bool = False) -> float:
         key = self._selection_key()
         if (not bool(force)) and self._selection_cache_key == key:
-            return
+            return 0.0
 
+        t0 = time.perf_counter()
         self._selection_cache_key = key
 
         from maiming.domain.systems.build_system import pick_block
@@ -276,15 +285,16 @@ class GLViewportWidget(QOpenGLWidget):
         )
         if hit is None:
             self._selection_target = None
-            return
+            return float((time.perf_counter() - t0) * 1000.0)
 
         hx, hy, hz = hit.hit
         st = self._session.world.blocks.get((int(hx), int(hy), int(hz)))
         if st is None:
             self._selection_target = None
-            return
+            return float((time.perf_counter() - t0) * 1000.0)
 
         self._selection_target = (int(hx), int(hy), int(hz), str(st))
+        return float((time.perf_counter() - t0) * 1000.0)
 
     def initializeGL(self) -> None:
         try:
@@ -353,6 +363,7 @@ class GLViewportWidget(QOpenGLWidget):
             self._crosshair.raise_()
 
     def paintGL(self) -> None:
+        paint_t0 = time.perf_counter()
         self._hud_ctl.on_render_frame()
 
         snap = self._session.make_snapshot()
@@ -365,7 +376,7 @@ class GLViewportWidget(QOpenGLWidget):
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
 
-        self._update_selection_target()
+        self._last_selection_pick_ms = self._update_selection_target()
 
         if self._selection_target is None:
             self._renderer.clear_selection()
@@ -398,6 +409,7 @@ class GLViewportWidget(QOpenGLWidget):
             fov_deg=cam.fov_deg,
             render_distance_chunks=int(self._state.render_distance_chunks),
         )
+        self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
         if self._overlays.dead():
@@ -439,8 +451,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _respawn(self) -> None:
         self._session.respawn()
-        self._selection_target = None
-        self._selection_cache_key = None
+        self._invalidate_selection_target()
         self._renderer.clear_selection()
         self._overlays.set_dead(False)
 
@@ -596,8 +607,6 @@ class GLViewportWidget(QOpenGLWidget):
             jump_started=bool(jump_started),
         )
 
-        self._update_selection_target()
-
         if float(self._session.player.position.y) < -64.0:
             self._overlays.set_dead(True)
             return
@@ -637,6 +646,8 @@ class GLViewportWidget(QOpenGLWidget):
             render_timer_interval_ms=int(self._render_timer.interval()),
             sim_hz=float(self._loop.sim_hz),
             render_distance_chunks=int(self._state.render_distance_chunks),
+            paint_ms=float(self._last_paint_ms),
+            selection_pick_ms=float(self._last_selection_pick_ms),
         )
         self.hud_updated.emit(payload)
 
@@ -714,14 +725,14 @@ class GLViewportWidget(QOpenGLWidget):
             b = e.button()
             if b == Qt.MouseButton.LeftButton:
                 self._session.break_block(reach=float(self._state.reach))
-                self._update_selection_target(force=True)
+                self._invalidate_selection_target()
             elif b == Qt.MouseButton.RightButton:
                 self._session.place_block(
                     block_id=self._state.selected_block_id,
                     reach=float(self._state.reach),
                     crouching=bool(self._inp.crouch_held()),
                 )
-                self._update_selection_target(force=True)
+                self._invalidate_selection_target()
 
         super().mousePressEvent(e)
 
