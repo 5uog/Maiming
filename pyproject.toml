@@ -1,12 +1,16 @@
 # FILE: pyproject.toml
 [build-system]
-requires = ["hatchling>=1.26"]
-build-backend = "hatchling.build"
+requires = [
+    "setuptools>=82",
+    "wheel>=0.45",
+    "Cython>=3.0,<4",
+]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "maiming"
 dynamic = ["version"]
-description = "Deterministic Bedrock-movement sandbox and OpenGL 3.3 instanced voxel renderer for block-accurate Minecraft PvP aiming studies."
+description = "Deterministic Bedrock-movement sandbox and OpenGL 4.3 Core Profile voxel renderer with compute-backed chunk face payload generation for block-accurate Minecraft PvP aiming studies."
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.13,<3.15"
 license = "Apache-2.0"
@@ -20,6 +24,7 @@ keywords = [
     "opengl",
     "voxel",
     "shadow-map",
+    "cython",
 ]
 
 classifiers = [
@@ -27,7 +32,6 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Topic :: Games/Entertainment",
     "Topic :: Scientific/Engineering :: Visualization",
@@ -42,26 +46,33 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build>=1.2,<2",
+    "Cython>=3.0,<4",
+    "setuptools>=82",
+    "wheel>=0.45",
 ]
 
 [project.scripts]
 maiming = "maiming.api.run:run_app"
 
-[tool.hatch.version]
-path = "src/maiming/meta/version.py"
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/maiming"]
+[tool.setuptools.dynamic]
+version = { attr = "maiming.meta.version.__version__" }
 
-[tool.hatch.build.targets.sdist]
-include = [
-    "src/maiming/**",
-    "assets/**",
-    "main.py",
-    "README.md",
-    "pyproject.toml",
-    "LICENSE",
+[tool.setuptools.package-data]
+maiming = [
+    "presentation/theme/*.qss",
+    "infrastructure/rendering/opengl/_internal/shaders/*.vert",
+    "infrastructure/rendering/opengl/_internal/shaders/*.frag",
+    "infrastructure/rendering/opengl/_internal/shaders/*.comp",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["maiming*"]
+namespaces = false
 
 [tool.ruff]
 line-length = 100

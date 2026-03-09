@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from maiming.core.math.vec3 import Vec3
 from maiming.core.grid.voxel_dda import dda_grid_traverse
+from maiming.core.grid.face_index import face_neighbor_offset
 from maiming.core.geometry.ray import Ray
 from maiming.core.geometry.intersection import ray_aabb_face
 
@@ -22,22 +23,6 @@ class BlockPick:
     t: float
     face: int
     hit_point: Vec3
-
-def _face_offset(face: int) -> tuple[int, int, int]:
-    fi = int(face)
-    if fi == 0:
-        return (1, 0, 0)
-    if fi == 1:
-        return (-1, 0, 0)
-    if fi == 2:
-        return (0, 1, 0)
-    if fi == 3:
-        return (0, -1, 0)
-    if fi == 4:
-        return (0, 0, 1)
-    if fi == 5:
-        return (0, 0, -1)
-    return (0, 0, 0)
 
 def pick_block(
     world: WorldState,
@@ -121,7 +106,7 @@ def pick_block(
             if float(d.y) < -1e-6 and local_y >= (1.0 - 1e-6):
                 face = int(FACE_POS_Y)
 
-        ox, oy, oz = _face_offset(face)
+        ox, oy, oz = face_neighbor_offset(int(face))
         if ox == 0 and oy == 0 and oz == 0:
             place = prev_cell
         else:

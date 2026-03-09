@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from typing import Callable
 
+from maiming.core.grid.face_index import face_neighbor_offset
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
 from maiming.infrastructure.rendering.opengl._internal.scene.face_axes import (
     approx_eq,
-    face_neighbor_offset,
     face_rect,
     face_touches_cell_boundary,
 )
@@ -33,27 +33,22 @@ def _neighbor_cover_rects(face_idx: int, boxes: list[LocalBox]) -> list[tuple[fl
             if approx_eq(float(b.mn_x), 0.0):
                 out.append((float(b.mn_y), float(b.mx_y), float(b.mn_z), float(b.mx_z)))
             continue
-
         if fi == 1:
             if approx_eq(float(b.mx_x), 1.0):
                 out.append((float(b.mn_y), float(b.mx_y), float(b.mn_z), float(b.mx_z)))
             continue
-
         if fi == 2:
             if approx_eq(float(b.mn_y), 0.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_z), float(b.mx_z)))
             continue
-
         if fi == 3:
             if approx_eq(float(b.mx_y), 1.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_z), float(b.mx_z)))
             continue
-
         if fi == 4:
             if approx_eq(float(b.mn_z), 0.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_y), float(b.mx_y)))
             continue
-
         if fi == 5:
             if approx_eq(float(b.mx_z), 1.0):
                 out.append((float(b.mn_x), float(b.mx_x), float(b.mn_y), float(b.mx_y)))
@@ -71,32 +66,26 @@ def _local_cover_rects(
     for other in boxes:
         if other is box:
             continue
-
         if fi == 0:
             if approx_eq(float(other.mn_x), float(box.mx_x)):
                 out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
             continue
-
         if fi == 1:
             if approx_eq(float(other.mx_x), float(box.mn_x)):
                 out.append((float(other.mn_y), float(other.mx_y), float(other.mn_z), float(other.mx_z)))
             continue
-
         if fi == 2:
             if approx_eq(float(other.mn_y), float(box.mx_y)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
             continue
-
         if fi == 3:
             if approx_eq(float(other.mx_y), float(box.mn_y)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_z), float(other.mx_z)))
             continue
-
         if fi == 4:
             if approx_eq(float(other.mn_z), float(box.mx_z)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
             continue
-
         if fi == 5:
             if approx_eq(float(other.mx_z), float(box.mn_z)):
                 out.append((float(other.mn_x), float(other.mx_x), float(other.mn_y), float(other.mx_y)))
@@ -219,13 +208,15 @@ def is_block_face_occluded(
     if nb_def is None or (not bool(nb_def.is_solid)):
         return False
 
-    nboxes = render_boxes_for_block(
-        str(nst),
-        get_state,
-        def_lookup,
-        int(nx),
-        int(ny),
-        int(nz),
+    nboxes = list(
+        render_boxes_for_block(
+            str(nst),
+            get_state,
+            def_lookup,
+            int(nx),
+            int(ny),
+            int(nz),
+        )
     )
     if not nboxes:
         return False

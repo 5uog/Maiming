@@ -1,0 +1,8 @@
+# FILE: MANIFEST.in
+graft assets
+include main.py
+include README.md
+include LICENSE
+recursive-include src/maiming/presentation/theme *.qss
+recursive-include src/maiming/infrastructure/rendering/opengl/_internal/shaders *.vert *.frag *.comp
+global-exclude __pycache__ *.py[cod]

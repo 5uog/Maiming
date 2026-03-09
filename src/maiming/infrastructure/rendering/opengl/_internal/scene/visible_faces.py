@@ -4,12 +4,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterator
 
+from maiming.core.grid.face_index import face_neighbor_offset
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.models.api import render_boxes_for_block
 from maiming.domain.blocks.models.common import LocalBox
 from maiming.domain.blocks.state_codec import parse_state
 from maiming.infrastructure.rendering.opengl._internal.scene.face_axes import (
-    face_neighbor_offset,
     face_touches_cell_boundary,
 )
 from maiming.infrastructure.rendering.opengl._internal.scene.face_occlusion import (
@@ -87,13 +87,15 @@ def iter_visible_faces(
     base, _props = parse_state(str(state_str))
     defn = def_lookup(str(base))
 
-    boxes = render_boxes_for_block(
-        str(state_str),
-        get_state,
-        def_lookup,
-        int(x),
-        int(y),
-        int(z),
+    boxes = list(
+        render_boxes_for_block(
+            str(state_str),
+            get_state,
+            def_lookup,
+            int(x),
+            int(y),
+            int(z),
+        )
     )
     if not boxes:
         return
