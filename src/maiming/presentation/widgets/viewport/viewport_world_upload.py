@@ -204,6 +204,21 @@ class WorldUploadTracker:
         self._pending[ck] = fut
         self._pending_rev[ck] = int(chunk_rev)
 
+    def _schedule_chunks_if_stale(
+        self,
+        *,
+        world: WorldState,
+        renderer: GLRenderer,
+        chunks: list[ChunkKey],
+    ) -> None:
+        for ck in chunks:
+            cr = int(world.chunk_mesh_revision(ck))
+            if cr <= 0:
+                continue
+            if int(self._resident_rev.get(ck, -1)) == int(cr):
+                continue
+            self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
+
     def upload_if_needed(
         self,
         *,
@@ -232,18 +247,15 @@ class WorldUploadTracker:
             if ck in existing:
                 self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
 
-        for ck in visible:
-            cr = int(world.chunk_mesh_revision(ck))
-            if cr <= 0:
-                continue
-            if int(self._resident_rev.get(ck, -1)) != int(cr):
-                self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
-
-        for ck in prefetch:
-            cr = int(world.chunk_mesh_revision(ck))
-            if cr <= 0:
-                continue
-            if int(self._resident_rev.get(ck, -1)) != int(cr):
-                self._schedule_build(world=world, renderer=renderer, ck=ck, chunk_rev=int(cr))
+        self._schedule_chunks_if_stale(
+            world=world,
+            renderer=renderer,
+            chunks=visible,
+        )
+        self._schedule_chunks_if_stale(
+            world=world,
+            renderer=renderer,
+            chunks=prefetch,
+        )
 
         self._drain_results(renderer)

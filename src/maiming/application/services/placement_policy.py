@@ -11,6 +11,7 @@ from maiming.domain.world.world_state import WorldState
 
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import format_state, parse_state
+from maiming.domain.blocks.state_values import slab_type_value
 from maiming.domain.blocks.connectivity import make_wall_state, make_fence_gate_state
 from maiming.domain.blocks.models.api import collision_boxes_for_block
 from maiming.domain.blocks.structural_rules import is_slab, is_stairs, is_wall, is_fence_gate
@@ -38,13 +39,6 @@ class PlacementPolicy:
         fy = float(hit_point.y) - float(int(hit_point.y))
         return "top" if fy >= 0.5 else "bottom"
 
-    @staticmethod
-    def _slab_type(props: dict[str, str]) -> str:
-        t = str(props.get("type", "bottom"))
-        if t in ("bottom", "top", "double"):
-            return t
-        return "bottom"
-
     def _try_merge_same_slab(
         self,
         *,
@@ -64,7 +58,7 @@ class PlacementPolicy:
         if want not in ("bottom", "top"):
             return None
 
-        cur = self._slab_type(props)
+        cur = slab_type_value(props)
         if cur == "double" or cur == want:
             return None
 

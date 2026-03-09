@@ -10,15 +10,12 @@ from maiming.domain.blocks.models.dimensions import (
     FENCE_GATE_WALL_CLOSED,
     FENCE_GATE_WALL_OPEN,
 )
+from maiming.domain.blocks.state_values import prop_as_bool
 
 def boxes_for_fence_gate(props: Dict[str, str]) -> List[LocalBox]:
     facing = str(props.get("facing", "south"))
-
-    open_s = str(props.get("open", "false")).lower()
-    is_open = open_s in ("1", "true", "yes", "on")
-
-    in_wall_s = str(props.get("in_wall", "false")).lower()
-    in_wall = in_wall_s in ("1", "true", "yes", "on")
+    is_open = prop_as_bool(props, "open", False)
+    in_wall = prop_as_bool(props, "in_wall", False)
 
     if bool(is_open):
         src = FENCE_GATE_WALL_OPEN if bool(in_wall) else FENCE_GATE_OPEN

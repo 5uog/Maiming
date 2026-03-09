@@ -5,6 +5,7 @@ from typing import Callable
 
 from maiming.domain.blocks.block_definition import BlockDefinition
 from maiming.domain.blocks.state_codec import parse_state
+from maiming.domain.blocks.state_values import slab_type_value
 
 DefLookup = Callable[[str], BlockDefinition | None]
 
@@ -33,12 +34,6 @@ def is_fence(defn: BlockDefinition | None) -> bool:
 def is_fence_gate(defn: BlockDefinition | None) -> bool:
     return _is_family(defn, "fence_gate")
 
-def _slab_type(props: dict[str, str]) -> str:
-    t = str(props.get("type", "bottom"))
-    if t in ("bottom", "top", "double"):
-        return t
-    return "bottom"
-
 def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, str]) -> bool:
     if defn is None:
         return False
@@ -46,7 +41,7 @@ def _state_is_full_solid_parts(defn: BlockDefinition | None, props: dict[str, st
     if is_full_solid(defn):
         return True
 
-    if is_slab(defn) and _slab_type(props) == "double":
+    if is_slab(defn) and slab_type_value(props) == "double":
         return True
 
     return False

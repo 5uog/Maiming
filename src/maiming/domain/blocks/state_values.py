@@ -19,3 +19,20 @@ def str_as_bool(raw: str | None, default: bool = False) -> bool:
 
 def prop_as_bool(props: Mapping[str, str], key: str, default: bool = False) -> bool:
     return str_as_bool(props.get(str(key)), default)
+
+def prop_as_str(props: Mapping[str, str], key: str, default: str = "") -> str:
+    raw = props.get(str(key))
+    if raw is None:
+        return str(default)
+    return str(raw)
+
+def slab_type_value(props: Mapping[str, str], default: str = "bottom") -> str:
+    t = prop_as_str(props, "type", default).strip()
+    if t in ("bottom", "top", "double"):
+        return t
+
+    d = str(default).strip()
+    if d in ("bottom", "top", "double"):
+        return d
+
+    return "bottom"

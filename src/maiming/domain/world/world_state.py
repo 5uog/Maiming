@@ -23,20 +23,25 @@ class WorldState:
 
     def __post_init__(self) -> None:
         with self._lock:
-            self._chunk_index.clear()
-            for k in self.blocks.keys():
-                ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
-                s = self._chunk_index.get(ck)
-                if s is None:
-                    s = set()
-                    self._chunk_index[ck] = s
-                s.add((int(k[0]), int(k[1]), int(k[2])))
+            self._rebuild_indexes_locked()
+            self._reset_mesh_tracking_locked()
 
-            self._chunk_mesh_rev.clear()
-            for ck in self._chunk_index.keys():
-                self._chunk_mesh_rev[ck] = int(max(1, int(self._chunk_mesh_rev.get(ck, 0))))
+    def _rebuild_indexes_locked(self) -> None:
+        self._chunk_index.clear()
+        for k in self.blocks.keys():
+            kk = (int(k[0]), int(k[1]), int(k[2]))
+            ck = chunk_key(int(kk[0]), int(kk[1]), int(kk[2]))
+            s = self._chunk_index.get(ck)
+            if s is None:
+                s = set()
+                self._chunk_index[ck] = s
+            s.add(kk)
 
-            self._dirty_chunks = set(self._chunk_index.keys())
+    def _reset_mesh_tracking_locked(self) -> None:
+        self._chunk_mesh_rev.clear()
+        for ck in self._chunk_index.keys():
+            self._chunk_mesh_rev[ck] = 1
+        self._dirty_chunks = set(self._chunk_index.keys())
 
     def existing_chunk_keys(self) -> set[ChunkKey]:
         with self._lock:
@@ -256,18 +261,5 @@ class WorldState:
                 self.blocks[kk] = str(v)
 
             self.revision = int(max(0, int(revision)))
-
-            self._chunk_index.clear()
-            for k in self.blocks.keys():
-                ck = chunk_key(int(k[0]), int(k[1]), int(k[2]))
-                s = self._chunk_index.get(ck)
-                if s is None:
-                    s = set()
-                    self._chunk_index[ck] = s
-                s.add((int(k[0]), int(k[1]), int(k[2])))
-
-            self._chunk_mesh_rev.clear()
-            for ck in self._chunk_index.keys():
-                self._chunk_mesh_rev[ck] = 1
-
-            self._dirty_chunks = set(self._chunk_index.keys())
+            self._rebuild_indexes_locked()
+            self._reset_mesh_tracking_locked()
