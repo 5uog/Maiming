@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from maiming.core.math.vec3 import Vec3
 from maiming.core.grid.voxel_dda import dda_grid_traverse
-from maiming.core.geometry.aabb import AABB
 from maiming.core.geometry.ray import Ray
 from maiming.core.geometry.intersection import ray_aabb_face
 
@@ -13,7 +12,7 @@ from maiming.domain.world.world_state import WorldState
 from maiming.domain.blocks.block_definition import FACE_POS_Y
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import pick_boxes_for_block
+from maiming.domain.blocks.models.api import pick_aabbs_for_block
 from maiming.domain.blocks.structural_rules import is_fence, is_wall
 
 @dataclass(frozen=True)
@@ -77,15 +76,15 @@ def pick_block(
             prev_cell = k
             continue
 
-        boxes = pick_boxes_for_block(
+        aabbs = pick_aabbs_for_block(
             str(st),
             get_state,
             get_def,
-            x=cx,
-            y=cy,
-            z=cz,
+            x=int(cx),
+            y=int(cy),
+            z=int(cz),
         )
-        if not boxes:
+        if not aabbs:
             prev_cell = k
             continue
 
@@ -93,11 +92,7 @@ def pick_block(
         best_face: int = -1
         best_point: Vec3 | None = None
 
-        for b in boxes:
-            aabb = AABB(
-                mn=Vec3(float(cx) + float(b.mn_x), float(cy) + float(b.mn_y), float(cz) + float(b.mn_z)),
-                mx=Vec3(float(cx) + float(b.mx_x), float(cy) + float(b.mx_y), float(cz) + float(b.mx_z)),
-            )
+        for aabb in aabbs:
             hit = ray_aabb_face(ray, aabb)
             if hit is None:
                 continue

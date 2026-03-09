@@ -11,7 +11,7 @@ from maiming.domain.config.collision_params import CollisionParams, DEFAULT_COLL
 
 from maiming.domain.blocks.block_registry import BlockRegistry
 from maiming.domain.blocks.state_codec import parse_state
-from maiming.domain.blocks.models.api import collision_boxes_for_block
+from maiming.domain.blocks.models.api import collision_aabbs_for_block
 
 @dataclass(frozen=True)
 class CollisionReport:
@@ -60,19 +60,15 @@ def _iter_block_aabbs(
     if defn is not None and (not bool(defn.is_solid)):
         return
 
-    boxes = collision_boxes_for_block(
+    for ba in collision_aabbs_for_block(
         st,
         lambda x, y, z: _world_get_state(world, x, y, z),
         block_registry.get,
-        bx,
-        by,
-        bz,
-    )
-    for b in boxes:
-        yield AABB(
-            mn=Vec3(float(bx) + float(b.mn_x), float(by) + float(b.mn_y), float(bz) + float(b.mn_z)),
-            mx=Vec3(float(bx) + float(b.mx_x), float(by) + float(b.mx_y), float(bz) + float(b.mx_z)),
-        )
+        int(bx),
+        int(by),
+        int(bz),
+    ):
+        yield ba
 
 def _any_intersection(
     world: WorldState,
