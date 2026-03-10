@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-from PyQt6.QtGui import QMouseEvent, QKeyEvent
+from PyQt6.QtGui import QMouseEvent, QKeyEvent, QWheelEvent
 from PyQt6.QtWidgets import QMessageBox
 
 from ....core.math.vec3 import Vec3
@@ -19,6 +19,7 @@ from ...config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 from ...config.gl_surface_format import build_gl_surface_format
 from ...hud.hud_controller import HudController
 from ..hud.crosshair_widget import CrosshairWidget
+from ..hud.hotbar_widget import HotbarWidget
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
 from ..overlays.pause_overlay import PauseOverlay
@@ -28,6 +29,27 @@ from .viewport_overlays import ViewportOverlays, OverlayRefs
 from .viewport_persistence import apply_persisted_state_if_present, save_state
 from .viewport_runtime_state import ViewportRuntimeState
 from .viewport_world_upload import WorldUploadTracker
+
+def _hotbar_index_from_key(key: int) -> int | None:
+    if key == int(Qt.Key.Key_1):
+        return 0
+    if key == int(Qt.Key.Key_2):
+        return 1
+    if key == int(Qt.Key.Key_3):
+        return 2
+    if key == int(Qt.Key.Key_4):
+        return 3
+    if key == int(Qt.Key.Key_5):
+        return 4
+    if key == int(Qt.Key.Key_6):
+        return 5
+    if key == int(Qt.Key.Key_7):
+        return 6
+    if key == int(Qt.Key.Key_8):
+        return 7
+    if key == int(Qt.Key.Key_9):
+        return 8
+    return None
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -99,11 +121,16 @@ class GLViewportWidget(QOpenGLWidget):
         self._crosshair = CrosshairWidget(self)
         self._crosshair.setVisible(True)
 
+        self._hotbar = HotbarWidget(parent=self, project_root=self._project_root, registry=self._session.block_registry)
+        self._hotbar.setVisible(True)
+
         self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
         self._inventory.block_selected.connect(self._on_inventory_selected)
+        self._inventory.hotbar_slot_selected.connect(self._select_hotbar_slot)
+        self._inventory.hotbar_slot_assigned.connect(self._assign_hotbar_slot)
         self._inventory.closed.connect(self._on_inventory_closed)
 
-        self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hud_getter=lambda: self._hud), runner=self._runner, inp=self._inp)
+        self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud), runner=self._runner, inp=self._inp)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
@@ -122,6 +149,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._state = apply_persisted_state_if_present(project_root=self._project_root, session=self._session, renderer=self._renderer)
         self._apply_runtime_to_renderer()
+        self._sync_hotbar_widgets()
 
         if not bool(self._state.build_mode):
             self._overlays.set_inventory_open(False)
@@ -148,6 +176,29 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _sync_cloud_motion_pause(self) -> None:
         self._renderer.set_cloud_motion_paused(bool(self._overlays.paused()))
+
+    def _sync_hotbar_widgets(self) -> None:
+        self._state.normalize()
+        slots = self._state.hotbar_snapshot()
+        idx = int(self._state.selected_hotbar_index)
+        self._inventory.sync_hotbar(slots=slots, selected_index=idx)
+        self._hotbar.sync_hotbar(slots=slots, selected_index=idx)
+
+    def _current_block_id(self) -> str | None:
+        self._state.normalize()
+        return self._state.current_block_id()
+
+    def _select_hotbar_slot(self, slot_index: int) -> None:
+        self._state.select_hotbar_index(int(slot_index))
+        self._sync_hotbar_widgets()
+
+    def _assign_hotbar_slot(self, slot_index: int, block_id: str) -> None:
+        self._state.set_hotbar_slot(int(slot_index), str(block_id))
+        self._sync_hotbar_widgets()
+
+    def _cycle_hotbar(self, step: int) -> None:
+        self._state.cycle_hotbar(int(step))
+        self._sync_hotbar_widgets()
 
     def save_state(self) -> None:
         self._sync_state_from_renderer_sun()
@@ -210,6 +261,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud.setVisible(bool(self._state.hud_visible))
         if bool(self._state.hud_visible):
             self._hud.show()
+            self._hotbar.raise_()
+            self._crosshair.raise_()
             self._hud.raise_()
 
     def _selection_key(self) -> tuple[float, float, float, float, float, int, float]:
@@ -264,7 +317,7 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 pass
 
-            QMessageBox.critical(self, "OpenGL 4.3 initialization failed", str(exc) if str(exc).strip() else "Unknown OpenGL initialization error.")
+            QMessageBox.critical(self, "OpenGL 4.3 initialization failed", str(exc).strip() if str(exc).strip() else "Unknown OpenGL initialization error.")
             raise
 
         ctx = self.context()
@@ -275,6 +328,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._state.vsync_on = False
 
         self._apply_runtime_to_renderer()
+        self._sync_hotbar_widgets()
         self._sync_cloud_motion_pause()
 
         self._runner.start()
@@ -290,6 +344,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
         self._settings.setGeometry(0, 0, max(1, w), max(1, h))
         self._crosshair.setGeometry(0, 0, max(1, w), max(1, h))
+        self._hotbar.setGeometry(0, 0, max(1, w), max(1, h))
         self._inventory.setGeometry(0, 0, max(1, w), max(1, h))
         self._death.setGeometry(0, 0, max(1, w), max(1, h))
 
@@ -302,6 +357,7 @@ class GLViewportWidget(QOpenGLWidget):
         elif self._overlays.inventory_open():
             self._inventory.raise_()
         else:
+            self._hotbar.raise_()
             self._crosshair.raise_()
 
     def paintGL(self) -> None:
@@ -345,31 +401,7 @@ class GLViewportWidget(QOpenGLWidget):
     def _sync_settings_values(self) -> None:
         self._sync_state_from_renderer_sun()
 
-        self._settings.sync_values(
-            fov_deg=self._session.settings.fov_deg,
-            sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px,
-            inv_x=self._state.invert_x,
-            inv_y=self._state.invert_y,
-            outline_selection=self._state.outline_selection,
-            cloud_wire=self._state.cloud_wire,
-            clouds_enabled=self._state.cloud_enabled,
-            cloud_density=int(self._state.cloud_density),
-            cloud_seed=int(self._state.cloud_seed),
-            cloud_flow_direction=str(self._state.cloud_flow_direction),
-            world_wire=self._state.world_wire,
-            shadow_enabled=self._state.shadow_enabled,
-            sun_az_deg=self._state.sun_az_deg,
-            sun_el_deg=self._state.sun_el_deg,
-            build_mode=self._state.build_mode,
-            auto_jump_enabled=self._state.auto_jump_enabled,
-            auto_sprint_enabled=self._state.auto_sprint_enabled,
-            gravity=float(self._session.settings.movement.gravity),
-            walk_speed=float(self._session.settings.movement.walk_speed),
-            sprint_speed=float(self._session.settings.movement.sprint_speed),
-            jump_v0=float(self._session.settings.movement.jump_v0),
-            auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-        )
+        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, build_mode=self._state.build_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), render_distance_chunks=int(self._state.render_distance_chunks))
 
     def _respawn(self) -> None:
         self._session.respawn()
@@ -483,8 +515,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
 
     def _on_inventory_selected(self, block_id: str) -> None:
-        self._state.selected_block_id = str(block_id)
-        self._state.normalize()
+        self._state.set_hotbar_slot(int(self._state.selected_hotbar_index), str(block_id))
+        self._sync_hotbar_widgets()
 
     def _on_inventory_closed(self) -> None:
         self._overlays.set_inventory_open(False)
@@ -519,37 +551,16 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(
-            session=self._session,
-            renderer=self._renderer,
-            auto_jump_enabled=self._state.auto_jump_enabled,
-            auto_sprint_enabled=self._state.auto_sprint_enabled,
-            build_mode=self._state.build_mode,
-            inventory_open=self._overlays.inventory_open(),
-            selected_block_id=self._state.selected_block_id,
-            reach=self._state.reach,
-            sun_az_deg=self._state.sun_az_deg,
-            sun_el_deg=self._state.sun_el_deg,
-            shadow_enabled=self._state.shadow_enabled,
-            world_wire=self._state.world_wire,
-            cloud_wire=self._state.cloud_wire,
-            cloud_enabled=self._state.cloud_enabled,
-            cloud_density=self._state.cloud_density,
-            cloud_seed=self._state.cloud_seed,
-            debug_shadow=self._state.debug_shadow,
-            fb_w=fb_w,
-            fb_h=fb_h,
-            dpr=dpr,
-            vsync_on=self._state.vsync_on,
-            render_timer_interval_ms=int(self._render_timer.interval()),
-            sim_hz=float(self._loop.sim_hz),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-            paint_ms=float(self._last_paint_ms),
-            selection_pick_ms=float(self._last_selection_pick_ms),
-        )
+        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, build_mode=self._state.build_mode, inventory_open=self._overlays.inventory_open(), selected_block_id=self._current_block_id() or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
+        hotbar_idx = _hotbar_index_from_key(int(e.key()))
+        if hotbar_idx is not None and (not self._overlays.paused()) and (not self._overlays.dead()) and (not self._overlays.settings_open()):
+            if not self._overlays.inventory_open():
+                self._select_hotbar_slot(int(hotbar_idx))
+                return
+
         if int(e.key()) == int(Qt.Key.Key_F4):
             self._state.debug_shadow = not bool(self._state.debug_shadow)
             self._renderer.set_debug_shadow(bool(self._state.debug_shadow))
@@ -589,7 +600,7 @@ class GLViewportWidget(QOpenGLWidget):
             self._sync_settings_values()
             return
 
-        if (int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()) and bool(self._state.build_mode)):
+        if int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()) and bool(self._state.build_mode):
             self._overlays.set_inventory_open(not self._overlays.inventory_open())
             return
 
@@ -601,6 +612,24 @@ class GLViewportWidget(QOpenGLWidget):
     def keyReleaseEvent(self, e) -> None:
         self._inp.on_key_release(e)
         super().keyReleaseEvent(e)
+
+    def wheelEvent(self, e: QWheelEvent) -> None:
+        if self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open():
+            super().wheelEvent(e)
+            return
+
+        dy = int(e.angleDelta().y())
+        if dy > 0:
+            self._cycle_hotbar(-1)
+            e.accept()
+            return
+
+        if dy < 0:
+            self._cycle_hotbar(1)
+            e.accept()
+            return
+
+        super().wheelEvent(e)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         self.setFocus(Qt.FocusReason.MouseFocusReason)
@@ -620,13 +649,13 @@ class GLViewportWidget(QOpenGLWidget):
                 self._session.break_block(reach=float(self._state.reach))
                 self._invalidate_selection_target()
             elif b == Qt.MouseButton.RightButton:
-                self._session.place_block(block_id=self._state.selected_block_id, reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
+                self._session.place_block(block_id=self._current_block_id(), reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
                 self._invalidate_selection_target()
 
         super().mousePressEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or (not self._inp.captured())):
+        if self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or (not self._inp.captured()):
             super().mouseMoveEvent(e)
             return
 

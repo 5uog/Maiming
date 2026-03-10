@@ -153,5 +153,5 @@ class SessionManager:
     def break_block(self, reach: float = 5.0) -> bool:
         return self.interaction.break_block(reach=float(reach))
 
-    def place_block(self, block_id: str, reach: float = 5.0, *, crouching: bool = False) -> bool:
-        return self.interaction.place_block(block_id=str(block_id), reach=float(reach), crouching=bool(crouching))
+    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False) -> bool:
+        return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching))

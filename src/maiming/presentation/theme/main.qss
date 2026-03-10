@@ -299,18 +299,26 @@ QWidget#inventoryRoot QLabel#subtitle {
     color: rgba(255,255,255,210);
 }
 
-QWidget#inventoryRoot QPushButton#slot {
+QWidget#inventoryRoot QPushButton#slot,
+QWidget#hotbarRoot QPushButton#slot {
     background: rgba(20,20,20,240);
     border: 2px solid #0b0b0b;
     border-radius: 0px;
+    padding: 0px;
 }
 
 QWidget#inventoryRoot QPushButton#slot:hover {
     border: 2px solid #8f8f8f;
 }
 
-QWidget#inventoryRoot QPushButton#slot[selected="true"] {
+QWidget#inventoryRoot QPushButton#slot[selected="true"],
+QWidget#hotbarRoot QPushButton#slot[selected="true"] {
     border: 2px solid #6aa038;
+}
+
+QWidget#hotbarRoot QFrame#hotbarPanel {
+    background: transparent;
+    border: none;
 }
 
 QWidget#deathRoot QLabel#title {

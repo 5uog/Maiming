@@ -106,8 +106,9 @@ class InteractionService:
             return False
         return self.block_registry.get(str(bid)) is not None
 
-    def _place_from_hit(self, *, hit: BlockPick, block_id: str) -> bool:
-        if not self._has_selected_placeable_block(str(block_id)):
+    def _place_from_hit(self, *, hit: BlockPick, block_id: str | None) -> bool:
+        bid = "" if block_id is None else str(block_id).strip()
+        if not self._has_selected_placeable_block(str(bid)):
             return False
 
         hx, hy, hz = hit.hit
@@ -115,7 +116,7 @@ class InteractionService:
         hit_state = self.world.blocks.get(hit_cell)
 
         if hit_state is not None:
-            merge_hit_state = self.placement_policy.resolve_slab_merge_state_from_hit(existing_state=str(hit_state), block_id=str(block_id), hit_face=int(hit.face))
+            merge_hit_state = self.placement_policy.resolve_slab_merge_state_from_hit(existing_state=str(hit_state), block_id=str(bid), hit_face=int(hit.face))
             if merge_hit_state is not None:
                 return self._apply_place_state(cell=hit_cell, place_state=str(merge_hit_state))
 
@@ -127,27 +128,27 @@ class InteractionService:
         existing_place_state = self.world.blocks.get(place_cell)
 
         if existing_place_state is not None:
-            merge_place_state = self.placement_policy.resolve_slab_merge_state(existing_state=str(existing_place_state), block_id=str(block_id), hit_face=int(hit.face), hit_point=hit.hit_point)
+            merge_place_state = self.placement_policy.resolve_slab_merge_state(existing_state=str(existing_place_state), block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point)
             if merge_place_state is None:
                 return False
 
             return self._apply_place_state(cell=place_cell, place_state=str(merge_place_state))
 
-        place_state = self.placement_policy.resolve_place_state(player=self.player, block_id=str(block_id), hit_face=int(hit.face), hit_point=hit.hit_point)
+        place_state = self.placement_policy.resolve_place_state(player=self.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point)
         if place_state is None:
             return False
 
         return self._apply_place_state(cell=place_cell, place_state=str(place_state))
 
-    def place_block(self, block_id: str, reach: float = 5.0, *, crouching: bool = False) -> bool:
+    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False) -> bool:
         hit = self._pick_target(reach=float(reach))
         if hit is None:
             return False
 
         if bool(crouching):
-            return self._place_from_hit(hit=hit, block_id=str(block_id))
+            return self._place_from_hit(hit=hit, block_id=block_id)
 
         if self._toggle_fence_gate_if_hit(hit.hit):
             return True
 
-        return self._place_from_hit(hit=hit, block_id=str(block_id))
+        return self._place_from_hit(hit=hit, block_id=block_id)

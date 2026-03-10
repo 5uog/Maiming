@@ -1,9 +1,12 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_runtime_state.py
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import normalize_cloud_flow_direction
+
+def _default_hotbar_slots() -> list[str]:
+    return ["", "", "", "", "", "", "", "", ""]
 
 @dataclass
 class ViewportRuntimeState:
@@ -22,7 +25,8 @@ class ViewportRuntimeState:
     shadow_enabled: bool = True
 
     build_mode: bool = False
-    selected_block_id: str = "minecraft:grass_block"
+    hotbar_slots: list[str] = field(default_factory=_default_hotbar_slots)
+    selected_hotbar_index: int = 0
     reach: float = 5.0
     auto_jump_enabled: bool = False
     auto_sprint_enabled: bool = False
@@ -55,5 +59,45 @@ class ViewportRuntimeState:
         el = float(self.sun_el_deg)
         self.sun_el_deg = max(0.0, min(90.0, el))
 
-        block_id = str(self.selected_block_id).strip()
-        self.selected_block_id = block_id if block_id else "minecraft:grass_block"
+        slots_in = list(self.hotbar_slots) if isinstance(self.hotbar_slots, list) else list(self.hotbar_slots or [])
+        slots_out: list[str] = []
+        for raw in slots_in[:9]:
+            if raw is None:
+                slots_out.append("")
+            else:
+                slots_out.append(str(raw).strip())
+
+        while len(slots_out) < 9:
+            slots_out.append("")
+
+        self.hotbar_slots = slots_out[:9]
+        self.selected_hotbar_index = int(max(0, min(8, int(self.selected_hotbar_index))))
+
+    def hotbar_snapshot(self) -> tuple[str, ...]:
+        self.normalize()
+        return tuple(str(v) for v in self.hotbar_slots[:9])
+
+    def current_block_id(self) -> str | None:
+        self.normalize()
+        bid = str(self.hotbar_slots[self.selected_hotbar_index]).strip()
+        return bid if bid else None
+
+    def set_hotbar_slot(self, index: int, block_id: str | None) -> None:
+        self.normalize()
+        idx = int(index)
+        if idx < 0 or idx >= 9:
+            return
+
+        bid = "" if block_id is None else str(block_id).strip()
+        self.hotbar_slots[idx] = bid
+
+    def select_hotbar_index(self, index: int) -> None:
+        self.normalize()
+        self.selected_hotbar_index = int(max(0, min(8, int(index))))
+
+    def cycle_hotbar(self, delta_steps: int) -> None:
+        self.normalize()
+        step = int(delta_steps)
+        if step == 0:
+            return
+        self.selected_hotbar_index = int((int(self.selected_hotbar_index) + step) % 9)

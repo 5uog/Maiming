@@ -16,6 +16,7 @@ class OverlayRefs:
     inventory: QWidget
     death: QWidget
     crosshair: QWidget
+    hotbar: QWidget
     hud_getter: Callable[[], QWidget | None]
 
 class ViewportOverlays:
@@ -42,7 +43,10 @@ class ViewportOverlays:
         return bool(self._settings_open)
 
     def _raise_game_hud(self) -> None:
+        self._r.hotbar.setVisible(True)
+        self._r.hotbar.raise_()
         self._r.crosshair.raise_()
+
         hud = self._r.hud_getter()
         if hud is not None:
             hud.raise_()
@@ -61,6 +65,7 @@ class ViewportOverlays:
 
             self._r.pause.setVisible(False)
             self._r.settings.setVisible(False)
+            self._r.hotbar.setVisible(False)
             self.set_inventory_open(False)
             self._inp.set_mouse_capture(False)
 
@@ -73,6 +78,7 @@ class ViewportOverlays:
 
         if (not self._paused) and (not self._inventory_open) and (not self._settings_open):
             self._inp.set_mouse_capture(True)
+            self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
 
@@ -89,6 +95,7 @@ class ViewportOverlays:
 
             self.set_inventory_open(False)
             self._inp.set_mouse_capture(False)
+            self._r.hotbar.setVisible(False)
 
             self._r.settings.setVisible(False)
             self._r.pause.setVisible(True)
@@ -109,6 +116,7 @@ class ViewportOverlays:
         if not self._inventory_open:
             self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
 
@@ -128,6 +136,7 @@ class ViewportOverlays:
             self._paused = True
             self.set_inventory_open(False)
             self._inp.set_mouse_capture(False)
+            self._r.hotbar.setVisible(False)
 
             self._r.pause.setVisible(False)
             self._r.settings.setVisible(True)
@@ -146,6 +155,7 @@ class ViewportOverlays:
         if not self._inventory_open:
             self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
 
@@ -164,6 +174,7 @@ class ViewportOverlays:
 
         if self._inventory_open:
             self._inp.set_mouse_capture(False)
+            self._r.hotbar.setVisible(False)
             self._r.inventory.setVisible(True)
             self._r.inventory.raise_()
             self._r.inventory.setFocus()
@@ -174,4 +185,5 @@ class ViewportOverlays:
         if (not self._paused) and (not self._dead) and (not self._settings_open):
             self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._r.hotbar.setVisible(True)
             self._raise_game_hud()

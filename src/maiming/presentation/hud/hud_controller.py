@@ -209,7 +209,13 @@ class HudController:
         shadow_ok, shadow_size = renderer.shadow_info()
         shadow_ok = bool(shadow_ok) and bool(shadow_enabled)
 
-        sel_name = renderer.block_display_name(selected_block_id)
+        selected_id = str(selected_block_id).strip()
+        if selected_id:
+            sel_name = renderer.block_display_name(selected_id)
+            sel_line = f"Select {str(sel_name)}  ({str(selected_id)})"
+        else:
+            sel_line = "Select Empty Hand"
+
         rd = int(max(2, min(16, int(render_distance_chunks))))
 
         lines: list[str] = []
@@ -234,7 +240,7 @@ class HudController:
             f"Mode build={int(bool(build_mode))} inv={int(bool(inventory_open))} "
             f"autoJump={int(bool(auto_jump_enabled))} autoSprint={int(bool(auto_sprint_enabled))} reach={float(reach):.2f}"
         )
-        lines.append(f"Select {str(sel_name)}  ({str(selected_block_id)})")
+        lines.append(str(sel_line))
         lines.append(f"Cloud en={int(bool(cloud_enabled))} den={int(cloud_density)} seed={int(cloud_seed)} wire={int(bool(cloud_wire))}")
         lines.append(f"World wire={int(bool(world_wire))} shadow={int(bool(shadow_ok))} size={int(shadow_size)} dbg={int(bool(debug_shadow))} sun={float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}")
         lines.append("")
