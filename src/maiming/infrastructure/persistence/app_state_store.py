@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any, ClassVar, Dict, Tuple
 
 from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from ...domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ...domain.world.world_state import WorldState
 from .json_file_store import JsonFileStore
-from .scalar_coercion import coerce_bool, coerce_float, coerce_int, coerce_str, mapping_bool, mapping_float, mapping_int, mapping_str
+from .scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 
 @dataclass(frozen=True)
 class PersistedSettings:
@@ -57,37 +58,23 @@ class PersistedSettings:
 
 @dataclass(frozen=True)
 class PersistedInventory:
-    HOTBAR_SIZE: ClassVar[int] = 9
+    HOTBAR_SIZE: ClassVar[int] = DOMAIN_HOTBAR_SIZE
 
     hotbar_slots: tuple[str, ...] = ("", "", "", "", "", "", "", "", "")
     selected_hotbar_index: int = 0
 
-    @staticmethod
-    def _normalize_slots(raw: object) -> tuple[str, ...]:
-        out: list[str] = []
-        if isinstance(raw, list):
-            for v in raw[: PersistedInventory.HOTBAR_SIZE]:
-                if v is None:
-                    out.append("")
-                else:
-                    out.append(str(v).strip())
-
-        while len(out) < PersistedInventory.HOTBAR_SIZE:
-            out.append("")
-
-        return tuple(out[: PersistedInventory.HOTBAR_SIZE])
-
     def to_dict(self) -> dict[str, Any]:
-        idx = int(max(0, min(self.HOTBAR_SIZE - 1, int(self.selected_hotbar_index))))
-        return {"hotbar_slots": [str(v).strip() for v in self.hotbar_slots[: self.HOTBAR_SIZE]], "selected_hotbar_index": int(idx)}
+        slots = normalize_hotbar_slots(self.hotbar_slots, size=self.HOTBAR_SIZE)
+        idx = normalize_hotbar_index(self.selected_hotbar_index, size=self.HOTBAR_SIZE)
+        return {"hotbar_slots": [str(v) for v in slots], "selected_hotbar_index": int(idx)}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedInventory":
         raw_slots = d.get("hotbar_slots", [])
-        slots = PersistedInventory._normalize_slots(raw_slots)
+        slots = normalize_hotbar_slots(raw_slots, size=PersistedInventory.HOTBAR_SIZE)
 
-        idx = coerce_int(d.get("selected_hotbar_index", 0), 0)
-        idx = int(max(0, min(PersistedInventory.HOTBAR_SIZE - 1, idx)))
+        raw_index = coerce_int(d.get("selected_hotbar_index", 0), 0)
+        idx = normalize_hotbar_index(raw_index, size=PersistedInventory.HOTBAR_SIZE)
 
         return PersistedInventory(hotbar_slots=slots, selected_hotbar_index=int(idx))
 

@@ -8,6 +8,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
 from ....domain.blocks.block_registry import BlockRegistry
+from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import refresh_widget_style
 from ..overlays.item_photo_provider import ItemPhotoProvider
 
@@ -39,6 +40,7 @@ class HotbarWidget(QWidget):
     def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
+        self._registry = registry
         self._photos = ItemPhotoProvider(project_root=Path(project_root), registry=registry, icon_size=36)
         self._slots: list[_DisplaySlot] = []
 
@@ -56,39 +58,32 @@ class HotbarWidget(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(6)
 
-        for _ in range(9):
+        for _ in range(HOTBAR_SIZE):
             btn = _DisplaySlot(self._panel)
             self._slots.append(btn)
             row.addWidget(btn)
 
-        self.sync_hotbar(slots=("", "", "", "", "", "", "", "", ""), selected_index=0)
+        self.sync_hotbar(slots=normalize_hotbar_slots(None, size=HOTBAR_SIZE), selected_index=0)
 
-    @staticmethod
-    def _display_name(block_id: str) -> str:
+    def _display_name(self, block_id: str) -> str:
         bid = str(block_id).strip()
         if not bid:
             return "Empty Hand"
-        return bid
+
+        block = self._registry.get(bid)
+        if block is None:
+            return bid
+        return str(block.display_name)
 
     def _tooltip_for_slot(self, slot_index: int, block_id: str) -> str:
         bid = str(block_id).strip()
         if not bid:
             return f"Hotbar Slot {int(slot_index) + 1}\nEmpty Hand"
-        return f"Hotbar Slot {int(slot_index) + 1}\n{bid}"
+        return f"Hotbar Slot {int(slot_index) + 1}\n{self._display_name(bid)}\n{bid}"
 
     def sync_hotbar(self, *, slots: tuple[str, ...] | list[str], selected_index: int) -> None:
-        src = list(slots)
-        norm: list[str] = []
-        for raw in src[:9]:
-            if raw is None:
-                norm.append("")
-            else:
-                norm.append(str(raw).strip())
-
-        while len(norm) < 9:
-            norm.append("")
-
-        idx = int(max(0, min(8, int(selected_index))))
+        norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)
+        idx = normalize_hotbar_index(selected_index, size=HOTBAR_SIZE)
 
         for i, btn in enumerate(self._slots):
             bid = str(norm[i]).strip()

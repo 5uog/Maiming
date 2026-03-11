@@ -8,6 +8,7 @@ from PyQt6.QtGui import QPixmap, QIcon, QDrag, QMouseEvent
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
 from ....domain.blocks.block_registry import BlockRegistry
+from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import hotbar_index_from_key, refresh_widget_style
 from .item_photo_provider import ItemPhotoProvider
 
@@ -193,7 +194,7 @@ class InventoryOverlay(QWidget):
         self._photos = ItemPhotoProvider(project_root=self._project_root, registry=self._reg, icon_size=36)
 
         self._hovered_block_id: str | None = None
-        self._hotbar_slots: list[str] = ["", "", "", "", "", "", "", "", ""]
+        self._hotbar_slots: list[str] = list(normalize_hotbar_slots(None, size=HOTBAR_SIZE))
         self._selected_hotbar_index: int = 0
 
         self._slot_buttons: list[_InventoryBlockButton] = []
@@ -255,7 +256,7 @@ class InventoryOverlay(QWidget):
         hl.setHorizontalSpacing(6)
         hl.setVerticalSpacing(0)
 
-        for i in range(9):
+        for i in range(HOTBAR_SIZE):
             b = _HotbarSlotButton(i, hotbar)
             b.slot_selected.connect(self._on_hotbar_slot_selected)
             b.block_dropped.connect(self._on_hotbar_slot_dropped)
@@ -321,19 +322,11 @@ class InventoryOverlay(QWidget):
             btn.set_slot_state(block_id=bid, selected=(int(i) == int(self._selected_hotbar_index)), tooltip=self._hotbar_tooltip(i, bid), pixmap=pm)
 
     def sync_hotbar(self, *, slots: tuple[str, ...] | list[str], selected_index: int) -> None:
-        src = list(slots)
-        out: list[str] = []
-        for raw in src[:9]:
-            if raw is None:
-                out.append("")
-            else:
-                out.append(str(raw).strip())
+        norm = normalize_hotbar_slots(slots, size=HOTBAR_SIZE)
+        idx = normalize_hotbar_index(selected_index, size=HOTBAR_SIZE)
 
-        while len(out) < 9:
-            out.append("")
-
-        self._hotbar_slots = out[:9]
-        self._selected_hotbar_index = int(max(0, min(8, int(selected_index))))
+        self._hotbar_slots = list(norm)
+        self._selected_hotbar_index = int(idx)
         self._sync_hotbar_buttons()
 
     def _on_block_hovered(self, block_id: str) -> None:
