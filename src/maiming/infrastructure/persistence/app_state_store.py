@@ -185,21 +185,6 @@ class AppState:
     def default() -> "AppState":
         return AppState(settings=PersistedSettings(), inventory=PersistedInventory(), player=PersistedPlayer(), world=PersistedWorld(revision=0, blocks={}))
 
-    @staticmethod
-    def from_legacy_dict(d: dict[str, Any]) -> "AppState":
-        if not isinstance(d, dict):
-            return AppState.default()
-
-        raw_settings = d.get("settings", {})
-        raw_player = d.get("player", {})
-        raw_world = d.get("world", {})
-
-        settings = PersistedSettings.from_dict(raw_settings) if isinstance(raw_settings, dict) else PersistedSettings()
-        player = PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer()
-        world = PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(revision=0, blocks={})
-
-        return AppState(settings=settings, inventory=PersistedInventory(), player=player, world=world)
-
 @dataclass
 class AppStateStore:
     project_root: Path
@@ -212,19 +197,12 @@ class AppStateStore:
         p = Path(self.project_root) / "user_data" / "world_state.json"
         return JsonFileStore(path=p)
 
-    def _legacy_store(self) -> JsonFileStore:
-        p = Path(self.project_root) / "user_data" / "state.json"
-        return JsonFileStore(path=p)
-
     def load(self) -> AppState | None:
         raw_player = self._player_store().read()
         raw_world = self._world_store().read()
 
         if raw_player is None and raw_world is None:
-            raw_legacy = self._legacy_store().read()
-            if raw_legacy is None:
-                return None
-            return AppState.from_legacy_dict(raw_legacy)
+            return None
 
         player_file = PlayerStateFile.from_dict(raw_player or {})
         world_file = WorldStateFile.from_dict(raw_world or {})
