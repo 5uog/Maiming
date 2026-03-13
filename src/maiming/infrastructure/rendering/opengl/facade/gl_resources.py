@@ -13,6 +13,7 @@ from .._internal.resources.texture_atlas import TextureAtlas
 @dataclass
 class GLResources:
     world_prog: ShaderProgram
+    world_no_shadow_prog: ShaderProgram
     shadow_prog: ShaderProgram
     sun_prog: ShaderProgram
     cloud_prog: ShaderProgram
@@ -20,6 +21,7 @@ class GLResources:
     chunk_face_payload_prog: ShaderProgram
 
     player_model_prog: ShaderProgram
+    player_model_no_shadow_prog: ShaderProgram
     player_model_shadow_prog: ShaderProgram
 
     cloud_mesh: MeshBuffer
@@ -35,6 +37,7 @@ class GLResources:
         shader_dir = Path(__file__).resolve().parents[1] / "_internal" / "shaders"
 
         world_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world.frag")
+        world_no_shadow_prog = ShaderProgram.from_files(shader_dir / "world.vert", shader_dir / "world_no_shadow.frag")
         shadow_prog = ShaderProgram.from_files(shader_dir / "shadow.vert", shader_dir / "shadow.frag")
         sun_prog = ShaderProgram.from_files(shader_dir / "sun.vert", shader_dir / "sun.frag")
         cloud_prog = ShaderProgram.from_files(shader_dir / "cloud_box.vert", shader_dir / "cloud_box.frag")
@@ -42,6 +45,7 @@ class GLResources:
         chunk_face_payload_prog = ShaderProgram.from_compute_file(shader_dir / "chunk_face_payload.comp")
 
         player_model_prog = ShaderProgram.from_files(shader_dir / "player_model.vert", shader_dir / "player_model.frag")
+        player_model_no_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model.vert", shader_dir / "player_model_no_shadow.frag")
         player_model_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model_shadow.vert", shader_dir / "player_model_shadow.frag")
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
@@ -53,7 +57,7 @@ class GLResources:
 
         empty_vao = int(glGenVertexArrays(1))
 
-        return GLResources(world_prog=world_prog, shadow_prog=shadow_prog, sun_prog=sun_prog, cloud_prog=cloud_prog, selection_prog=selection_prog, chunk_face_payload_prog=chunk_face_payload_prog, player_model_prog=player_model_prog, player_model_shadow_prog=player_model_shadow_prog, cloud_mesh=cloud_mesh, player_model_mesh=player_model_mesh, atlas=atlas, empty_vao=empty_vao, blocks=blocks)
+        return GLResources(world_prog=world_prog, world_no_shadow_prog=world_no_shadow_prog, shadow_prog=shadow_prog, sun_prog=sun_prog, cloud_prog=cloud_prog, selection_prog=selection_prog, chunk_face_payload_prog=chunk_face_payload_prog, player_model_prog=player_model_prog, player_model_no_shadow_prog=player_model_no_shadow_prog, player_model_shadow_prog=player_model_shadow_prog, cloud_mesh=cloud_mesh, player_model_mesh=player_model_mesh, atlas=atlas, empty_vao=empty_vao, blocks=blocks)
 
     def destroy(self) -> None:
         self.cloud_mesh.destroy()
@@ -61,12 +65,14 @@ class GLResources:
         self.atlas.destroy()
 
         self.world_prog.destroy()
+        self.world_no_shadow_prog.destroy()
         self.shadow_prog.destroy()
         self.sun_prog.destroy()
         self.cloud_prog.destroy()
         self.selection_prog.destroy()
         self.chunk_face_payload_prog.destroy()
         self.player_model_prog.destroy()
+        self.player_model_no_shadow_prog.destroy()
         self.player_model_shadow_prog.destroy()
 
         if int(self.empty_vao) != 0:

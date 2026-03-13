@@ -43,8 +43,12 @@ class FramePipeline:
         return (ok, int(info.size) if ok else 0)
 
     def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None) -> RendererFrameMetrics:
-        shadow_info_pre = self.shadow_pass.info()
-        light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))))
+        use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
+        if bool(use_light_space):
+            shadow_info_pre = self.shadow_pass.info()
+            light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))))
+        else:
+            light_vp = mat4.identity()
 
         player_pose = build_player_model_pose(player_state)
 

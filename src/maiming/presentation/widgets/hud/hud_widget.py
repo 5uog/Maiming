@@ -84,37 +84,42 @@ class HUDWidget(QWidget):
     def _height_for(self, text: str, font: QFont, label_w: int) -> int:
         raw = str(text or "")
         if not raw.strip():
-            return int(2 * (self._pad_px + self._border_px) + 2)
+            return int(2 * (self._pad_px + self._border_px) + 2 + self._bottom_extra(font))
 
         inner_w = self._inner_text_width(int(label_w))
         fm = QFontMetrics(font)
         r = fm.boundingRect(QRect(0, 0, int(inner_w), 100000), int(Qt.TextFlag.TextWordWrap), raw)
 
         pad_total = 2 * (int(self._pad_px) + int(self._border_px))
-        return int(max(1, int(r.height()) + pad_total + 2))
+        return int(max(1, int(r.height()) + pad_total + 2 + self._bottom_extra(font)))
+
+    def _bottom_extra(self, font: QFont) -> int:
+        fm = QFontMetrics(font)
+        return int(max(4, int(fm.descent()) + 2))
 
     def _trim_to_height(self, text: str, font: QFont, label_w: int, max_label_h: int) -> _FitResult:
         raw = str(text or "")
         if not raw.strip():
-            h = int(2 * (self._pad_px + self._border_px) + 2)
+            h = int(2 * (self._pad_px + self._border_px) + 2 + self._bottom_extra(font))
             return _FitResult(text="", h=int(min(max_label_h, h)))
 
         inner_w = self._inner_text_width(int(label_w))
         fm = QFontMetrics(font)
 
         pad_total = 2 * (int(self._pad_px) + int(self._border_px))
-        max_text_h = int(max(1, int(max_label_h) - pad_total - 2))
+        extra = self._bottom_extra(font)
+        max_text_h = int(max(1, int(max_label_h) - pad_total - 2 - extra))
 
         kept = raw.splitlines()
         while kept:
             cand = "\n".join(kept).strip()
             r = fm.boundingRect(QRect(0, 0, int(inner_w), 100000), int(Qt.TextFlag.TextWordWrap), cand)
             if int(r.height()) <= int(max_text_h):
-                h = int(r.height()) + int(pad_total) + 2
+                h = int(r.height()) + int(pad_total) + 2 + int(extra)
                 return _FitResult(text=cand, h=int(max(1, min(int(max_label_h), h))))
             kept.pop()
 
-        h = int(pad_total) + 2
+        h = int(pad_total) + 2 + int(extra)
         return _FitResult(text="", h=int(max(1, min(int(max_label_h), h))))
 
     def _fit_text(self, text: str, label: QLabel, label_w: int, max_label_h: int) -> _FitResult:

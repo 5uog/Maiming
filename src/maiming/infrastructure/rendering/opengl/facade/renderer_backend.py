@@ -79,8 +79,8 @@ class RendererBackend:
         glDepthFunc(GL_LESS)
 
         self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
-        self._world.initialize(self._res.world_prog, self._res.atlas)
-        self._player.initialize(world_prog=self._res.player_model_prog, shadow_prog=self._res.player_model_shadow_prog, mesh=self._res.player_model_mesh)
+        self._world.initialize(shadowed_prog=self._res.world_prog, no_shadow_prog=self._res.world_no_shadow_prog, atlas=self._res.atlas)
+        self._player.initialize(world_prog=self._res.player_model_prog, no_shadow_prog=self._res.player_model_no_shadow_prog, shadow_prog=self._res.player_model_shadow_prog, mesh=self._res.player_model_mesh)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
         self._selection_pass.initialize(self._res.selection_prog)

@@ -42,19 +42,22 @@ class WorldDrawInputs:
 
 class WorldPass:
     def __init__(self) -> None:
-        self._prog: ShaderProgram | None = None
+        self._shadow_prog: ShaderProgram | None = None
+        self._no_shadow_prog: ShaderProgram | None = None
         self._atlas: TextureAtlas | None = None
         self._batch = AggregatedFaceBatch()
         self._last_metrics = PassFrameMetrics()
 
-    def initialize(self, prog: ShaderProgram, atlas: TextureAtlas) -> None:
-        self._prog = prog
+    def initialize(self, *, shadowed_prog: ShaderProgram, no_shadow_prog: ShaderProgram, atlas: TextureAtlas) -> None:
+        self._shadow_prog = shadowed_prog
+        self._no_shadow_prog = no_shadow_prog
         self._atlas = atlas
         self._batch.initialize()
 
     def destroy(self) -> None:
         self._batch.destroy()
-        self._prog = None
+        self._shadow_prog = None
+        self._no_shadow_prog = None
         self._atlas = None
         self._last_metrics = PassFrameMetrics()
 
@@ -70,7 +73,7 @@ class WorldPass:
     def draw(self, inp: WorldDrawInputs) -> PassFrameMetrics:
         t0 = time.perf_counter()
 
-        if self._prog is None or self._atlas is None:
+        if self._shadow_prog is None or self._no_shadow_prog is None or self._atlas is None:
             self._last_metrics = PassFrameMetrics()
             return self._last_metrics
 
@@ -90,47 +93,54 @@ class WorldPass:
         draw_calls = 0
         instances = 0
 
+        use_shadow_program = bool(inp.shadow_enabled or inp.debug_shadow)
+        prog = self._shadow_prog if bool(use_shadow_program) else self._no_shadow_prog
+
         with GLStateGuard(capture_framebuffer=False, capture_viewport=False, capture_enables=(GL_CULL_FACE,), capture_cull_mode=True, capture_polygon_mode=True):
             if bool(inp.world_wireframe):
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-            self._prog.use()
-            self._prog.set_mat4("u_viewProj", view_proj)
-            self._prog.set_mat4("u_lightViewProj", inp.light_view_proj)
-            self._prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
-            self._prog.set_int("u_atlas", 0)
-            self._prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
+            prog.use()
+            prog.set_mat4("u_viewProj", view_proj)
+            prog.set_mat4("u_lightViewProj", inp.light_view_proj)
+            prog.set_vec3("u_sunDir", inp.sun_dir.x, inp.sun_dir.y, inp.sun_dir.z)
+            prog.set_int("u_atlas", 0)
+            prog.set_int("u_selMode", int(inp.sel_mode))
+            prog.set_ivec3("u_selBlock", int(inp.sel_x), int(inp.sel_y), int(inp.sel_z))
+            prog.set_float("u_selTint", float(inp.sel_tint))
 
-            shadow_sampling_ok = bool(inp.shadow_enabled and inp.shadow_info.ok and int(inp.shadow_info.tex_id) != 0 and int(inp.shadow_info.inst_count) > 0)
-            self._prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
-            self._prog.set_int("u_shadowMap", 1)
+            shadow_sampling_ok = False
+            if bool(use_shadow_program):
+                prog.set_int("u_debugShadow", 1 if bool(inp.debug_shadow) else 0)
 
-            ss = float(max(1, int(inp.shadow_info.size))) if shadow_sampling_ok else 1.0
-            self._prog.set_vec2("u_shadowTexel", 1.0 / ss, 1.0 / ss)
-            self._prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
-            self._prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
-            self._prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
+                shadow_sampling_ok = bool(inp.shadow_enabled and inp.shadow_info.ok and int(inp.shadow_info.tex_id) != 0 and int(inp.shadow_info.inst_count) > 0)
+                prog.set_int("u_shadowEnabled", 1 if shadow_sampling_ok else 0)
+                prog.set_int("u_shadowMap", 1)
 
-            self._prog.set_int("u_selMode", int(inp.sel_mode))
-            self._prog.set_ivec3("u_selBlock", int(inp.sel_x), int(inp.sel_y), int(inp.sel_z))
-            self._prog.set_float("u_selTint", float(inp.sel_tint))
+                ss = float(max(1, int(inp.shadow_info.size))) if shadow_sampling_ok else 1.0
+                prog.set_vec2("u_shadowTexel", 1.0 / ss, 1.0 / ss)
+                prog.set_float("u_shadowDarkMul", float(inp.shadow.dark_mul))
+                prog.set_float("u_shadowBiasMin", float(inp.shadow.bias_min))
+                prog.set_float("u_shadowBiasSlope", float(inp.shadow.bias_slope))
 
             glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, int(self._atlas.tex_id))
 
-            glActiveTexture(GL_TEXTURE1)
-            glBindTexture(GL_TEXTURE_2D, int(inp.shadow_info.tex_id) if shadow_sampling_ok else 0)
+            if bool(use_shadow_program):
+                glActiveTexture(GL_TEXTURE1)
+                glBindTexture(GL_TEXTURE_2D, int(inp.shadow_info.tex_id) if shadow_sampling_ok else 0)
 
             glEnable(GL_CULL_FACE)
             glCullFace(GL_BACK)
 
-            draw_calls, instances = self._batch.draw(commands, before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)))
+            draw_calls, instances = self._batch.draw(commands, before_face_draw=lambda fi: prog.set_int("u_face", int(fi)))
 
             glDisable(GL_CULL_FACE)
 
-            glActiveTexture(GL_TEXTURE1)
-            glBindTexture(GL_TEXTURE_2D, 0)
-            glActiveTexture(GL_TEXTURE0)
+            if bool(use_shadow_program):
+                glActiveTexture(GL_TEXTURE1)
+                glBindTexture(GL_TEXTURE_2D, 0)
+                glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, 0)
 
         self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=bool(draw_calls > 0))
