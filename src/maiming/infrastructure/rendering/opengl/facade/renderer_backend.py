@@ -11,6 +11,7 @@ from .....domain.blocks.state_codec import parse_state
 from .....domain.world.chunking import ChunkKey
 from .._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
 from .._internal.passes.cloud_pass import CloudPass
+from .._internal.passes.player_model_pass import PlayerModelPass
 from .._internal.passes.selection_pass import SelectionPass
 from .._internal.passes.shadow_map_pass import ShadowMapPass
 from .._internal.passes.sun_pass import SunPass
@@ -22,6 +23,7 @@ from .block_visual_resolver import BlockVisualResolver
 from .gl_info_probe import GLInfoSnapshot, probe_gl_info
 from .gl_renderer_params import GLRendererParams
 from .gl_resources import GLResources
+from .player_render_state import PlayerRenderState
 from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState
 from .selection_controller import SelectionController
@@ -51,6 +53,7 @@ class RendererBackend:
 
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
+        self._player = PlayerModelPass()
         self._sun = SunPass(self._cfg.sun)
         self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
         self._selection_pass = SelectionPass()
@@ -77,13 +80,14 @@ class RendererBackend:
 
         self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
         self._world.initialize(self._res.world_prog, self._res.atlas)
+        self._player.initialize(world_prog=self._res.player_model_prog, shadow_prog=self._res.player_model_shadow_prog, mesh=self._res.player_model_mesh)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
         self._selection_pass.initialize(self._res.selection_prog)
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
-        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
 
         self.apply_runtime_state()
 
@@ -91,6 +95,7 @@ class RendererBackend:
         self._gpu_payload_builder.destroy()
         self._shadow.destroy()
         self._world.destroy()
+        self._player.destroy()
         self._selection_pass.destroy()
 
         if self._res is not None:
@@ -184,9 +189,9 @@ class RendererBackend:
         self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
         self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None = None) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks))
+        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state)

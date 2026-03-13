@@ -10,11 +10,14 @@ from ......core.math.vec3 import Vec3
 from ......core.math.view_angles import forward_from_yaw_pitch_deg
 from ......domain.world.chunking import chunk_key
 from ..passes.cloud_pass import CloudPass
+from ..passes.player_model_pass import PlayerModelPass
 from ..passes.shadow_map_pass import ShadowMapPass
 from ..passes.sun_pass import SunPass
 from ..passes.world_pass import WorldDrawInputs, WorldPass
 from ..pipeline.light_space import compute_light_view_proj
+from ..scene.player_model_pose import build_player_model_pose
 from ...facade.gl_renderer_params import GLRendererParams
+from ...facade.player_render_state import PlayerRenderState
 from ...facade.render_metrics import PassFrameMetrics, RendererFrameMetrics
 from ...facade.render_state import RendererRuntimeState
 from ...facade.selection_controller import SelectionController
@@ -25,6 +28,7 @@ class FramePipeline:
     state: RendererRuntimeState
     shadow_pass: ShadowMapPass
     world_pass: WorldPass
+    player_pass: PlayerModelPass
     sun_pass: SunPass
     cloud_pass: CloudPass
     selection: SelectionController
@@ -38,13 +42,15 @@ class FramePipeline:
         ok = bool(self.cfg.shadow.enabled and info.ok and int(info.tex_id) != 0 and int(info.inst_count) > 0)
         return (ok, int(info.size) if ok else 0)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int) -> RendererFrameMetrics:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None) -> RendererFrameMetrics:
         shadow_info_pre = self.shadow_pass.info()
         light_vp = compute_light_view_proj(center=eye, sun_dir=self.state.sun_dir, sun=self.cfg.sun, shadow=self.cfg.shadow, shadow_size=int(max(1, int(shadow_info_pre.size))))
 
+        player_pose = build_player_model_pose(player_state)
+
         shadow_metrics = PassFrameMetrics()
         if bool(self.state.shadow_enabled):
-            shadow_metrics = self.shadow_pass.render(light_vp)
+            shadow_metrics = self.shadow_pass.render(light_vp, extra_draw=(lambda vp: self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp)))
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -73,6 +79,10 @@ class FramePipeline:
         sel_mode, sx, sy, sz = self.selection.world_inputs()
 
         world_metrics = self.world_pass.draw(WorldDrawInputs(view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), world_wireframe=bool(self.state.world_wireframe), shadow=self.cfg.shadow, shadow_info=shadow_info, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), sel_mode=int(sel_mode), sel_x=int(sx), sel_y=int(sy), sel_z=int(sz), sel_tint=float(self.sel_tint_strength)))
+
+        player_dc, player_inst = self.player_pass.draw_world(pose=player_pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
+
+        world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + player_dc), instances=int(world_metrics.instances + player_inst), rendered=bool(world_metrics.rendered or (player_dc > 0)))
 
         self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir)
 

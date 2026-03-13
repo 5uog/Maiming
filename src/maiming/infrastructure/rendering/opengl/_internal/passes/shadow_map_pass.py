@@ -2,6 +2,7 @@
 from __future__ import annotations
 import time
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 
@@ -22,6 +23,8 @@ class ShadowMapInfo:
     tex_id: int
     inst_count: int
 
+ExtraShadowDraw = Callable[[np.ndarray], tuple[int, int]]
+
 class ShadowMapPass:
     def __init__(self, cfg: ShadowParams) -> None:
         self._cfg = cfg
@@ -35,6 +38,7 @@ class ShadowMapPass:
 
         self._batch = AggregatedFaceBatch()
         self._last_metrics = PassFrameMetrics()
+        self._last_extra_instances: int = 0
 
     def initialize(self, prog: ShaderProgram, size: int) -> None:
         self._prog = prog
@@ -46,9 +50,10 @@ class ShadowMapPass:
         self._destroy_shadow_map()
         self._prog = None
         self._last_metrics = PassFrameMetrics()
+        self._last_extra_instances = 0
 
     def info(self) -> ShadowMapInfo:
-        return ShadowMapInfo(ok=bool(self._ok), size=int(self._size), tex_id=int(self._tex), inst_count=int(self._batch.total_instances()))
+        return ShadowMapInfo(ok=bool(self._ok), size=int(self._size), tex_id=int(self._tex), inst_count=int(self._batch.total_instances() + self._last_extra_instances))
 
     def remove_chunk(self, chunk_key: ChunkKey) -> None:
         self._batch.remove_chunk(chunk_key)
@@ -59,8 +64,10 @@ class ShadowMapPass:
     def set_chunk_faces(self, *, chunk_key: ChunkKey, world_revision: int, faces: list[np.ndarray]) -> None:
         self._batch.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=faces)
 
-    def render(self, light_vp: np.ndarray) -> PassFrameMetrics:
+    def render(self, light_vp: np.ndarray, *, extra_draw: ExtraShadowDraw | None = None) -> PassFrameMetrics:
         t0 = time.perf_counter()
+
+        self._last_extra_instances = 0
 
         if self._prog is None:
             self._last_metrics = PassFrameMetrics()
@@ -71,7 +78,7 @@ class ShadowMapPass:
         if not bool(self._ok) or int(self._fbo) == 0 or int(self._tex) == 0:
             self._last_metrics = PassFrameMetrics()
             return self._last_metrics
-        if int(self._batch.total_instances()) <= 0:
+        if int(self._batch.total_instances()) <= 0 and extra_draw is None:
             self._last_metrics = PassFrameMetrics()
             return self._last_metrics
 
@@ -112,9 +119,15 @@ class ShadowMapPass:
 
             draw_calls, instances = self._batch.draw(commands, before_face_draw=lambda fi: self._prog.set_int("u_face", int(fi)))
 
+            if extra_draw is not None:
+                extra_dc, extra_inst = extra_draw(vp)
+                draw_calls += int(extra_dc)
+                instances += int(extra_inst)
+                self._last_extra_instances = int(extra_inst)
+
             glDisable(GL_POLYGON_OFFSET_FILL)
 
-        self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=True)
+        self._last_metrics = PassFrameMetrics(cpu_ms=float((time.perf_counter() - t0) * 1000.0), draw_calls=int(draw_calls), instances=int(instances), rendered=bool(draw_calls > 0))
         return self._last_metrics
 
     def _destroy_shadow_map(self) -> None:

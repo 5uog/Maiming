@@ -13,6 +13,7 @@ from ....application.session.fixed_step_runner import FixedStepRunner
 from ....application.session.session_manager import SessionManager
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
+from ....infrastructure.rendering.opengl.facade.player_render_state import PlayerRenderState
 
 from ...config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 from ...config.gl_surface_format import build_gl_surface_format
@@ -337,7 +338,10 @@ class GLViewportWidget(QOpenGLWidget):
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
         cam = snap.camera
-        self._renderer.render(w=fb_w, h=fb_h, eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z), yaw_deg=cam.yaw_deg, pitch_deg=cam.pitch_deg, fov_deg=cam.fov_deg, render_distance_chunks=int(self._state.render_distance_chunks))
+        pl = snap.player_model
+        player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person))
+
+        self._renderer.render(w=fb_w, h=fb_h, eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z), yaw_deg=cam.yaw_deg, pitch_deg=cam.pitch_deg, fov_deg=cam.fov_deg, render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state)
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:

@@ -62,6 +62,16 @@ class MeshBuffer:
         return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
 
     @staticmethod
+    def create_cube_transform_instanced() -> "MeshBuffer":
+        vao, vbo, vertex_count = _create_static_vertex_buffer(np.asarray(_cube_vertices(), dtype=np.float32))
+        instance_vbo = _attach_instance_buffer(stride_bytes=16 * 4, attrs=((3, 4, 0), (4, 4, 16), (5, 4, 32), (6, 4, 48)))
+
+        glBindVertexArray(0)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+
+    @staticmethod
     def create_quad_instanced(face: int) -> "MeshBuffer":
         vao, vbo, vertex_count = _create_static_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
         instance_vbo = _attach_instance_buffer(stride_bytes=12 * 4, attrs=((3, 3, 0), (4, 3, 12), (5, 4, 24), (6, 1, 40), (7, 1, 44)))

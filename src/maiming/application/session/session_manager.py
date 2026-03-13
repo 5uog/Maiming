@@ -1,6 +1,7 @@
 # FILE: src/maiming/application/session/session_manager.py
 from __future__ import annotations
 from dataclasses import dataclass, field
+import math
 
 from ...core.math.vec3 import Vec3, clampf
 from ...core.math.smoothing import exp_alpha
@@ -15,10 +16,12 @@ from ...domain.blocks.block_registry import BlockRegistry
 from ...domain.blocks.default_registry import create_default_registry
 
 from .session_settings import SessionSettings
-from .render_snapshot import CameraDTO, RenderSnapshotDTO
+from .render_snapshot import CameraDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ..services.interaction_service import InteractionService
 
 _FLIGHT_TOGGLE_WINDOW_S = 0.25
+_PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED = 8.0
+_PLAYER_WALK_MAX_SWING_SCALE = 1.35
 
 @dataclass
 class SessionManager:
@@ -30,6 +33,7 @@ class SessionManager:
     interaction: InteractionService = field(init=False, repr=False)
     _sim_time_s: float = field(default=0.0, init=False, repr=False)
     _last_jump_press_s: float | None = field(default=None, init=False, repr=False)
+    _player_walk_phase_rad: float = field(default=0.0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.interaction = InteractionService.create(world=self.world, player=self.player, block_registry=self.block_registry)
@@ -57,6 +61,7 @@ class SessionManager:
         p.auto_jump_start_y = float(p.position.y)
         p.auto_jump_cooldown_s = 0.0
         self._last_jump_press_s = None
+        self._player_walk_phase_rad = 0.0
 
     def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
         p = self.player
@@ -116,6 +121,19 @@ class SessionManager:
             return
 
         self.player.velocity = Vec3(float(self.player.velocity.x), min(0.0, float(self.player.velocity.y)), float(self.player.velocity.z))
+
+    def _update_player_walk_phase(self, dt: float) -> None:
+        p = self.player
+        if bool(p.flying) or (not bool(p.on_ground)):
+            return
+
+        speed = math.hypot(float(p.velocity.x), float(p.velocity.z))
+        if speed <= 1e-6:
+            return
+
+        base = max(1e-6, float(self.settings.movement.walk_speed))
+        rate = float(_PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED) * (float(speed) / float(base))
+        self._player_walk_phase_rad = float((float(self._player_walk_phase_rad) + rate * float(dt)) % (2.0 * math.pi))
 
     def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> bool:
         self._sim_time_s += float(dt)
@@ -195,12 +213,28 @@ class SessionManager:
 
         self._update_crouch_eye(float(dt), bool(crouch))
         self._update_step_eye(float(dt))
+        self._update_player_walk_phase(float(dt))
         return bool(jump_pulse)
 
     def make_snapshot(self) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
         cam = CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg)
-        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam)
+
+        p = self.player
+        speed = math.hypot(float(p.velocity.x), float(p.velocity.z))
+        crouch_amount = 0.0
+        if float(p.crouch_eye_drop) > 1e-9:
+            crouch_amount = float(max(0.0, min(1.0, float(p.crouch_eye_offset) / float(p.crouch_eye_drop))))
+
+        if bool(p.flying) or (not bool(p.on_ground)):
+            limb_swing_amount = 0.0
+        else:
+            walk_speed = max(1e-6, float(self.settings.movement.walk_speed))
+            limb_swing_amount = 0.5 * min(float(_PLAYER_WALK_MAX_SWING_SCALE), float(speed) / float(walk_speed))
+
+        player_model = PlayerModelSnapshotDTO(base_x=float(p.position.x), base_y=float(p.position.y), base_z=float(p.position.z), body_yaw_deg=float(p.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(p.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), is_first_person=True)
+
+        return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam, player_model=player_model)
 
     def break_block(self, reach: float = 5.0) -> bool:
         return self.interaction.break_block(reach=float(reach))
