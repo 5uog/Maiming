@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/models/stairs.py
 from __future__ import annotations
-
 from typing import Dict, List
 
 from ..state_codec import parse_state

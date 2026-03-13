@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/inventory/hotbar.py
 from __future__ import annotations
-
 from collections.abc import Sequence
 
 HOTBAR_SIZE: int = 9

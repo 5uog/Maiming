@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/face_bucket_layout.py
 from __future__ import annotations
-
 from typing import Sequence
 
 import numpy as np

@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/systems/movement_system.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 import math
 

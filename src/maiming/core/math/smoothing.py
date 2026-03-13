@@ -1,6 +1,5 @@
 # FILE: src/maiming/core/math/smoothing.py
 from __future__ import annotations
-
 import math
 
 def exp_alpha(rate: float, dt: float) -> float:

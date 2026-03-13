@@ -1,13 +1,9 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/gl_info_probe.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 import re
 
-from OpenGL.GL import (
-    glGetString, glGetIntegerv,
-    GL_VENDOR, GL_RENDERER, GL_VERSION, GL_SHADING_LANGUAGE_VERSION, GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_CONTEXT_PROFILE_MASK, GL_CONTEXT_CORE_PROFILE_BIT, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT,
-)
+from OpenGL.GL import glGetString, glGetIntegerv, GL_VENDOR, GL_RENDERER, GL_VERSION, GL_SHADING_LANGUAGE_VERSION, GL_MAJOR_VERSION, GL_MINOR_VERSION, GL_CONTEXT_PROFILE_MASK, GL_CONTEXT_CORE_PROFILE_BIT, GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
 
 _VERSION_RE = re.compile(r"(\d+)\.(\d+)")
 

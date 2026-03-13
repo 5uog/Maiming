@@ -1,6 +1,5 @@
 # FILE: src/maiming/application/services/placement_policy.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3

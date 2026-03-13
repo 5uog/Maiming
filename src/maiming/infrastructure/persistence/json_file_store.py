@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/persistence/json_file_store.py
 from __future__ import annotations
-
 import json
 import os
 from dataclasses import dataclass

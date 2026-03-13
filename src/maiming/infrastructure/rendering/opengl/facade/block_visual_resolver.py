@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/block_visual_resolver.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Callable
 

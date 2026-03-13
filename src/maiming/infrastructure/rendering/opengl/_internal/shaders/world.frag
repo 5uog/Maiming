@@ -38,9 +38,7 @@ float shadow_pcf4(vec3 uvz, float bias) {
 }
 
 float shadow_factor(float ndl) {
-    if (u_shadowEnabled == 0) {
-        return (u_debugShadow != 0) ? 0.0 : 1.0;
-    }
+    if (u_shadowEnabled == 0) { return (u_debugShadow != 0) ? 0.0 : 1.0; }
 
     vec3 ndc = v_lightPos.xyz / max(v_lightPos.w, 1e-6);
     vec3 uvz = ndc * 0.5 + 0.5;

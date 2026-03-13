@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/chunk_selection.py
 from __future__ import annotations
-
 from collections.abc import Callable, Iterable
 
 import numpy as np

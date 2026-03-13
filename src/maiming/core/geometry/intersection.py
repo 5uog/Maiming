@@ -1,6 +1,5 @@
 # FILE: src/maiming/core/geometry/intersection.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ..grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z

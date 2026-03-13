@@ -1,6 +1,7 @@
 # FILE: src/maiming/presentation/windows/main_window.py
 from __future__ import annotations
 from pathlib import Path
+
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
 from ..config.gl_surface_format import install_default_gl_surface_format
@@ -38,7 +39,7 @@ def run_app(*, project_root: Path) -> None:
         app.setStyleSheet(qss.read_text(encoding="utf-8"))
 
     w = MainWindow(project_root=root)
-    w.setWindowTitle("Maiming v2.5")
+    w.setWindowTitle("Maiming")
     w.resize(1280, 720)
     w.show()
 

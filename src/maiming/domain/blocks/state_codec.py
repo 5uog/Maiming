@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/state_codec.py
 from __future__ import annotations
-
 from typing import Dict, Tuple
 
 def parse_state(s: str) -> Tuple[str, Dict[str, str]]:

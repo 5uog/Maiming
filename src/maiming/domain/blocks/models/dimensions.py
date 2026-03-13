@@ -10,15 +10,9 @@ FENCE_POST = px_box(6, 0, 6, 10, 16, 10)
 FENCE_ARM_LOW_NORTH = px_box(7, 6, 0, 9, 9, 9)
 FENCE_ARM_HIGH_NORTH = px_box(7, 12, 0, 9, 15, 9)
 
-FENCE_GATE_CLOSED: list[LocalBox] = [
-    px_box(0, 5, 7, 2, 16, 9, uv_hint="post"), px_box(14, 5, 7, 16, 16, 9, uv_hint="post"), px_box(6, 6, 7, 8, 15, 9, uv_hint="stile"), px_box(8, 6, 7, 10, 15, 9, uv_hint="stile"), 
-    px_box(2, 6, 7, 6, 9, 9, uv_hint="rail"), px_box(2, 12, 7, 6, 15, 9, uv_hint="rail"), px_box(10, 6, 7, 14, 9, 9, uv_hint="rail"), px_box(10, 12, 7, 14, 15, 9, uv_hint="rail")
-]
+FENCE_GATE_CLOSED: list[LocalBox] = [px_box(0, 5, 7, 2, 16, 9, uv_hint="post"), px_box(14, 5, 7, 16, 16, 9, uv_hint="post"), px_box(6, 6, 7, 8, 15, 9, uv_hint="stile"), px_box(8, 6, 7, 10, 15, 9, uv_hint="stile"), px_box(2, 6, 7, 6, 9, 9, uv_hint="rail"), px_box(2, 12, 7, 6, 15, 9, uv_hint="rail"), px_box(10, 6, 7, 14, 9, 9, uv_hint="rail"), px_box(10, 12, 7, 14, 15, 9, uv_hint="rail")]
 
-FENCE_GATE_OPEN: list[LocalBox] = [
-    px_box(0, 5, 7, 2, 16, 9, uv_hint="post"), px_box(14, 5, 7, 16, 16, 9, uv_hint="post"), px_box(0, 6, 13, 2, 15, 15, uv_hint="stile"), px_box(14, 6, 13, 16, 15, 15, uv_hint="stile"),
-    px_box(0, 6, 9, 2, 9, 13, uv_hint="rail"), px_box(0, 12, 9, 2, 15, 13, uv_hint="rail"), px_box(14, 6, 9, 16, 9, 13, uv_hint="rail"), px_box(14, 12, 9, 16, 15, 13, uv_hint="rail"),
-]
+FENCE_GATE_OPEN: list[LocalBox] = [px_box(0, 5, 7, 2, 16, 9, uv_hint="post"), px_box(14, 5, 7, 16, 16, 9, uv_hint="post"), px_box(0, 6, 13, 2, 15, 15, uv_hint="stile"), px_box(14, 6, 13, 16, 15, 15, uv_hint="stile"), px_box(0, 6, 9, 2, 9, 13, uv_hint="rail"), px_box(0, 12, 9, 2, 15, 13, uv_hint="rail"), px_box(14, 6, 9, 16, 9, 13, uv_hint="rail"), px_box(14, 12, 9, 16, 15, 13, uv_hint="rail")]
 
 def _shift_y(boxes: list[LocalBox], dy_px: float) -> list[LocalBox]:
     dy = float(dy_px) / 16.0

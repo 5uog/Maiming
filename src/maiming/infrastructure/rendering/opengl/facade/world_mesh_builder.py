@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/world_mesh_builder.py
 from __future__ import annotations
-
 from typing import Callable, Iterable
 
 import numpy as np

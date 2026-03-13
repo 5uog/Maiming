@@ -1,8 +1,6 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/compute/chunk_face_payload_builder.py
 from __future__ import annotations
-
 from dataclasses import dataclass
-
 import numpy as np
 
 from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARRIER_BIT, GL_BUFFER_UPDATE_BARRIER_BIT

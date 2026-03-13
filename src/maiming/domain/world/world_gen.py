@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/world/world_gen.py
 from __future__ import annotations
-
 from typing import Dict
 
 from .world_state import WorldState, BlockKey

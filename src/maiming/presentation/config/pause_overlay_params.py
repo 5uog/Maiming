@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/config/pause_overlay_params.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ...application.session.session_settings import SessionSettings

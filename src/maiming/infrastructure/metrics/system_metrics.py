@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/metrics/system_metrics.py
 from __future__ import annotations
-
 import os
 import sys
 import time
@@ -128,11 +127,7 @@ def _windows_total_mem_bytes() -> int | None:
     try:
         import ctypes
         class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [
-                ("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64), 
-                ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64), 
-                ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64), ("ullAvailExtendedVirtual", ctypes.c_uint64)
-            ]
+            _fields_ = [("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64), ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64), ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64), ("ullAvailExtendedVirtual", ctypes.c_uint64)]
         ms = MEMORYSTATUSEX()
         ms.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
         ok = ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(ms))
@@ -148,10 +143,7 @@ def _windows_rss_bytes_psapi() -> int | None:
         import ctypes.wintypes as wt
 
         class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
-            _fields_ = [
-                ("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", wt.SIZE_T), ("WorkingSetSize", wt.SIZE_T), ("QuotaPeakPagedPoolUsage", wt.SIZE_T), 
-                ("QuotaPagedPoolUsage", wt.SIZE_T), ("QuotaPeakNonPagedPoolUsage", wt.SIZE_T), ("QuotaNonPagedPoolUsage", wt.SIZE_T), ("PagefileUsage", wt.SIZE_T), ("PeakPagefileUsage", wt.SIZE_T)
-            ]
+            _fields_ = [("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", wt.SIZE_T), ("WorkingSetSize", wt.SIZE_T), ("QuotaPeakPagedPoolUsage", wt.SIZE_T), ("QuotaPagedPoolUsage", wt.SIZE_T), ("QuotaPeakNonPagedPoolUsage", wt.SIZE_T), ("QuotaNonPagedPoolUsage", wt.SIZE_T), ("PagefileUsage", wt.SIZE_T), ("PeakPagefileUsage", wt.SIZE_T)]
 
         counters = PROCESS_MEMORY_COUNTERS()
         counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)

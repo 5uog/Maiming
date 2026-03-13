@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/families/stone_types.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ..block_definition import BlockTextures

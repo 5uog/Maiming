@@ -1,6 +1,5 @@
 # FILE: src/maiming/core/math/view_angles.py
 from __future__ import annotations
-
 import math
 
 from .vec3 import Vec3

@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/resources/texture_atlas.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Tuple, Iterable
@@ -8,12 +7,8 @@ import math
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QImage, QPainter, QColor
-from OpenGL.GL import (
-    glGenTextures, glTexImage2D, glBindTexture, glTexParameteri, glDeleteTextures,
-    GL_TEXTURE_2D, GL_RGBA, GL_UNSIGNED_BYTE,
-    GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_NEAREST,
-    GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE,
-)
+
+from OpenGL.GL import glGenTextures, glTexImage2D, glBindTexture, glTexParameteri, glDeleteTextures, GL_TEXTURE_2D, GL_RGBA, GL_UNSIGNED_BYTE, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_NEAREST, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE
 
 UVRect = Tuple[float, float, float, float]
 

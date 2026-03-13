@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/selection_outline_builder.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Callable
 

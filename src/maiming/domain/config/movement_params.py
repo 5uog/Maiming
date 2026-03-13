@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/config/movement_params.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 @dataclass(frozen=True)

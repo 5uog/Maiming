@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/hud/hud_controller.py
 from __future__ import annotations
-
 import math
 import time
 import tracemalloc
@@ -212,39 +211,27 @@ class HudController:
         selected_id = str(selected_block_id).strip()
         if selected_id:
             sel_name = renderer.block_display_name(selected_id)
-            sel_line = f"Select {str(sel_name)}  ({str(selected_id)})"
+            sel_line = f"{str(sel_name)} ({str(selected_id)}) Selected\n"
         else:
-            sel_line = "Select Empty Hand"
+            sel_line = "Empty Hand Selected\n"
 
         rd = int(max(2, min(16, int(render_distance_chunks))))
 
         lines: list[str] = []
-        lines.append(f"FPS {fps.render_fps:.1f}  SIM {fps.sim_fps:.1f}  T {t_txt}  {vs}")
-        lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture")
-        lines.append("")
-        lines.append(f"GPU {gpu_txt}  {mem_line}  Alloc {self._py.rate_mib_s:.1f} MiB/s")
-        lines.append(
-            f"CPU paint {float(paint_ms):.2f} ms  world {float(world_perf.cpu_ms):.2f} ms  "
-            f"shadow {float(shadow_perf.cpu_ms):.2f} ms  pick {float(selection_pick_ms):.2f} ms"
-        )
-        lines.append(
-            f"Draw W/S {int(world_perf.draw_calls)}/{int(shadow_perf.draw_calls)}  "
-            f"Inst W/S {int(world_perf.instances)}/{int(shadow_perf.instances)}"
-        )
-        lines.append("")
-        lines.append(f"XYZ {px:.2f} {py:.2f} {pz:.2f}  Block {bx} {by} {bz}  Chunk {cx} {cy} {cz} [{rx} {rz}]")
-        lines.append(f"Facing {card}  Yaw {p.yaw_deg:.1f}  Pitch {p.pitch_deg:.1f}")
-        lines.append("")
-        lines.append(f"RenderDist {rd} chunks")
-        lines.append(
-            f"Mode creative={int(bool(creative_mode))} flying={int(bool(flying))} inv={int(bool(inventory_open))} "
-            f"autoJump={int(bool(auto_jump_enabled))} autoSprint={int(bool(auto_sprint_enabled))} reach={float(reach):.2f}"
-        )
+        lines.append(f"FPS {fps.render_fps:.1f} | SIM {fps.sim_fps:.1f} | T {t_txt}  {vs}")
+        lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture\n")
+        lines.append(f"GPU {gpu_txt} | {mem_line}\nAlloc {self._py.rate_mib_s:.1f} MiB/s")
+        lines.append(f"CPU paint {float(paint_ms):.2f} ms\nworld {float(world_perf.cpu_ms):.2f} ms | shadow {float(shadow_perf.cpu_ms):.2f} ms | pick {float(selection_pick_ms):.2f} ms")
+        lines.append(f"Draw {int(world_perf.draw_calls)}/{int(shadow_perf.draw_calls)} (W/S) | Inst {int(world_perf.instances)}/{int(shadow_perf.instances)} (W/S)\n")
+        lines.append(f"XYZ {px:.2f} {py:.2f} {pz:.2f} |\nBlock {bx} {by} {bz} | Chunk {cx} {cy} {cz} [{rx} {rz}] |")
+        lines.append(f"Facing {card} | Yaw {p.yaw_deg:.1f} | Pitch {p.pitch_deg:.1f} |")
+        lines.append(f"RenderDist {rd} chunks\n")
+        lines.append(f"Mode Creative: {int(bool(creative_mode))} | Flying: {int(bool(flying))} | Inventory: {int(bool(inventory_open))} |")
+        lines.append(f"Auto Jump: {int(bool(auto_jump_enabled))} | Auto Sprint: {int(bool(auto_sprint_enabled))} | Reach: {float(reach):.2f} |\n")
         lines.append(str(sel_line))
-        lines.append(f"Cloud en={int(bool(cloud_enabled))} den={int(cloud_density)} seed={int(cloud_seed)} wire={int(bool(cloud_wire))}")
-        lines.append(f"World wire={int(bool(world_wire))} shadow={int(bool(shadow_ok))} size={int(shadow_size)} dbg={int(bool(debug_shadow))} sun={float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}")
-        lines.append("")
-        lines.append(f"Maiming {__version__}  Display {int(fb_w)}x{int(fb_h)}  dpr {float(dpr):.2f}")
+        lines.append(f"Cloud: {int(bool(cloud_enabled))} | Density: {int(cloud_density)} |\nSeed: {int(cloud_seed)} | Cloud Wireflame: {int(bool(cloud_wire))} |\n")
+        lines.append(f"World Wireflame: {int(bool(world_wire))} | Shadow: {int(bool(shadow_ok))} | Size: {int(shadow_size)} | DBG: {int(bool(debug_shadow))} | Sun: {float(sun_az_deg):.0f}/{float(sun_el_deg):.0f}\n")
+        lines.append(f"Maiming v{__version__} | Display: {int(fb_w)}x{int(fb_h)} | DPR: {float(dpr):.2f}")
 
         gl_vendor, gl_rend, gl_ver, _glsl = renderer.gl_info()
         if gl_rend:
@@ -261,22 +248,18 @@ class HudController:
         recent = float(metrics.recent_window_s)
 
         lines: list[str] = []
-        lines.append("PLAYER METRICS")
-        lines.append(f"HSpeed blk/s  cur {metrics.horiz_speed.current:.3f}  avg {metrics.horiz_speed.mean:.3f}  recent{recent:.1f}s {metrics.horiz_speed.recent_mean:.3f}")
-        lines.append(f"VSpeed blk/s  cur {metrics.vert_speed.current:.3f}  avg {metrics.vert_speed.mean:.3f}  recent{recent:.1f}s {metrics.vert_speed.recent_mean:.3f}")
-        lines.append(
-            "JumpInt s     "
-            f"cur {self._fmt_optional(metrics.jump_interval.current)}  "
-            f"avg {self._fmt_optional(metrics.jump_interval.mean)}  "
-            f"recent{recent:.1f}s {self._fmt_optional(metrics.jump_interval.recent_mean)}"
-        )
-        lines.append("")
-        lines.append("APPLIED PARAMS")
-        lines.append(f"gravity               {metrics.applied.gravity:.3f}")
-        lines.append(f"walk_speed            {metrics.applied.walk_speed:.3f}")
-        lines.append(f"sprint_speed          {metrics.applied.sprint_speed:.3f}")
-        lines.append(f"jump_v0               {metrics.applied.jump_v0:.3f}")
-        lines.append(f"auto_jump_cooldown_s  {metrics.applied.auto_jump_cooldown_s:.3f}")
+        lines.append("HSpeed blk/s:")
+        lines.append(f"Current: {metrics.horiz_speed.current:.3f} | Average: {metrics.horiz_speed.mean:.3f} |")
+        lines.append(f"Recent: {recent:.1f}s {metrics.horiz_speed.recent_mean:.3f} |\n")
+        lines.append("VSpeed blk/s:")
+        lines.append(f"Current: {metrics.vert_speed.current:.3f} | Average: {metrics.vert_speed.mean:.3f} |")
+        lines.append(f"Recent: {recent:.1f}s {metrics.vert_speed.recent_mean:.3f} |\n")
+        lines.append("JumpInt/s:")
+        lines.append(f"Current: {self._fmt_optional(metrics.jump_interval.current)} | Average: {self._fmt_optional(metrics.jump_interval.mean)} |")
+        lines.append(f"Recent: {recent:.1f}s {self._fmt_optional(metrics.jump_interval.recent_mean)} |\n")
+        lines.append(f"Gravity: {metrics.applied.gravity:.3f} | Walk Speed: {metrics.applied.walk_speed:.3f} |")
+        lines.append(f"Sprint Speed: {metrics.applied.sprint_speed:.3f} |")
+        lines.append(f"Jump v0: {metrics.applied.jump_v0:.3f} | Auto Jump Cooldown/s: {metrics.applied.auto_jump_cooldown_s:.3f} |")
         return "\n".join(lines).rstrip()
 
     def build_payload(self, *, session: SessionManager, renderer: GLRenderer, auto_jump_enabled: bool, auto_sprint_enabled: bool, creative_mode: bool, flying: bool, inventory_open: bool, selected_block_id: str, reach: float, sun_az_deg: float, sun_el_deg: float, shadow_enabled: bool, world_wire: bool, cloud_wire: bool, cloud_enabled: bool, cloud_density: int, cloud_seed: int, debug_shadow: bool, fb_w: int, fb_h: int, dpr: float, vsync_on: bool, render_timer_interval_ms: int, sim_hz: float, render_distance_chunks: int, paint_ms: float, selection_pick_ms: float) -> HudPayload:

@@ -1,13 +1,9 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/pipeline/frame_pipeline.py
 from __future__ import annotations
-
 import math
 from dataclasses import dataclass
 
-from OpenGL.GL import (
-    glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask,
-    GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS,
-)
+from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
 from ......core.math import mat4
 from ......core.math.vec3 import Vec3

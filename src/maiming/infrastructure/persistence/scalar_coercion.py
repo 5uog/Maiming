@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/persistence/scalar_coercion.py
 from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any
 

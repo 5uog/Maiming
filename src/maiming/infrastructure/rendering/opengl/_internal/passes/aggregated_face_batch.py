@@ -1,17 +1,12 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/aggregated_face_batch.py
 from __future__ import annotations
-
 from ctypes import c_void_p
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
 import numpy as np
 
-from OpenGL.GL import (
-    glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect,
-    glBindBuffer, glBindVertexArray,
-    GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
-)
+from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 
 from ......domain.world.chunking import ChunkKey, normalize_chunk_key
 from ..face_bucket_layout import FACE_COUNT

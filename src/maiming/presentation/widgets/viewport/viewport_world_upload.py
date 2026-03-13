@@ -5,6 +5,7 @@ from typing import Dict
 import math
 import queue
 from concurrent.futures import ThreadPoolExecutor, Future
+
 import numpy as np
 
 from ....core.math.vec3 import Vec3

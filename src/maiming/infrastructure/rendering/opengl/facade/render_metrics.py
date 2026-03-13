@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/render_metrics.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 @dataclass(frozen=True)

@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/models/fence_gate.py
 from __future__ import annotations
-
 from typing import Dict, List
 
 from .common import LocalBox, rotate_box_y_cw, gate_turns_from_facing

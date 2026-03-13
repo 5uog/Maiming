@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/models/api.py
 from __future__ import annotations
-
 from collections import OrderedDict
 from threading import RLock
 from typing import Sequence
@@ -20,7 +19,6 @@ from .fence_gate import boxes_for_fence_gate
 from .wall import boxes_for_wall
 
 _TALL_STRUCTURAL_MIN_HEIGHT = 1.5
-
 _LOCAL_BOX_CACHE_CAP = 32768
 _WORLD_AABB_CACHE_CAP = 32768
 
@@ -60,11 +58,7 @@ def _callable_cache_token(fn: object) -> int:
     return int(id(fn))
 
 def _shape_signature(state_str: str, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> tuple[object, ...]:
-    return (
-        int(_callable_cache_token(get_def)),
-        str(state_str),
-        *six_neighbor_state_signature(get_state, int(x), int(y), int(z)),
-    )
+    return (int(_callable_cache_token(get_def)), str(state_str), *six_neighbor_state_signature(get_state, int(x), int(y), int(z)))
 
 def _raise_boxes_to_min_height(boxes: Sequence[LocalBox], min_height: float) -> tuple[LocalBox, ...]:
     out: list[LocalBox] = []

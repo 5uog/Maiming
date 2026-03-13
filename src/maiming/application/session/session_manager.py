@@ -1,6 +1,5 @@
 # FILE: src/maiming/application/session/session_manager.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 from ...core.math.vec3 import Vec3, clampf

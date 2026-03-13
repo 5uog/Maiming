@@ -1,16 +1,11 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/mesh_buffer.py
 from __future__ import annotations
-
 from ctypes import c_void_p
 from dataclasses import dataclass
 
 import numpy as np
 
-from OpenGL.GL import (
-    glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays,
-    glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor,
-    GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_STREAM_DRAW, GL_FLOAT
-)
+from OpenGL.GL import glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays, glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glVertexAttribDivisor, GL_ARRAY_BUFFER, GL_STATIC_DRAW, GL_STREAM_DRAW, GL_FLOAT
 
 from .array_view import as_float32_c_array, as_float32_rows
 from .buffer_upload import upload_array_buffer

@@ -1524,7 +1524,7 @@ static const char* const __pyx_f[] = {
 /*--- Type declarations ---*/
 struct __pyx_obj_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse;
 
-/* "maiming/core/grid/voxel_dda.py":15
+/* "maiming/core/grid/voxel_dda.py":16
  *     enter_face: int = -1
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):             # <<<<<<<<<<<<<<
@@ -2885,7 +2885,7 @@ return 0;
 /* #### Code section: module_code ### */
 static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value); /* proto */
 
-/* "maiming/core/grid/voxel_dda.py":15
+/* "maiming/core/grid/voxel_dda.py":16
  *     enter_face: int = -1
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):             # <<<<<<<<<<<<<<
@@ -2935,62 +2935,62 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_origin,&__pyx_mstate_global->__pyx_n_u_direction,&__pyx_mstate_global->__pyx_n_u_t_max,&__pyx_mstate_global->__pyx_n_u_cell_size,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 15, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 16, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  4:
         values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 16, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 16, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 16, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 16, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "dda_grid_traverse", 0) < (0)) __PYX_ERR(0, 15, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "dda_grid_traverse", 0) < (0)) __PYX_ERR(0, 16, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 3; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("dda_grid_traverse", 0, 3, 4, i); __PYX_ERR(0, 15, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("dda_grid_traverse", 0, 3, 4, i); __PYX_ERR(0, 16, __pyx_L3_error) }
       }
     } else {
       switch (__pyx_nargs) {
         case  4:
         values[3] = __Pyx_ArgRef_FASTCALL(__pyx_args, 3);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[3])) __PYX_ERR(0, 16, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  3:
         values[2] = __Pyx_ArgRef_FASTCALL(__pyx_args, 2);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[2])) __PYX_ERR(0, 16, __pyx_L3_error)
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 16, __pyx_L3_error)
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 15, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 16, __pyx_L3_error)
         break;
         default: goto __pyx_L5_argtuple_error;
       }
     }
     __pyx_v_origin = values[0];
     __pyx_v_direction = values[1];
-    __pyx_v_t_max = __Pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_t_max == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L3_error)
+    __pyx_v_t_max = __Pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_t_max == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L3_error)
     if (values[3]) {
-      __pyx_v_cell_size = __Pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_cell_size == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 15, __pyx_L3_error)
+      __pyx_v_cell_size = __Pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_cell_size == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 16, __pyx_L3_error)
     } else {
       __pyx_v_cell_size = ((double)((double)1.0));
     }
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("dda_grid_traverse", 0, 3, 4, __pyx_nargs); __PYX_ERR(0, 15, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("dda_grid_traverse", 0, 3, 4, __pyx_nargs); __PYX_ERR(0, 16, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3023,7 +3023,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_dda_grid_traverse(CYTH
   if (unlikely(!__pyx_cur_scope)) {
     __pyx_cur_scope = ((struct __pyx_obj_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse *)Py_None);
     __Pyx_INCREF(Py_None);
-    __PYX_ERR(0, 15, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   } else {
     __Pyx_GOTREF((PyObject *)__pyx_cur_scope);
   }
@@ -3036,7 +3036,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_dda_grid_traverse(CYTH
   __pyx_cur_scope->__pyx_v_t_max = __pyx_v_t_max;
   __pyx_cur_scope->__pyx_v_cell_size = __pyx_v_cell_size;
   {
-    __pyx_CoroutineObject *gen = __Pyx_Generator_New((__pyx_coroutine_body_t) __pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0]), (PyObject *) __pyx_cur_scope, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda); if (unlikely(!gen)) __PYX_ERR(0, 15, __pyx_L1_error)
+    __pyx_CoroutineObject *gen = __Pyx_Generator_New((__pyx_coroutine_body_t) __pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0]), (PyObject *) __pyx_cur_scope, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda); if (unlikely(!gen)) __PYX_ERR(0, 16, __pyx_L1_error)
     __Pyx_DECREF(__pyx_cur_scope);
     __Pyx_RefNannyFinishContext();
     return (PyObject *) gen;
@@ -3052,7 +3052,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_dda_grid_traverse(CYTH
   return __pyx_r;
 }
 
-/* "maiming/core/grid/voxel_dda.py":28
+/* "maiming/core/grid/voxel_dda.py":29
  *     step_z = 1 if d.z > 0 else -1
  * 
  *     def int_bound(s: float, ds: float) -> float:             # <<<<<<<<<<<<<<
@@ -3100,39 +3100,39 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_s,&__pyx_mstate_global->__pyx_n_u_ds,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 28, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 29, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  2:
         values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 28, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 29, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 28, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 29, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "int_bound", 0) < (0)) __PYX_ERR(0, 28, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "int_bound", 0) < (0)) __PYX_ERR(0, 29, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("int_bound", 1, 2, 2, i); __PYX_ERR(0, 28, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("int_bound", 1, 2, 2, i); __PYX_ERR(0, 29, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 2)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 28, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 29, __pyx_L3_error)
       values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 28, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 29, __pyx_L3_error)
     }
-    __pyx_v_s = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_s == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 28, __pyx_L3_error)
-    __pyx_v_ds = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_ds == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 28, __pyx_L3_error)
+    __pyx_v_s = __Pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_s == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
+    __pyx_v_ds = __Pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_ds == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 29, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("int_bound", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 28, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("int_bound", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 29, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3169,7 +3169,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("int_bound", 0);
 
-  /* "maiming/core/grid/voxel_dda.py":29
+  /* "maiming/core/grid/voxel_dda.py":30
  * 
  *     def int_bound(s: float, ds: float) -> float:
  *         if ds > 0:             # <<<<<<<<<<<<<<
@@ -3179,22 +3179,22 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
   __pyx_t_1 = (__pyx_v_ds > 0.0);
   if (__pyx_t_1) {
 
-    /* "maiming/core/grid/voxel_dda.py":30
+    /* "maiming/core/grid/voxel_dda.py":31
  *     def int_bound(s: float, ds: float) -> float:
  *         if ds > 0:
  *             s = s - math.floor(s)             # <<<<<<<<<<<<<<
  *             return (1.0 - s) / ds
  *         else:
 */
-    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_4 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_7 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -3214,18 +3214,18 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 30, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     }
-    __pyx_t_6 = PyNumber_Subtract(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_6 = PyNumber_Subtract(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_6); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 30, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_6); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 31, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_v_s = __pyx_t_8;
 
-    /* "maiming/core/grid/voxel_dda.py":31
+    /* "maiming/core/grid/voxel_dda.py":32
  *         if ds > 0:
  *             s = s - math.floor(s)
  *             return (1.0 - s) / ds             # <<<<<<<<<<<<<<
@@ -3236,15 +3236,15 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
     __pyx_t_8 = (1.0 - __pyx_v_s);
     if (unlikely(__pyx_v_ds == 0)) {
       PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-      __PYX_ERR(0, 31, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_t_8 / __pyx_v_ds)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_t_8 / __pyx_v_ds)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_r = __pyx_t_6;
     __pyx_t_6 = 0;
     goto __pyx_L0;
 
-    /* "maiming/core/grid/voxel_dda.py":29
+    /* "maiming/core/grid/voxel_dda.py":30
  * 
  *     def int_bound(s: float, ds: float) -> float:
  *         if ds > 0:             # <<<<<<<<<<<<<<
@@ -3253,7 +3253,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
 */
   }
 
-  /* "maiming/core/grid/voxel_dda.py":33
+  /* "maiming/core/grid/voxel_dda.py":34
  *             return (1.0 - s) / ds
  *         else:
  *             s = s - math.floor(s)             # <<<<<<<<<<<<<<
@@ -3261,15 +3261,15 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
  * 
 */
   /*else*/ {
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_2 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_s); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_7 = 1;
     #if CYTHON_UNPACK_METHODS
@@ -3289,18 +3289,18 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 33, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     }
-    __pyx_t_4 = PyNumber_Subtract(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_4 = PyNumber_Subtract(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_4); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyFloat_AsDouble(__pyx_t_4); if (unlikely((__pyx_t_8 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_v_s = __pyx_t_8;
 
-    /* "maiming/core/grid/voxel_dda.py":34
+    /* "maiming/core/grid/voxel_dda.py":35
  *         else:
  *             s = s - math.floor(s)
  *             return s / (-ds)             # <<<<<<<<<<<<<<
@@ -3311,16 +3311,16 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
     __pyx_t_8 = (-__pyx_v_ds);
     if (unlikely(__pyx_t_8 == 0)) {
       PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-      __PYX_ERR(0, 34, __pyx_L1_error)
+      __PYX_ERR(0, 35, __pyx_L1_error)
     }
-    __pyx_t_4 = PyFloat_FromDouble((__pyx_v_s / __pyx_t_8)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_4 = PyFloat_FromDouble((__pyx_v_s / __pyx_t_8)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 35, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_r = __pyx_t_4;
     __pyx_t_4 = 0;
     goto __pyx_L0;
   }
 
-  /* "maiming/core/grid/voxel_dda.py":28
+  /* "maiming/core/grid/voxel_dda.py":29
  *     step_z = 1 if d.z > 0 else -1
  * 
  *     def int_bound(s: float, ds: float) -> float:             # <<<<<<<<<<<<<<
@@ -3343,7 +3343,7 @@ static PyObject *__pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_in
   return __pyx_r;
 }
 
-/* "maiming/core/grid/voxel_dda.py":15
+/* "maiming/core/grid/voxel_dda.py":16
  *     enter_face: int = -1
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):             # <<<<<<<<<<<<<<
@@ -3386,10 +3386,10 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_L3_first_run:;
   if (unlikely(__pyx_sent_value != Py_None)) {
     if (unlikely(__pyx_sent_value)) PyErr_SetString(PyExc_TypeError, "can't send non-None value to a just-started generator");
-    __PYX_ERR(0, 15, __pyx_L1_error)
+    __PYX_ERR(0, 16, __pyx_L1_error)
   }
 
-  /* "maiming/core/grid/voxel_dda.py":16
+  /* "maiming/core/grid/voxel_dda.py":17
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
  *     d = direction             # <<<<<<<<<<<<<<
@@ -3400,55 +3400,55 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __Pyx_GIVEREF(__pyx_cur_scope->__pyx_v_direction);
   __pyx_cur_scope->__pyx_v_d = __pyx_cur_scope->__pyx_v_direction;
 
-  /* "maiming/core/grid/voxel_dda.py":17
+  /* "maiming/core/grid/voxel_dda.py":18
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
  *     d = direction
  *     if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:             # <<<<<<<<<<<<<<
  *         return
  * 
 */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_4) {
   } else {
     __pyx_t_1 = __pyx_t_4;
     goto __pyx_L5_bool_binop_done;
   }
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_4) {
   } else {
     __pyx_t_1 = __pyx_t_4;
     goto __pyx_L5_bool_binop_done;
   }
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_1 = __pyx_t_4;
   __pyx_L5_bool_binop_done:;
   if (__pyx_t_1) {
 
-    /* "maiming/core/grid/voxel_dda.py":18
+    /* "maiming/core/grid/voxel_dda.py":19
  *     d = direction
  *     if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:
  *         return             # <<<<<<<<<<<<<<
@@ -3459,7 +3459,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
     __pyx_r = Py_None; __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "maiming/core/grid/voxel_dda.py":17
+    /* "maiming/core/grid/voxel_dda.py":18
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
  *     d = direction
  *     if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:             # <<<<<<<<<<<<<<
@@ -3468,7 +3468,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
 */
   }
 
-  /* "maiming/core/grid/voxel_dda.py":20
+  /* "maiming/core/grid/voxel_dda.py":21
  *         return
  * 
  *     x = math.floor(origin.x / cell_size)             # <<<<<<<<<<<<<<
@@ -3476,16 +3476,16 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  *     z = math.floor(origin.z / cell_size)
 */
   __pyx_t_3 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = __Pyx_PyNumber_Divide(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyNumber_Divide(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3507,14 +3507,14 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 20, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   }
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_cur_scope->__pyx_v_x = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":21
+  /* "maiming/core/grid/voxel_dda.py":22
  * 
  *     x = math.floor(origin.x / cell_size)
  *     y = math.floor(origin.y / cell_size)             # <<<<<<<<<<<<<<
@@ -3522,16 +3522,16 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  * 
 */
   __pyx_t_6 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_5 = __Pyx_PyNumber_Divide(__pyx_t_8, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 21, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyNumber_Divide(__pyx_t_8, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3553,14 +3553,14 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
     __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   }
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_cur_scope->__pyx_v_y = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":22
+  /* "maiming/core/grid/voxel_dda.py":23
  *     x = math.floor(origin.x / cell_size)
  *     y = math.floor(origin.y / cell_size)
  *     z = math.floor(origin.z / cell_size)             # <<<<<<<<<<<<<<
@@ -3568,16 +3568,16 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  *     step_x = 1 if d.x > 0 else -1
 */
   __pyx_t_3 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_math); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_mstate_global->__pyx_n_u_floor); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = __Pyx_PyNumber_Divide(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyNumber_Divide(__pyx_t_5, __pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3599,25 +3599,25 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
   }
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_cur_scope->__pyx_v_z = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":24
+  /* "maiming/core/grid/voxel_dda.py":25
  *     z = math.floor(origin.z / cell_size)
  * 
  *     step_x = 1 if d.x > 0 else -1             # <<<<<<<<<<<<<<
  *     step_y = 1 if d.y > 0 else -1
  *     step_z = 1 if d.z > 0 else -1
 */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_8 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_8 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 25, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   if (__pyx_t_1) {
     __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
@@ -3630,18 +3630,18 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_step_x = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":25
+  /* "maiming/core/grid/voxel_dda.py":26
  * 
  *     step_x = 1 if d.x > 0 else -1
  *     step_y = 1 if d.y > 0 else -1             # <<<<<<<<<<<<<<
  *     step_z = 1 if d.z > 0 else -1
  * 
 */
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_6 = PyObject_RichCompare(__pyx_t_8, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_6 = PyObject_RichCompare(__pyx_t_8, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   if (__pyx_t_1) {
     __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
@@ -3654,18 +3654,18 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_step_y = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":26
+  /* "maiming/core/grid/voxel_dda.py":27
  *     step_x = 1 if d.x > 0 else -1
  *     step_y = 1 if d.y > 0 else -1
  *     step_z = 1 if d.z > 0 else -1             # <<<<<<<<<<<<<<
  * 
  *     def int_bound(s: float, ds: float) -> float:
 */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 26, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_8 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 26, __pyx_L1_error)
+  __pyx_t_8 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 27, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 26, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 27, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   if (__pyx_t_1) {
     __Pyx_INCREF(__pyx_mstate_global->__pyx_int_1);
@@ -3678,19 +3678,19 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_step_z = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":28
+  /* "maiming/core/grid/voxel_dda.py":29
  *     step_z = 1 if d.z > 0 else -1
  * 
  *     def int_bound(s: float, ds: float) -> float:             # <<<<<<<<<<<<<<
  *         if ds > 0:
  *             s = s - math.floor(s)
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_s, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ds, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __pyx_t_8 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_1int_bound, 0, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse_locals_int_bou, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 28, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_s, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 29, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_ds, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 29, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_return, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_1int_bound, 0, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse_locals_int_bou, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 29, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_8, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3698,38 +3698,38 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_int_bound = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":36
+  /* "maiming/core/grid/voxel_dda.py":37
  *             return s / (-ds)
  * 
  *     tmx = int_bound(origin.x / cell_size, d.x) if abs(d.x) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  *     tmy = int_bound(origin.y / cell_size, d.y) if abs(d.y) > 1e-12 else 1e30
  *     tmz = int_bound(origin.z / cell_size, d.z) if abs(d.z) > 1e-12 else 1e30
 */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 36, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 36, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_1) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
+    __pyx_t_3 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_8 = __pyx_t_3;
     __pyx_t_3 = 0;
@@ -3741,38 +3741,38 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tmx = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":37
+  /* "maiming/core/grid/voxel_dda.py":38
  * 
  *     tmx = int_bound(origin.x / cell_size, d.x) if abs(d.x) > 1e-12 else 1e30
  *     tmy = int_bound(origin.y / cell_size, d.y) if abs(d.y) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  *     tmz = int_bound(origin.z / cell_size, d.z) if abs(d.z) > 1e-12 else 1e30
  * 
 */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 37, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_11, __pyx_t_10); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __pyx_t_2 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_11, __pyx_t_10); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_8 = __pyx_t_2;
     __pyx_t_2 = 0;
@@ -3784,38 +3784,38 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tmy = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":38
+  /* "maiming/core/grid/voxel_dda.py":39
  *     tmx = int_bound(origin.x / cell_size, d.x) if abs(d.x) > 1e-12 else 1e30
  *     tmy = int_bound(origin.y / cell_size, d.y) if abs(d.y) > 1e-12 else 1e30
  *     tmz = int_bound(origin.z / cell_size, d.z) if abs(d.z) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  * 
  *     tdx = (cell_size / abs(d.x)) if abs(d.x) > 1e-12 else 1e30
 */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 38, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 39, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_1) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_origin, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_10 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_3 = __pyx_pf_7maiming_4core_4grid_9voxel_dda_17dda_grid_traverse_int_bound(__pyx_cur_scope->__pyx_v_int_bound, __pyx_t_10, __pyx_t_11); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_8 = __pyx_t_3;
     __pyx_t_3 = 0;
@@ -3827,31 +3827,31 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tmz = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":40
+  /* "maiming/core/grid/voxel_dda.py":41
  *     tmz = int_bound(origin.z / cell_size, d.z) if abs(d.z) > 1e-12 else 1e30
  * 
  *     tdx = (cell_size / abs(d.x)) if abs(d.x) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  *     tdy = (cell_size / abs(d.y)) if abs(d.y) > 1e-12 else 1e30
  *     tdz = (cell_size / abs(d.z)) if abs(d.z) > 1e-12 else 1e30
 */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_t_6, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 40, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_1) {
-    __pyx_t_3 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_3 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_x); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyNumber_Absolute(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyNumber_Absolute(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3865,31 +3865,31 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tdx = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":41
+  /* "maiming/core/grid/voxel_dda.py":42
  * 
  *     tdx = (cell_size / abs(d.x)) if abs(d.x) > 1e-12 else 1e30
  *     tdy = (cell_size / abs(d.y)) if abs(d.y) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  *     tdz = (cell_size / abs(d.z)) if abs(d.z) > 1e-12 else 1e30
  * 
 */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_2 = __Pyx_PyNumber_Absolute(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyNumber_Absolute(__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_6 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   if (__pyx_t_1) {
-    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_y); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyNumber_Divide(__pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -3903,31 +3903,31 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tdy = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":42
+  /* "maiming/core/grid/voxel_dda.py":43
  *     tdx = (cell_size / abs(d.x)) if abs(d.x) > 1e-12 else 1e30
  *     tdy = (cell_size / abs(d.y)) if abs(d.y) > 1e-12 else 1e30
  *     tdz = (cell_size / abs(d.z)) if abs(d.z) > 1e-12 else 1e30             # <<<<<<<<<<<<<<
  * 
  *     t = 0.0
 */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyNumber_Absolute(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_float_1eneg_12, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (__pyx_t_1) {
-    __pyx_t_2 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_2 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_cell_size); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_d, __pyx_mstate_global->__pyx_n_u_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 43, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyNumber_Absolute(__pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 43, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 43, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -3941,7 +3941,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __pyx_cur_scope->__pyx_v_tdz = __pyx_t_8;
   __pyx_t_8 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":44
+  /* "maiming/core/grid/voxel_dda.py":45
  *     tdz = (cell_size / abs(d.z)) if abs(d.z) > 1e-12 else 1e30
  * 
  *     t = 0.0             # <<<<<<<<<<<<<<
@@ -3952,7 +3952,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_float_0_0);
   __pyx_cur_scope->__pyx_v_t = __pyx_mstate_global->__pyx_float_0_0;
 
-  /* "maiming/core/grid/voxel_dda.py":45
+  /* "maiming/core/grid/voxel_dda.py":46
  * 
  *     t = 0.0
  *     enter_face = -1             # <<<<<<<<<<<<<<
@@ -3961,7 +3961,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
 */
   __pyx_cur_scope->__pyx_v_enter_face = -1L;
 
-  /* "maiming/core/grid/voxel_dda.py":47
+  /* "maiming/core/grid/voxel_dda.py":48
  *     enter_face = -1
  * 
  *     while t <= t_max:             # <<<<<<<<<<<<<<
@@ -3969,15 +3969,15 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  * 
 */
   while (1) {
-    __pyx_t_8 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_t_max); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 47, __pyx_L1_error)
+    __pyx_t_8 = PyFloat_FromDouble(__pyx_cur_scope->__pyx_v_t_max); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 48, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_t, __pyx_t_8, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 47, __pyx_L1_error)
+    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_t, __pyx_t_8, Py_LE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 48, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 47, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 48, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (!__pyx_t_1) break;
 
-    /* "maiming/core/grid/voxel_dda.py":48
+    /* "maiming/core/grid/voxel_dda.py":49
  * 
  *     while t <= t_max:
  *         yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))             # <<<<<<<<<<<<<<
@@ -3985,18 +3985,18 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  *         if tmx < tmy and tmx < tmz:
 */
     __pyx_t_8 = NULL;
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_DDAHit); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_mstate_global->__pyx_n_u_DDAHit); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_x); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_7 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_y); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_y); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_5 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_z); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyNumber_Int(__pyx_cur_scope->__pyx_v_z); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_12 = __Pyx_PyNumber_Float(__pyx_cur_scope->__pyx_v_t); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_12 = __Pyx_PyNumber_Float(__pyx_cur_scope->__pyx_v_t); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_12);
     __pyx_t_14 = NULL;
-    __pyx_t_15 = __Pyx_PyLong_From_long(__pyx_cur_scope->__pyx_v_enter_face); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_15 = __Pyx_PyLong_From_long(__pyx_cur_scope->__pyx_v_enter_face); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 49, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_15);
     __pyx_t_9 = 1;
     {
@@ -4004,7 +4004,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       __pyx_t_13 = __Pyx_PyObject_FastCall((PyObject*)(&PyLong_Type), __pyx_callargs+__pyx_t_9, (2-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
       __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
       __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
-      if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 48, __pyx_L1_error)
+      if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 49, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_13);
     }
     __pyx_t_9 = 1;
@@ -4029,7 +4029,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
       __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 48, __pyx_L1_error)
+      if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 49, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     }
     __pyx_r = __pyx_t_3;
@@ -4041,45 +4041,45 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
     __pyx_generator->resume_label = 1;
     return __pyx_r;
     __pyx_L10_resume_from_yield:;
-    if (unlikely(!__pyx_sent_value)) __PYX_ERR(0, 48, __pyx_L1_error)
+    if (unlikely(!__pyx_sent_value)) __PYX_ERR(0, 49, __pyx_L1_error)
 
-    /* "maiming/core/grid/voxel_dda.py":50
+    /* "maiming/core/grid/voxel_dda.py":51
  *         yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
  * 
  *         if tmx < tmy and tmx < tmz:             # <<<<<<<<<<<<<<
  *             x += step_x
  *             t = tmx
 */
-    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tmy, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 50, __pyx_L1_error)
+    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tmy, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 51, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 51, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (__pyx_t_4) {
     } else {
       __pyx_t_1 = __pyx_t_4;
       goto __pyx_L12_bool_binop_done;
     }
-    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tmz, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 50, __pyx_L1_error)
+    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tmz, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 51, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_4 < 0))) __PYX_ERR(0, 51, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_1 = __pyx_t_4;
     __pyx_L12_bool_binop_done:;
     if (__pyx_t_1) {
 
-      /* "maiming/core/grid/voxel_dda.py":51
+      /* "maiming/core/grid/voxel_dda.py":52
  * 
  *         if tmx < tmy and tmx < tmz:
  *             x += step_x             # <<<<<<<<<<<<<<
  *             t = tmx
  *             tmx += tdx
 */
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_x, __pyx_cur_scope->__pyx_v_step_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 51, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_x, __pyx_cur_scope->__pyx_v_step_x); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 52, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_x);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_x, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":52
+      /* "maiming/core/grid/voxel_dda.py":53
  *         if tmx < tmy and tmx < tmz:
  *             x += step_x
  *             t = tmx             # <<<<<<<<<<<<<<
@@ -4091,29 +4091,29 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_t, __pyx_cur_scope->__pyx_v_tmx);
       __Pyx_GIVEREF(__pyx_cur_scope->__pyx_v_tmx);
 
-      /* "maiming/core/grid/voxel_dda.py":53
+      /* "maiming/core/grid/voxel_dda.py":54
  *             x += step_x
  *             t = tmx
  *             tmx += tdx             # <<<<<<<<<<<<<<
  *             enter_face = 1 if step_x > 0 else 0
  *         elif tmy < tmz:
 */
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tdx); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmx, __pyx_cur_scope->__pyx_v_tdx); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 54, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_tmx);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_tmx, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":54
+      /* "maiming/core/grid/voxel_dda.py":55
  *             t = tmx
  *             tmx += tdx
  *             enter_face = 1 if step_x > 0 else 0             # <<<<<<<<<<<<<<
  *         elif tmy < tmz:
  *             y += step_y
 */
-      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_x, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 54, __pyx_L1_error)
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_x, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 55, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 55, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       if (__pyx_t_1) {
         __pyx_t_16 = 1;
@@ -4122,7 +4122,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       }
       __pyx_cur_scope->__pyx_v_enter_face = __pyx_t_16;
 
-      /* "maiming/core/grid/voxel_dda.py":50
+      /* "maiming/core/grid/voxel_dda.py":51
  *         yield DDAHit(int(x), int(y), int(z), float(t), int(enter_face))
  * 
  *         if tmx < tmy and tmx < tmz:             # <<<<<<<<<<<<<<
@@ -4132,33 +4132,33 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       goto __pyx_L11;
     }
 
-    /* "maiming/core/grid/voxel_dda.py":55
+    /* "maiming/core/grid/voxel_dda.py":56
  *             tmx += tdx
  *             enter_face = 1 if step_x > 0 else 0
  *         elif tmy < tmz:             # <<<<<<<<<<<<<<
  *             y += step_y
  *             t = tmy
 */
-    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmy, __pyx_cur_scope->__pyx_v_tmz, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 55, __pyx_L1_error)
-    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 55, __pyx_L1_error)
+    __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_tmy, __pyx_cur_scope->__pyx_v_tmz, Py_LT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 56, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (__pyx_t_1) {
 
-      /* "maiming/core/grid/voxel_dda.py":56
+      /* "maiming/core/grid/voxel_dda.py":57
  *             enter_face = 1 if step_x > 0 else 0
  *         elif tmy < tmz:
  *             y += step_y             # <<<<<<<<<<<<<<
  *             t = tmy
  *             tmy += tdy
 */
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_y, __pyx_cur_scope->__pyx_v_step_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 56, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_y, __pyx_cur_scope->__pyx_v_step_y); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_y);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_y, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":57
+      /* "maiming/core/grid/voxel_dda.py":58
  *         elif tmy < tmz:
  *             y += step_y
  *             t = tmy             # <<<<<<<<<<<<<<
@@ -4170,29 +4170,29 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_t, __pyx_cur_scope->__pyx_v_tmy);
       __Pyx_GIVEREF(__pyx_cur_scope->__pyx_v_tmy);
 
-      /* "maiming/core/grid/voxel_dda.py":58
+      /* "maiming/core/grid/voxel_dda.py":59
  *             y += step_y
  *             t = tmy
  *             tmy += tdy             # <<<<<<<<<<<<<<
  *             enter_face = 3 if step_y > 0 else 2
  *         else:
 */
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmy, __pyx_cur_scope->__pyx_v_tdy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 58, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmy, __pyx_cur_scope->__pyx_v_tdy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 59, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_tmy);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_tmy, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":59
+      /* "maiming/core/grid/voxel_dda.py":60
  *             t = tmy
  *             tmy += tdy
  *             enter_face = 3 if step_y > 0 else 2             # <<<<<<<<<<<<<<
  *         else:
  *             z += step_z
 */
-      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_y, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 59, __pyx_L1_error)
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 59, __pyx_L1_error)
+      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_y, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 60, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 60, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       if (__pyx_t_1) {
         __pyx_t_16 = 3;
@@ -4201,7 +4201,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       }
       __pyx_cur_scope->__pyx_v_enter_face = __pyx_t_16;
 
-      /* "maiming/core/grid/voxel_dda.py":55
+      /* "maiming/core/grid/voxel_dda.py":56
  *             tmx += tdx
  *             enter_face = 1 if step_x > 0 else 0
  *         elif tmy < tmz:             # <<<<<<<<<<<<<<
@@ -4211,7 +4211,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       goto __pyx_L11;
     }
 
-    /* "maiming/core/grid/voxel_dda.py":61
+    /* "maiming/core/grid/voxel_dda.py":62
  *             enter_face = 3 if step_y > 0 else 2
  *         else:
  *             z += step_z             # <<<<<<<<<<<<<<
@@ -4219,14 +4219,14 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
  *             tmz += tdz
 */
     /*else*/ {
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_z, __pyx_cur_scope->__pyx_v_step_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 61, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_z, __pyx_cur_scope->__pyx_v_step_z); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_z);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_z, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":62
+      /* "maiming/core/grid/voxel_dda.py":63
  *         else:
  *             z += step_z
  *             t = tmz             # <<<<<<<<<<<<<<
@@ -4238,26 +4238,26 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_t, __pyx_cur_scope->__pyx_v_tmz);
       __Pyx_GIVEREF(__pyx_cur_scope->__pyx_v_tmz);
 
-      /* "maiming/core/grid/voxel_dda.py":63
+      /* "maiming/core/grid/voxel_dda.py":64
  *             z += step_z
  *             t = tmz
  *             tmz += tdz             # <<<<<<<<<<<<<<
  *             enter_face = 5 if step_z > 0 else 4
 */
-      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmz, __pyx_cur_scope->__pyx_v_tdz); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 63, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_cur_scope->__pyx_v_tmz, __pyx_cur_scope->__pyx_v_tdz); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 64, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_tmz);
       __Pyx_DECREF_SET(__pyx_cur_scope->__pyx_v_tmz, __pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "maiming/core/grid/voxel_dda.py":64
+      /* "maiming/core/grid/voxel_dda.py":65
  *             t = tmz
  *             tmz += tdz
  *             enter_face = 5 if step_z > 0 else 4             # <<<<<<<<<<<<<<
 */
-      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_z, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 64, __pyx_L1_error)
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 64, __pyx_L1_error)
+      __pyx_t_3 = PyObject_RichCompare(__pyx_cur_scope->__pyx_v_step_z, __pyx_mstate_global->__pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 65, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       if (__pyx_t_1) {
         __pyx_t_16 = 5;
@@ -4270,7 +4270,7 @@ static PyObject *__pyx_gb_7maiming_4core_4grid_9voxel_dda_2generator(__pyx_Corou
   }
   CYTHON_MAYBE_UNUSED_VAR(__pyx_cur_scope);
 
-  /* "maiming/core/grid/voxel_dda.py":15
+  /* "maiming/core/grid/voxel_dda.py":16
  *     enter_face: int = -1
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):             # <<<<<<<<<<<<<<
@@ -4585,15 +4585,15 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse)) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse_spec, __pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse_spec, __pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   #else
   __pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse = &__pyx_type_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   #endif
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_7maiming_4core_4grid_9voxel_dda___pyx_scope_struct__dda_grid_traverse);
@@ -4916,7 +4916,7 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
  * from __future__ import annotations
  * import math             # <<<<<<<<<<<<<<
  * from dataclasses import dataclass
- * from ..math.vec3 import Vec3
+ * 
 */
   __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
@@ -4928,8 +4928,8 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
  * from __future__ import annotations
  * import math
  * from dataclasses import dataclass             # <<<<<<<<<<<<<<
- * from ..math.vec3 import Vec3
  * 
+ * from ..math.vec3 import Vec3
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_dataclass};
@@ -4948,59 +4948,59 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":5
- * import math
+  /* "maiming/core/grid/voxel_dda.py":6
  * from dataclasses import dataclass
+ * 
  * from ..math.vec3 import Vec3             # <<<<<<<<<<<<<<
  * 
  * @dataclass(frozen=True)
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Vec3};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math_vec3, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_math_vec3, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_math_vec3, __pyx_imported_names, 1, __pyx_mstate_global->__pyx_kp_u_maiming_core_math_vec3, 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Vec3};
     __pyx_t_3 = 0; {
-      __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 5, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_ImportFrom(__pyx_t_2, __pyx_imported_names[__pyx_t_3]); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 6, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_imported_names[__pyx_t_3], __pyx_t_4) < (0)) __PYX_ERR(0, 5, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_imported_names[__pyx_t_3], __pyx_t_4) < (0)) __PYX_ERR(0, 6, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":8
+  /* "maiming/core/grid/voxel_dda.py":9
  * 
  * @dataclass(frozen=True)
  * class DDAHit:             # <<<<<<<<<<<<<<
  *     cell_x: int
  *     cell_y: int
 */
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_mstate_global->__pyx_empty_tuple, __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_mstate_global->__pyx_n_u_DDAHit, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, (PyObject *) NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Py3MetaclassPrepare((PyObject *) NULL, __pyx_mstate_global->__pyx_empty_tuple, __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_mstate_global->__pyx_n_u_DDAHit, (PyObject *) NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, (PyObject *) NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_x, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_y, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_z, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_t, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_enter_face, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_annotations, __pyx_t_4) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_x, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_y, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_cell_z, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_t, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_mstate_global->__pyx_n_u_enter_face, __pyx_mstate_global->__pyx_n_u_int) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_annotations, __pyx_t_4) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":13
+  /* "maiming/core/grid/voxel_dda.py":14
  *     cell_z: int
  *     t: float
  *     enter_face: int = -1             # <<<<<<<<<<<<<<
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):
 */
-  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_enter_face, __pyx_mstate_global->__pyx_int_neg_1) < (0)) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_enter_face, __pyx_mstate_global->__pyx_int_neg_1) < (0)) __PYX_ERR(0, 14, __pyx_L1_error)
 
-  /* "maiming/core/grid/voxel_dda.py":7
+  /* "maiming/core/grid/voxel_dda.py":8
  * from ..math.vec3 import Vec3
  * 
  * @dataclass(frozen=True)             # <<<<<<<<<<<<<<
@@ -5009,30 +5009,30 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
 */
   __pyx_t_5 = NULL;
   __pyx_t_7 = NULL;
-  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 7, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_8, __pyx_mstate_global->__pyx_n_u_dataclass); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_9 = 1;
   {
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 1 : 0)] = {__pyx_t_7, NULL};
-    __pyx_t_10 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 7, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_MakeVectorcallBuilderKwds(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 8, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_frozen, Py_True, __pyx_t_10, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 7, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_frozen, Py_True, __pyx_t_10, __pyx_callargs+1, 0) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
     __pyx_t_6 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_8, __pyx_callargs+__pyx_t_9, (1-__pyx_t_9) | (__pyx_t_9*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_10);
     __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 7, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 8, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
   }
 
-  /* "maiming/core/grid/voxel_dda.py":8
+  /* "maiming/core/grid/voxel_dda.py":9
  * 
  * @dataclass(frozen=True)
  * class DDAHit:             # <<<<<<<<<<<<<<
  *     cell_x: int
  *     cell_y: int
 */
-  __pyx_t_8 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_mstate_global->__pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_Py3ClassCreate(((PyObject*)&PyType_Type), __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_mstate_global->__pyx_empty_tuple, __pyx_t_2, NULL, 0, 0); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_8);
@@ -5044,32 +5044,32 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 7, __pyx_L1_error)
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 8, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   }
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_t_4) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_DDAHit, __pyx_t_4) < (0)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "maiming/core/grid/voxel_dda.py":15
+  /* "maiming/core/grid/voxel_dda.py":16
  *     enter_face: int = -1
  * 
  * def dda_grid_traverse(origin: Vec3, direction: Vec3, t_max: float, cell_size: float = 1.0):             # <<<<<<<<<<<<<<
  *     d = direction
  *     if abs(d.x) < 1e-12 and abs(d.y) < 1e-12 and abs(d.z) < 1e-12:
 */
-  __pyx_t_2 = PyFloat_FromDouble(((double)1.0)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_2 = PyFloat_FromDouble(((double)1.0)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_origin, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_direction, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_t_max, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cell_size, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_4grid_9voxel_dda_1dda_grid_traverse, 0, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_origin, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_direction, __pyx_mstate_global->__pyx_n_u_Vec3) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_t_max, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_cell_size, __pyx_mstate_global->__pyx_n_u_float) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_CyFunction_New(&__pyx_mdef_7maiming_4core_4grid_9voxel_dda_1dda_grid_traverse, 0, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, NULL, __pyx_mstate_global->__pyx_n_u_maiming_core_grid_voxel_dda, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_6);
@@ -5078,7 +5078,7 @@ __Pyx_RefNannySetupContext("PyInit_voxel_dda", 0);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_6, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_t_6) < (0)) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_dda_grid_traverse, __pyx_t_6) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
   /* "maiming/core/grid/voxel_dda.py":1
@@ -5299,12 +5299,12 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 21, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS|CO_GENERATOR), 15};
+    const __Pyx_PyCode_New_function_description descr = {4, 0, 0, 21, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS|CO_GENERATOR), 16};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_origin, __pyx_mstate->__pyx_n_u_direction, __pyx_mstate->__pyx_n_u_t_max, __pyx_mstate->__pyx_n_u_cell_size, __pyx_mstate->__pyx_n_u_d, __pyx_mstate->__pyx_n_u_x, __pyx_mstate->__pyx_n_u_y, __pyx_mstate->__pyx_n_u_z, __pyx_mstate->__pyx_n_u_step_x, __pyx_mstate->__pyx_n_u_step_y, __pyx_mstate->__pyx_n_u_step_z, __pyx_mstate->__pyx_n_u_int_bound, __pyx_mstate->__pyx_n_u_int_bound, __pyx_mstate->__pyx_n_u_tmx, __pyx_mstate->__pyx_n_u_tmy, __pyx_mstate->__pyx_n_u_tmz, __pyx_mstate->__pyx_n_u_tdx, __pyx_mstate->__pyx_n_u_tdy, __pyx_mstate->__pyx_n_u_tdz, __pyx_mstate->__pyx_n_u_t, __pyx_mstate->__pyx_n_u_enter_face};
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_grid_voxel_dda, __pyx_mstate->__pyx_n_u_dda_grid_traverse, __pyx_mstate->__pyx_kp_b_iso88591_G_a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 28};
+    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 29};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_s, __pyx_mstate->__pyx_n_u_ds};
     __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_src_maiming_core_grid_voxel_dda, __pyx_mstate->__pyx_n_u_int_bound, __pyx_mstate->__pyx_kp_b_iso88591_3b_D_aq_D_Rq_D_aq_2S, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }

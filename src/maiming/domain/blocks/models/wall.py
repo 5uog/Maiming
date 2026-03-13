@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/models/wall.py
 from __future__ import annotations
-
 from typing import Dict, List
 
 from .common import LocalBox, GetState, GetDef, rotate_box_y_cw

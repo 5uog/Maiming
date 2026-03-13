@@ -1,15 +1,9 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/renderer_backend.py
 from __future__ import annotations
-
 from pathlib import Path
 
 import numpy as np
-from OpenGL.GL import (
-    glEnable,
-    glDepthFunc,
-    GL_DEPTH_TEST,
-    GL_LESS,
-)
+from OpenGL.GL import glEnable, glDepthFunc, GL_DEPTH_TEST, GL_LESS
 
 from .....core.math.vec3 import Vec3
 from .....domain.blocks.block_registry import BlockRegistry
@@ -33,34 +27,17 @@ from .render_state import RendererRuntimeState
 from .selection_controller import SelectionController
 
 def _format_context_details(info: GLInfoSnapshot) -> str:
-    return (
-        f"OpenGL={info.version or 'unknown'}; "
-        f"GLSL={info.glsl_version or 'unknown'}; "
-        f"parsed_version={int(info.major_version)}.{int(info.minor_version)}; "
-        f"parsed_glsl={int(info.glsl_major_version)}.{int(info.glsl_minor_version)}; "
-        f"profile={info.profile_name()}; "
-        f"vendor={info.vendor or 'unknown'}; "
-        f"renderer={info.renderer or 'unknown'}"
-    )
+    return (f"OpenGL={info.version or 'unknown'}; GLSL={info.glsl_version or 'unknown'}; parsed_version={int(info.major_version)}.{int(info.minor_version)}; parsed_glsl={int(info.glsl_major_version)}.{int(info.glsl_minor_version)}; profile={info.profile_name()}; vendor={info.vendor or 'unknown'}; renderer={info.renderer or 'unknown'}")
 
 def _require_gl43_core_context(info: GLInfoSnapshot) -> None:
     if not info.is_version_at_least(4, 3):
-        raise RuntimeError(
-            "The active context does not satisfy the OpenGL 4.3 requirement for the compute-backed "
-            f"chunk face payload path. {_format_context_details(info)}"
-        )
+        raise RuntimeError(f"The active context does not satisfy the OpenGL 4.3 requirement for the compute-backed chunk face payload path. {_format_context_details(info)}")
 
     if not info.is_core_profile():
-        raise RuntimeError(
-            "The active context is not Core Profile, but the renderer requires OpenGL 4.3 Core "
-            f"Profile for the compute-backed chunk face payload path. {_format_context_details(info)}"
-        )
+        raise RuntimeError(f"The active context is not Core Profile, but the renderer requires OpenGL 4.3 Core Profile for the compute-backed chunk face payload path. {_format_context_details(info)}")
 
     if not info.is_glsl_at_least(4, 30):
-        raise RuntimeError(
-            "The active GLSL version is insufficient for the compute-backed chunk face payload path. "
-            f"{_format_context_details(info)}"
-        )
+        raise RuntimeError(f"The active GLSL version is insufficient for the compute-backed chunk face payload path. {_format_context_details(info)}")
 
 class RendererBackend:
     def __init__(self, *, cfg: GLRendererParams, state: RendererRuntimeState, sel_tint_strength: float = 0.55) -> None:
@@ -70,17 +47,7 @@ class RendererBackend:
 
         self._res: GLResources | None = None
         self._visuals: BlockVisualResolver | None = None
-        self._gl_info = GLInfoSnapshot(
-            vendor="",
-            renderer="",
-            version="",
-            glsl_version="",
-            major_version=0,
-            minor_version=0,
-            glsl_major_version=0,
-            glsl_minor_version=0,
-            context_profile_mask=0,
-        )
+        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="", major_version=0, minor_version=0, glsl_major_version=0, glsl_minor_version=0, context_profile_mask=0)
 
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
@@ -101,12 +68,7 @@ class RendererBackend:
         try:
             self._res = GLResources.load(assets_dir, blocks=block_registry)
         except Exception as exc:
-            raise RuntimeError(
-                "OpenGL 4.3 initialization failed while compiling or linking one or more required "
-                "shader resources for the renderer, including the compute-backed chunk face payload "
-                f"program. {_format_context_details(self._gl_info)}\n"
-                f"Original error:\n{exc}"
-            ) from exc
+            raise RuntimeError(f"OpenGL 4.3 initialization failed while compiling or linking one or more required shader resources for the renderer, including the compute-backed chunk face payload program. {_format_context_details(self._gl_info)}\nOriginal error:\n{exc}") from exc
 
         self._visuals = BlockVisualResolver(atlas=self._res.atlas, blocks=self._res.blocks)
 

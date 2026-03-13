@@ -1,6 +1,5 @@
 # FILE: src/maiming/application/session/render_snapshot.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 @dataclass(frozen=True)

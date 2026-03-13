@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/block_definition.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Tuple
 

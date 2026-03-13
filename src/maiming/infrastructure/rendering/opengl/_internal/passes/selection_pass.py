@@ -1,16 +1,11 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/selection_pass.py
 from __future__ import annotations
-
 from ctypes import c_void_p
 from dataclasses import dataclass
 
 import numpy as np
 
-from OpenGL.GL import (
-    glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays,
-    glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glDrawArrays, glEnable, glDisable, glDepthMask, glDepthFunc,
-    GL_ARRAY_BUFFER, GL_STREAM_DRAW, GL_FLOAT, GL_LINES, GL_DEPTH_TEST, GL_LEQUAL, GL_BLEND, GL_CULL_FACE
-)
+from OpenGL.GL import glGenVertexArrays, glGenBuffers, glDeleteBuffers, glDeleteVertexArrays, glBindVertexArray, glBindBuffer, glBufferData, glEnableVertexAttribArray, glVertexAttribPointer, glDrawArrays, glEnable, glDisable, glDepthMask, glDepthFunc, GL_ARRAY_BUFFER, GL_STREAM_DRAW, GL_FLOAT, GL_LINES, GL_DEPTH_TEST, GL_LEQUAL, GL_BLEND, GL_CULL_FACE
 
 from ..gl.array_view import as_float32_c_array
 from ..gl.buffer_upload import upload_array_buffer

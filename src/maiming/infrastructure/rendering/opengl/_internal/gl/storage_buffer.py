@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/storage_buffer.py
 from __future__ import annotations
-
 import numpy as np
 
 from OpenGL.GL import glGenBuffers, glDeleteBuffers, glBindBuffer, glBindBufferBase, glBufferData, glGetBufferSubData, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW

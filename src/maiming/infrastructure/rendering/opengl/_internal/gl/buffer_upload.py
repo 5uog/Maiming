@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/gl/buffer_upload.py
 from __future__ import annotations
-
 import numpy as np
 
 from OpenGL.GL import glBindBuffer, glBufferData, glBufferSubData

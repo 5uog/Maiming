@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/world_face_source_builder.py
 from __future__ import annotations
-
 from typing import Callable, Iterable
 
 import numpy as np

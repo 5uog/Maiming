@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/state_values.py
 from __future__ import annotations
-
 from collections.abc import Mapping
 
 def bool_str(v: bool) -> str:

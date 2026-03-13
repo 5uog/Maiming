@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/block_registry.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from .block_definition import BlockDefinition

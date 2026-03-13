@@ -1,15 +1,11 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/world_pass.py
 from __future__ import annotations
-
 import time
 from dataclasses import dataclass
 
 import numpy as np
 
-from OpenGL.GL import (
-    glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode,
-    GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE,
-)
+from OpenGL.GL import glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE
 
 from ......core.math.vec3 import Vec3
 from ......domain.world.chunking import ChunkKey

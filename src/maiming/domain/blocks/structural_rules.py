@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/blocks/structural_rules.py
 from __future__ import annotations
-
 from typing import Callable
 
 from .block_definition import BlockDefinition

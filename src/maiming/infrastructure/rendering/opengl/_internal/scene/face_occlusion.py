@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/scene/face_occlusion.py
 from __future__ import annotations
-
 from typing import Callable
 
 from ......core.grid.face_index import face_neighbor_offset

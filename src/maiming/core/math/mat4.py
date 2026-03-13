@@ -2,6 +2,7 @@
 from __future__ import annotations
 import math
 import numpy as np
+
 from .vec3 import Vec3
 
 def identity() -> np.ndarray:

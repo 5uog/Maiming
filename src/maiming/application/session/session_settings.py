@@ -1,6 +1,5 @@
 # FILE: src/maiming/application/session/session_settings.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field, replace
 from typing import ClassVar
 

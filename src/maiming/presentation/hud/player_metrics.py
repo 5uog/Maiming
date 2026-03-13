@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/hud/player_metrics.py
 from __future__ import annotations
-
 import math
 from collections import deque
 from dataclasses import dataclass, field

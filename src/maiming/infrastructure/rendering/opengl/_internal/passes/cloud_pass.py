@@ -1,13 +1,9 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/_internal/passes/cloud_pass.py
 from __future__ import annotations
-
 import time
 import numpy as np
 
-from OpenGL.GL import (
-    glEnable, glDisable, glDepthMask, glDepthFunc, glBlendFunc, glBlendEquation, glCullFace, glPolygonMode, glBindVertexArray, glDrawArraysInstanced,
-    GL_DEPTH_TEST, GL_LESS, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE, GL_FILL, GL_TRIANGLES
-)
+from OpenGL.GL import glEnable, glDisable, glDepthMask, glDepthFunc, glBlendFunc, glBlendEquation, glCullFace, glPolygonMode, glBindVertexArray, glDrawArraysInstanced, GL_DEPTH_TEST, GL_LESS, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE, GL_FILL, GL_TRIANGLES
 
 from ......core.math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram

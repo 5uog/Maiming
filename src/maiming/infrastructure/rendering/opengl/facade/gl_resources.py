@@ -1,13 +1,11 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/gl_resources.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 
 from OpenGL.GL import glGenVertexArrays, glDeleteVertexArrays
 
 from .....domain.blocks.block_registry import BlockRegistry
-
 from .._internal.gl.shader_program import ShaderProgram
 from .._internal.gl.mesh_buffer import MeshBuffer
 from .._internal.resources.texture_atlas import TextureAtlas

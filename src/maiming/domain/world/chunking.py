@@ -1,6 +1,5 @@
 # FILE: src/maiming/domain/world/chunking.py
 from __future__ import annotations
-
 from typing import Tuple, Set
 
 CHUNK_SIZE: int = 16

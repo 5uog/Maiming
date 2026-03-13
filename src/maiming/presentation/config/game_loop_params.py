@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/config/game_loop_params.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 @dataclass(frozen=True)

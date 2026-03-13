@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/rendering/opengl/facade/selection_controller.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 import numpy as np

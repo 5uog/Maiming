@@ -1,6 +1,5 @@
 # FILE: src/maiming/application/services/interaction_service.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 from ...domain.world.world_state import WorldState
@@ -22,7 +21,6 @@ class InteractionService:
     world: WorldState
     player: PlayerEntity
     block_registry: BlockRegistry
-
     placement_policy: PlacementPolicy = field(init=False, repr=False)
 
     def __post_init__(self) -> None:

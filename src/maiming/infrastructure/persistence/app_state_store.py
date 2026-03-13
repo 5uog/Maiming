@@ -1,6 +1,5 @@
 # FILE: src/maiming/infrastructure/persistence/app_state_store.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Tuple
