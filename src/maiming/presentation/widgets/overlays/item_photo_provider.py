@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/overlays/item_photo_provider.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 

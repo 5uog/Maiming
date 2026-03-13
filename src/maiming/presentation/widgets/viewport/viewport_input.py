@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_input.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt, QPoint

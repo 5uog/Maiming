@@ -1,6 +1,7 @@
 # FILE: src/maiming/presentation/screens/game_screen.py
 from __future__ import annotations
 from pathlib import Path
+
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 
 from ..widgets.viewport.gl_viewport_widget import GLViewportWidget

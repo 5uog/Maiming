@@ -1,6 +1,5 @@
 # FILE: src/maiming/api/run.py
 from __future__ import annotations
-
 from pathlib import Path
 
 def _search_start(start: Path) -> Path:

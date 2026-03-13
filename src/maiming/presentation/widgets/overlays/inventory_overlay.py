@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/overlays/inventory_overlay.py
 from __future__ import annotations
-
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint, QByteArray, QMimeData

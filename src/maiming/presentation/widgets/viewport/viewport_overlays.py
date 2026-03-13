@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_overlays.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Callable
 

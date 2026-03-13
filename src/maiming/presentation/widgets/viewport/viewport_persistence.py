@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_persistence.py
 from __future__ import annotations
-
 from pathlib import Path
 
 from ....core.math.vec3 import Vec3
@@ -14,7 +13,6 @@ PersistedRuntime = ViewportRuntimeState
 
 def apply_persisted_state_if_present(*, project_root: Path, session: SessionManager, renderer: GLRenderer) -> ViewportRuntimeState:
     runtime = ViewportRuntimeState()
-
     store = AppStateStore(project_root=Path(project_root))
     st = store.load()
 
@@ -33,25 +31,19 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
 
         runtime.invert_x = bool(ps.invert_x)
         runtime.invert_y = bool(ps.invert_y)
-
         runtime.outline_selection = bool(ps.outline_selection)
-
         runtime.world_wire = bool(ps.world_wireframe)
         runtime.shadow_enabled = bool(ps.shadow_enabled)
-
         runtime.sun_az_deg = float(ps.sun_az_deg)
         runtime.sun_el_deg = float(ps.sun_el_deg)
-
         runtime.cloud_enabled = bool(ps.cloud_enabled)
         runtime.cloud_density = int(ps.cloud_density)
         runtime.cloud_seed = int(ps.cloud_seed)
         runtime.cloud_flow_direction = str(getattr(ps, "cloud_flow_direction", "west_to_east"))
-
         runtime.creative_mode = bool(getattr(ps, "creative_mode", getattr(ps, "build_mode", False)))
         runtime.auto_jump_enabled = bool(ps.auto_jump_enabled)
         runtime.auto_sprint_enabled = bool(getattr(ps, "auto_sprint_enabled", False))
         runtime.render_distance_chunks = int(ps.render_distance_chunks)
-
         runtime.creative_hotbar_slots = list(st.inventory.creative_hotbar_slots)
         runtime.creative_selected_hotbar_index = int(st.inventory.creative_selected_hotbar_index)
         runtime.survival_hotbar_slots = list(st.inventory.survival_hotbar_slots)
@@ -77,9 +69,7 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
             session.world.replace_all(blocks={k: str(v) for (k, v) in pw.blocks.items()}, revision=int(max(1, int(pw.revision))))
 
     runtime.normalize()
-
     runtime.hud_visible = False
-
     renderer.set_outline_selection_enabled(bool(runtime.outline_selection))
     renderer.set_world_wireframe(bool(runtime.world_wire))
     renderer.set_shadow_enabled(bool(runtime.shadow_enabled))

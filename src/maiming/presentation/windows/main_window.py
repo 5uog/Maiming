@@ -1,8 +1,6 @@
 # FILE: src/maiming/presentation/windows/main_window.py
 from __future__ import annotations
-
 from pathlib import Path
-
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
 from ..config.gl_surface_format import install_default_gl_surface_format

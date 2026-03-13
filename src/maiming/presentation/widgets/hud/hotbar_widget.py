@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/hud/hotbar_widget.py
 from __future__ import annotations
-
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QSize

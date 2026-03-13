@@ -2,7 +2,6 @@
 from __future__ import annotations
 from pathlib import Path
 import sys
-
 from setuptools import Extension, setup
 
 _ROOT = Path(__file__).resolve().parent

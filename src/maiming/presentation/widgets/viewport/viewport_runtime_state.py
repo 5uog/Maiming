@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_runtime_state.py
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 from ....domain.inventory.hotbar import HOTBAR_SIZE, current_hotbar_block_id, cycle_hotbar_index, normalize_hotbar_index, normalize_hotbar_slots, with_hotbar_assignment

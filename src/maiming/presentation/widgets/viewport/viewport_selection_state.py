@@ -1,6 +1,5 @@
 # FILE: src/maiming/presentation/widgets/viewport/viewport_selection_state.py
 from __future__ import annotations
-
 import time
 from dataclasses import dataclass
 
