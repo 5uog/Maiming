@@ -11,6 +11,8 @@ from .....domain.blocks.state_codec import parse_state
 from .....domain.world.chunking import ChunkKey
 from .._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
 from .._internal.passes.cloud_pass import CloudPass
+from .._internal.passes.first_person_arm_pass import FirstPersonArmPass
+from .._internal.passes.held_block_pass import HeldBlockPass
 from .._internal.passes.player_model_pass import PlayerModelPass
 from .._internal.passes.selection_pass import SelectionPass
 from .._internal.passes.shadow_map_pass import ShadowMapPass
@@ -54,6 +56,8 @@ class RendererBackend:
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
         self._player = PlayerModelPass()
+        self._first_person_arm = FirstPersonArmPass()
+        self._held_block = HeldBlockPass()
         self._sun = SunPass(self._cfg.sun)
         self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
         self._selection_pass = SelectionPass()
@@ -81,13 +85,15 @@ class RendererBackend:
         self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
         self._world.initialize(shadowed_prog=self._res.world_prog, no_shadow_prog=self._res.world_no_shadow_prog, atlas=self._res.atlas)
         self._player.initialize(world_prog=self._res.player_model_prog, no_shadow_prog=self._res.player_model_no_shadow_prog, shadow_prog=self._res.player_model_shadow_prog, mesh=self._res.player_model_mesh)
+        self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
+        self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
         self._selection_pass.initialize(self._res.selection_prog)
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
-        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
 
         self.apply_runtime_state()
 
@@ -96,6 +102,8 @@ class RendererBackend:
         self._shadow.destroy()
         self._world.destroy()
         self._player.destroy()
+        self._first_person_arm.destroy()
+        self._held_block.destroy()
         self._selection_pass.destroy()
 
         if self._res is not None:

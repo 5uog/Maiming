@@ -10,11 +10,14 @@ from ......core.math.vec3 import Vec3
 from ......core.math.view_angles import forward_from_yaw_pitch_deg
 from ......domain.world.chunking import chunk_key
 from ..passes.cloud_pass import CloudPass
+from ..passes.first_person_arm_pass import FirstPersonArmPass
+from ..passes.held_block_pass import HeldBlockPass
 from ..passes.player_model_pass import PlayerModelPass
 from ..passes.shadow_map_pass import ShadowMapPass
 from ..passes.sun_pass import SunPass
 from ..passes.world_pass import WorldDrawInputs, WorldPass
 from ..pipeline.light_space import compute_light_view_proj
+from ..scene.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ..scene.player_model_pose import build_player_model_pose
 from ...facade.gl_renderer_params import GLRendererParams
 from ...facade.player_render_state import PlayerRenderState
@@ -29,6 +32,8 @@ class FramePipeline:
     shadow_pass: ShadowMapPass
     world_pass: WorldPass
     player_pass: PlayerModelPass
+    first_person_arm_pass: FirstPersonArmPass
+    held_block_pass: HeldBlockPass
     sun_pass: SunPass
     cloud_pass: CloudPass
     selection: SelectionController
@@ -91,4 +96,14 @@ class FramePipeline:
         self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir)
 
         self.selection.draw(view_proj=vp)
+
+        first_person = None if player_state is None else player_state.first_person
+        if first_person is not None and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
+            glClear(GL_DEPTH_BUFFER_BIT)
+            hand_vp = mat4.perspective(fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
+            if first_person.visible_block_id is not None:
+                self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
+            else:
+                self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
+
         return RendererFrameMetrics(world=world_metrics, shadow=shadow_metrics)

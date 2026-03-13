@@ -5,6 +5,7 @@ import math
 
 import numpy as np
 
+from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind, translate_matrix
 from ...facade.player_render_state import PlayerRenderState
 
 _PX = 1.0 / 16.0
@@ -106,6 +107,19 @@ def _compose(*mats: np.ndarray) -> np.ndarray:
 def _as_rows(m: np.ndarray) -> np.ndarray:
     return np.asarray(m, dtype=np.float32).reshape(16)
 
+def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
+    swing = _clampf(float(swing_progress), 0.0, 1.0)
+    if swing <= 1e-6:
+        return (0.0, 0.0, 0.0)
+
+    root = math.sin(math.sqrt(swing) * math.pi)
+    full = math.sin(swing * math.pi)
+    eased = 1.0 - pow(1.0 - swing, 4.0)
+    attack_x = -1.2 * math.sin(eased * math.pi)
+    attack_y = -0.35 * root
+    attack_z = -0.4 * full
+    return (float(attack_x), float(attack_y), float(attack_z))
+
 def _build_part_rows(state: PlayerRenderState) -> tuple[np.ndarray, ...]:
     crouch = _clampf(float(state.crouch_amount), 0.0, 1.0)
     body_yaw = math.radians(float(state.body_yaw_deg))
@@ -131,12 +145,31 @@ def _build_part_rows(state: PlayerRenderState) -> tuple[np.ndarray, ...]:
     leg_group_z = _lerp(0.0, float(_CROUCH_LEG_POS_Z), float(crouch))
     head = _compose(root, _mat_translate(0.0, float(head_group_y), 0.0), _mat_rot_y(float(head_yaw)), _mat_rot_x(float(head_pitch)), _mat_translate(float(_HEAD_CENTER[0]), float(_HEAD_CENTER[1]), float(_HEAD_CENTER[2])), _mat_scale(float(_HEAD_SIZE[0]), float(_HEAD_SIZE[1]), float(_HEAD_SIZE[2])))
     body = _compose(root, _mat_translate(0.0, float(body_group_y), float(body_group_z)), _mat_rot_x(float(_CROUCH_BODY_ROT_X) * float(crouch)), _mat_scale(float(_BODY_SIZE[0]), float(_BODY_SIZE[1]), float(_BODY_SIZE[2])))
-    right_arm = _compose(root, _mat_translate(float(_RIGHT_ARM_GROUP_POS_STAND[0]), float(arm_group_y), float(arm_group_z)), _mat_rot_z(float(right_arm_rot_z)), _mat_rot_x(float(right_arm_rot_x)), _mat_translate(float(_RIGHT_ARM_PIVOT_SLIM[0]), float(_RIGHT_ARM_PIVOT_SLIM[1]), float(_RIGHT_ARM_PIVOT_SLIM[2])), _mat_scale(float(_ARM_SIZE_SLIM[0]), float(_ARM_SIZE_SLIM[1]), float(_ARM_SIZE_SLIM[2])))
-    left_arm = _compose(root, _mat_translate(float(_LEFT_ARM_GROUP_POS_STAND[0]), float(arm_group_y), float(arm_group_z)), _mat_rot_z(float(left_arm_rot_z)), _mat_rot_x(float(left_arm_rot_x)), _mat_translate(float(_LEFT_ARM_PIVOT_SLIM[0]), float(_LEFT_ARM_PIVOT_SLIM[1]), float(_LEFT_ARM_PIVOT_SLIM[2])), _mat_scale(float(_ARM_SIZE_SLIM[0]), float(_ARM_SIZE_SLIM[1]), float(_ARM_SIZE_SLIM[2])))
+    right_arm_parent = _compose(root, _mat_translate(float(_RIGHT_ARM_GROUP_POS_STAND[0]), float(arm_group_y), float(arm_group_z)), _mat_rot_z(float(right_arm_rot_z)), _mat_rot_x(float(right_arm_rot_x)))
+    left_arm_parent = _compose(root, _mat_translate(float(_LEFT_ARM_GROUP_POS_STAND[0]), float(arm_group_y), float(arm_group_z)), _mat_rot_z(float(left_arm_rot_z)), _mat_rot_x(float(left_arm_rot_x)))
+    right_arm = _compose(right_arm_parent, _mat_translate(float(_RIGHT_ARM_PIVOT_SLIM[0]), float(_RIGHT_ARM_PIVOT_SLIM[1]), float(_RIGHT_ARM_PIVOT_SLIM[2])), _mat_scale(float(_ARM_SIZE_SLIM[0]), float(_ARM_SIZE_SLIM[1]), float(_ARM_SIZE_SLIM[2])))
+    left_arm = _compose(left_arm_parent, _mat_translate(float(_LEFT_ARM_PIVOT_SLIM[0]), float(_LEFT_ARM_PIVOT_SLIM[1]), float(_LEFT_ARM_PIVOT_SLIM[2])), _mat_scale(float(_ARM_SIZE_SLIM[0]), float(_ARM_SIZE_SLIM[1]), float(_ARM_SIZE_SLIM[2])))
     right_leg = _compose(root, _mat_translate(float(_RIGHT_LEG_GROUP_POS_STAND[0]), float(_RIGHT_LEG_GROUP_POS_STAND[1]), float(leg_group_z)), _mat_rot_x(float(right_leg_rot_x)), _mat_translate(float(_LEG_PIVOT[0]), float(_LEG_PIVOT[1]), float(_LEG_PIVOT[2])), _mat_scale(float(_LEG_SIZE[0]), float(_LEG_SIZE[1]), float(_LEG_SIZE[2])))
     left_leg = _compose(root, _mat_translate(float(_LEFT_LEG_GROUP_POS_STAND[0]), float(_LEFT_LEG_GROUP_POS_STAND[1]), float(leg_group_z)), _mat_rot_x(float(left_leg_rot_x)), _mat_translate(float(_LEG_PIVOT[0]), float(_LEG_PIVOT[1]), float(_LEG_PIVOT[2])), _mat_scale(float(_LEG_SIZE[0]), float(_LEG_SIZE[1]), float(_LEG_SIZE[2])))
 
-    return (_as_rows(head), _as_rows(body), _as_rows(right_arm), _as_rows(left_arm), _as_rows(right_leg), _as_rows(left_leg))
+    rows = [_as_rows(head), _as_rows(body), _as_rows(right_arm), _as_rows(left_arm), _as_rows(right_leg), _as_rows(left_leg)]
+
+    first_person = state.first_person
+    if bool(state.is_first_person) and first_person is not None:
+        attack_x, attack_y, attack_z = _shadow_attack_angles(float(first_person.swing_progress))
+        left_arm_shadow_parent = _compose(root, _mat_translate(float(_LEFT_ARM_GROUP_POS_STAND[0]), float(arm_group_y), float(arm_group_z)), _mat_rot_z(float(left_arm_rot_z) - float(attack_z)), _mat_rot_y(float(-attack_y)), _mat_rot_x(float(left_arm_rot_x) + float(attack_x)))
+        left_arm_shadow = _compose(left_arm_shadow_parent, _mat_translate(float(_LEFT_ARM_PIVOT_SLIM[0]), float(_LEFT_ARM_PIVOT_SLIM[1]), float(_LEFT_ARM_PIVOT_SLIM[2])), _mat_scale(float(_ARM_SIZE_SLIM[0]), float(_ARM_SIZE_SLIM[1]), float(_ARM_SIZE_SLIM[2])))
+        rows[3] = _as_rows(left_arm_shadow)
+
+        if first_person.visible_block_kind is not None:
+            hand_anchor = _compose(left_arm_shadow_parent, translate_matrix(float(THIRD_PERSON_RIGHT_HAND_ANCHOR[0]), float(THIRD_PERSON_RIGHT_HAND_ANCHOR[1]), float(THIRD_PERSON_RIGHT_HAND_ANCHOR[2])))
+            item_parent = _compose(hand_anchor, build_third_person_item_hand_transform())
+            block_boxes = [tb.box for tb in held_block_model_boxes_for_kind(first_person.visible_block_kind)]
+            block_rows = cube_rows_from_boxes(block_boxes, item_parent)
+            if block_rows.size > 0:
+                rows.extend([row for row in block_rows])
+
+    return tuple(rows)
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
     empty = np.zeros((0, 16), dtype=np.float32)

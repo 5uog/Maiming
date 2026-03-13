@@ -13,7 +13,7 @@ from ....application.session.fixed_step_runner import FixedStepRunner
 from ....application.session.session_manager import SessionManager
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from ....infrastructure.rendering.opengl.facade.player_render_state import PlayerRenderState
+from ....infrastructure.rendering.opengl.facade.player_render_state import FirstPersonRenderState, PlayerRenderState
 
 from ...config.game_loop_params import GameLoopParams, DEFAULT_GAME_LOOP_PARAMS
 from ...config.gl_surface_format import build_gl_surface_format
@@ -28,6 +28,7 @@ from ..overlays.settings_overlay import SettingsOverlay
 from .viewport_input import ViewportInput
 from .viewport_overlays import ViewportOverlays, OverlayRefs
 from .viewport_persistence import apply_persisted_state_if_present, save_state
+from .first_person_motion import FirstPersonMotionController
 from .viewport_runtime_state import ViewportRuntimeState
 from .viewport_selection_state import ViewportSelectionState
 from .viewport_world_upload import WorldUploadTracker
@@ -56,6 +57,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._state = ViewportRuntimeState()
         self._sync_state_from_renderer_sun()
+        self._first_person_motion = FirstPersonMotionController(slim_arm=True)
 
         self._selection_state = ViewportSelectionState()
 
@@ -133,6 +135,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._state = apply_persisted_state_if_present(project_root=self._project_root, session=self._session, renderer=self._renderer)
         self._apply_runtime_to_renderer()
         self._sync_hotbar_widgets()
+        self._first_person_motion.prime(self._current_block_id())
 
     def _sync_state_from_renderer_sun(self) -> None:
         az, el = self._renderer.sun_angles()
@@ -169,17 +172,23 @@ class GLViewportWidget(QOpenGLWidget):
         self._state.normalize()
         return self._state.current_block_id()
 
+    def _sync_first_person_target(self) -> None:
+        self._first_person_motion.set_target_block_id(self._current_block_id())
+
     def _select_hotbar_slot(self, slot_index: int) -> None:
         self._state.select_hotbar_index(int(slot_index))
         self._sync_hotbar_widgets()
+        self._sync_first_person_target()
 
     def _assign_hotbar_slot(self, slot_index: int, block_id: str) -> None:
         self._state.set_hotbar_slot(int(slot_index), str(block_id))
         self._sync_hotbar_widgets()
+        self._sync_first_person_target()
 
     def _cycle_hotbar(self, step: int) -> None:
         self._state.cycle_hotbar(int(step))
         self._sync_hotbar_widgets()
+        self._sync_first_person_target()
 
     def save_state(self) -> None:
         self._sync_state_from_renderer_sun()
@@ -339,7 +348,10 @@ class GLViewportWidget(QOpenGLWidget):
 
         cam = snap.camera
         pl = snap.player_model
-        player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person))
+        motion = self._first_person_motion.sample()
+        visible_def = None if motion.visible_block_id is None else self._session.block_registry.get(str(motion.visible_block_id))
+        first_person = FirstPersonRenderState(visible_block_id=motion.visible_block_id, visible_block_kind=None if visible_def is None else str(visible_def.kind), target_block_id=motion.target_block_id, equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), slim_arm=bool(motion.slim_arm))
+        player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person), first_person=first_person)
 
         self._renderer.render(w=fb_w, h=fb_h, eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z), yaw_deg=cam.yaw_deg, pitch_deg=cam.pitch_deg, fov_deg=cam.fov_deg, render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state)
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
@@ -440,6 +452,7 @@ class GLViewportWidget(QOpenGLWidget):
         if not bool(self._state.creative_mode):
             self._session.player.flying = False
         self._sync_hotbar_widgets()
+        self._sync_first_person_target()
 
     def _set_auto_jump(self, on: bool) -> None:
         self._state.auto_jump_enabled = bool(on)
@@ -485,6 +498,7 @@ class GLViewportWidget(QOpenGLWidget):
         active_index = int(self._state.creative_selected_hotbar_index if bool(self._state.creative_mode) else self._state.survival_selected_hotbar_index)
         self._state.set_hotbar_slot(int(active_index), str(block_id))
         self._sync_hotbar_widgets()
+        self._sync_first_person_target()
 
     def _on_inventory_closed(self) -> None:
         self._overlays.set_inventory_open(False)
@@ -503,6 +517,8 @@ class GLViewportWidget(QOpenGLWidget):
                 sprint = True
 
         jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        self._sync_first_person_target()
+        self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
 
         if float(self._session.player.position.y) < -64.0:
@@ -611,13 +627,15 @@ class GLViewportWidget(QOpenGLWidget):
             super().mousePressEvent(e)
             return
 
-        if bool(self._state.creative_mode):
-            b = e.button()
-            if b == Qt.MouseButton.LeftButton:
-                self._session.break_block(reach=float(self._state.reach))
-                self._invalidate_selection_target()
-            elif b == Qt.MouseButton.RightButton:
-                self._session.place_block(block_id=self._current_block_id(), reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
+        b = e.button()
+        if b == Qt.MouseButton.LeftButton:
+            self._session.break_block(reach=float(self._state.reach))
+            self._first_person_motion.trigger_left_swing()
+            self._invalidate_selection_target()
+        elif b == Qt.MouseButton.RightButton:
+            success = self._session.place_block(block_id=self._current_block_id(), reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
+            self._first_person_motion.trigger_right_swing(success=bool(success))
+            if bool(success):
                 self._invalidate_selection_target()
 
         super().mousePressEvent(e)

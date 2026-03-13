@@ -81,6 +81,16 @@ class MeshBuffer:
 
         return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
 
+    @staticmethod
+    def create_quad_transform_instanced(face: int) -> "MeshBuffer":
+        vao, vbo, vertex_count = _create_static_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
+        instance_vbo = _attach_instance_buffer(stride_bytes=20 * 4, attrs=((3, 4, 0), (4, 4, 16), (5, 4, 32), (6, 4, 48), (7, 4, 64)))
+
+        glBindVertexArray(0)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+        return MeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_count), instance_vbo=int(instance_vbo), instance_capacity=0)
+
     def upload_instances(self, instance_data: np.ndarray) -> None:
         data = as_float32_c_array(instance_data)
         self.instance_capacity = upload_array_buffer(target=GL_ARRAY_BUFFER, buffer=int(self.instance_vbo), usage=GL_STREAM_DRAW, data=data, capacity_bytes=int(self.instance_capacity))
