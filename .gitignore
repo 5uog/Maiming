@@ -1,10 +1,9 @@
-# FILE: .gitignore
 __pycache__/
 user_data/
 dist/
 
-# *.exp
-# *.obj
-# *.lib
-# *.pyd
-# *.c
+*.exp
+*.obj
+*.lib
+*.pyd
+*.c

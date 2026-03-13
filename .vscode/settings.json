@@ -1,4 +1,3 @@
-// FILE: .vscode/settings.json
 {
     "diffEditor.experimental.useTrueInlineView": true,
     "editor.bracketPairColorization.enabled": true,
