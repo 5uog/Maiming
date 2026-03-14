@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Dict, Tuple
 
+from ...domain.config.render_distance import clamp_render_distance_chunks
 from ...domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from ...domain.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ...domain.world.world_state import WorldState
@@ -20,6 +21,7 @@ class PersistedSettings:
 
     outline_selection: bool = True
 
+    cloud_wireframe: bool = False
     world_wireframe: bool = False
     shadow_enabled: bool = True
 
@@ -34,6 +36,13 @@ class PersistedSettings:
     creative_mode: bool = False
     auto_jump_enabled: bool = False
     auto_sprint_enabled: bool = False
+    hide_hud: bool = False
+    hide_hand: bool = False
+    fullscreen: bool = False
+    view_bobbing_enabled: bool = True
+    camera_shake_enabled: bool = True
+    view_bobbing_strength: float = 0.35
+    camera_shake_strength: float = 0.20
 
     gravity: float = float(DEFAULT_MOVEMENT_PARAMS.gravity)
     walk_speed: float = float(DEFAULT_MOVEMENT_PARAMS.walk_speed)
@@ -46,17 +55,16 @@ class PersistedSettings:
 
     render_distance_chunks: int = 6
 
-    hud_visible: bool = True
+    hud_visible: bool = False
 
     def to_dict(self) -> dict[str, Any]:
-        return {"fov_deg": float(self.fov_deg), "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px), "invert_x": bool(self.invert_x), "invert_y": bool(self.invert_y), "outline_selection": bool(self.outline_selection), "world_wireframe": bool(self.world_wireframe), "shadow_enabled": bool(self.shadow_enabled), "sun_az_deg": float(self.sun_az_deg), "sun_el_deg": float(self.sun_el_deg), "cloud_enabled": bool(self.cloud_enabled), "cloud_density": int(self.cloud_density), "cloud_seed": int(self.cloud_seed), "cloud_flow_direction": str(self.cloud_flow_direction), "creative_mode": bool(self.creative_mode), "auto_jump_enabled": bool(self.auto_jump_enabled), "auto_sprint_enabled": bool(self.auto_sprint_enabled), "gravity": float(self.gravity), "walk_speed": float(self.walk_speed), "sprint_speed": float(self.sprint_speed), "jump_v0": float(self.jump_v0), "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s), "fly_speed": float(self.fly_speed), "fly_ascend_speed": float(self.fly_ascend_speed), "fly_descend_speed": float(self.fly_descend_speed), "render_distance_chunks": int(self.render_distance_chunks), "hud_visible": bool(self.hud_visible)}
+        return {"fov_deg": float(self.fov_deg), "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px), "invert_x": bool(self.invert_x), "invert_y": bool(self.invert_y), "outline_selection": bool(self.outline_selection), "cloud_wireframe": bool(self.cloud_wireframe), "world_wireframe": bool(self.world_wireframe), "shadow_enabled": bool(self.shadow_enabled), "sun_az_deg": float(self.sun_az_deg), "sun_el_deg": float(self.sun_el_deg), "cloud_enabled": bool(self.cloud_enabled), "cloud_density": int(self.cloud_density), "cloud_seed": int(self.cloud_seed), "cloud_flow_direction": str(self.cloud_flow_direction), "creative_mode": bool(self.creative_mode), "auto_jump_enabled": bool(self.auto_jump_enabled), "auto_sprint_enabled": bool(self.auto_sprint_enabled), "hide_hud": bool(self.hide_hud), "hide_hand": bool(self.hide_hand), "fullscreen": bool(self.fullscreen), "view_bobbing_enabled": bool(self.view_bobbing_enabled), "camera_shake_enabled": bool(self.camera_shake_enabled), "view_bobbing_strength": float(self.view_bobbing_strength), "camera_shake_strength": float(self.camera_shake_strength), "gravity": float(self.gravity), "walk_speed": float(self.walk_speed), "sprint_speed": float(self.sprint_speed), "jump_v0": float(self.jump_v0), "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s), "fly_speed": float(self.fly_speed), "fly_ascend_speed": float(self.fly_ascend_speed), "fly_descend_speed": float(self.fly_descend_speed), "render_distance_chunks": int(self.render_distance_chunks), "hud_visible": bool(self.hud_visible)}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedSettings":
-        rd = mapping_int(d, "render_distance_chunks", 6)
-        rd = int(max(2, min(16, rd)))
+        rd = clamp_render_distance_chunks(mapping_int(d, "render_distance_chunks", 6))
 
-        return PersistedSettings(fov_deg=mapping_float(d, "fov_deg", 80.0), mouse_sens_deg_per_px=mapping_float(d, "mouse_sens_deg_per_px", 0.09), invert_x=mapping_bool(d, "invert_x", False), invert_y=mapping_bool(d, "invert_y", False), outline_selection=mapping_bool(d, "outline_selection", True), world_wireframe=mapping_bool(d, "world_wireframe", False), shadow_enabled=mapping_bool(d, "shadow_enabled", True), sun_az_deg=mapping_float(d, "sun_az_deg", 45.0), sun_el_deg=mapping_float(d, "sun_el_deg", 60.0), cloud_enabled=mapping_bool(d, "cloud_enabled", True), cloud_density=mapping_int(d, "cloud_density", 1), cloud_seed=mapping_int(d, "cloud_seed", 1337), cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"), creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)), auto_jump_enabled=mapping_bool(d, "auto_jump_enabled", False), auto_sprint_enabled=mapping_bool(d, "auto_sprint_enabled", False), gravity=mapping_float(d, "gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)), walk_speed=mapping_float(d, "walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)), sprint_speed=mapping_float(d, "sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)), jump_v0=mapping_float(d, "jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)), auto_jump_cooldown_s=mapping_float(d, "auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)), fly_speed=mapping_float(d, "fly_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_speed)), fly_ascend_speed=mapping_float(d, "fly_ascend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)), fly_descend_speed=mapping_float(d, "fly_descend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)), render_distance_chunks=int(rd), hud_visible=mapping_bool(d, "hud_visible", True))
+        return PersistedSettings(fov_deg=mapping_float(d, "fov_deg", 80.0), mouse_sens_deg_per_px=mapping_float(d, "mouse_sens_deg_per_px", 0.09), invert_x=mapping_bool(d, "invert_x", False), invert_y=mapping_bool(d, "invert_y", False), outline_selection=mapping_bool(d, "outline_selection", True), cloud_wireframe=mapping_bool(d, "cloud_wireframe", mapping_bool(d, "cloud_wire", False)), world_wireframe=mapping_bool(d, "world_wireframe", False), shadow_enabled=mapping_bool(d, "shadow_enabled", True), sun_az_deg=mapping_float(d, "sun_az_deg", 45.0), sun_el_deg=mapping_float(d, "sun_el_deg", 60.0), cloud_enabled=mapping_bool(d, "cloud_enabled", True), cloud_density=mapping_int(d, "cloud_density", 1), cloud_seed=mapping_int(d, "cloud_seed", 1337), cloud_flow_direction=mapping_str(d, "cloud_flow_direction", "west_to_east"), creative_mode=mapping_bool(d, "creative_mode", mapping_bool(d, "build_mode", False)), auto_jump_enabled=mapping_bool(d, "auto_jump_enabled", False), auto_sprint_enabled=mapping_bool(d, "auto_sprint_enabled", False), hide_hud=mapping_bool(d, "hide_hud", False), hide_hand=mapping_bool(d, "hide_hand", False), fullscreen=mapping_bool(d, "fullscreen", False), view_bobbing_enabled=mapping_bool(d, "view_bobbing_enabled", True), camera_shake_enabled=mapping_bool(d, "camera_shake_enabled", True), view_bobbing_strength=mapping_float(d, "view_bobbing_strength", 0.35), camera_shake_strength=mapping_float(d, "camera_shake_strength", 0.20), gravity=mapping_float(d, "gravity", float(DEFAULT_MOVEMENT_PARAMS.gravity)), walk_speed=mapping_float(d, "walk_speed", float(DEFAULT_MOVEMENT_PARAMS.walk_speed)), sprint_speed=mapping_float(d, "sprint_speed", float(DEFAULT_MOVEMENT_PARAMS.sprint_speed)), jump_v0=mapping_float(d, "jump_v0", float(DEFAULT_MOVEMENT_PARAMS.jump_v0)), auto_jump_cooldown_s=mapping_float(d, "auto_jump_cooldown_s", float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s)), fly_speed=mapping_float(d, "fly_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_speed)), fly_ascend_speed=mapping_float(d, "fly_ascend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed)), fly_descend_speed=mapping_float(d, "fly_descend_speed", float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed)), render_distance_chunks=int(rd), hud_visible=mapping_bool(d, "hud_visible", False))
 
 @dataclass(frozen=True)
 class PersistedInventory:

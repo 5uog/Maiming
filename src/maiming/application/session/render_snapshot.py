@@ -10,6 +10,12 @@ class CameraDTO:
     yaw_deg: float
     pitch_deg: float
     fov_deg: float
+    shake_tx: float = 0.0
+    shake_ty: float = 0.0
+    shake_tz: float = 0.0
+    shake_yaw_deg: float = 0.0
+    shake_pitch_deg: float = 0.0
+    shake_roll_deg: float = 0.0
 
 @dataclass(frozen=True)
 class PlayerModelSnapshotDTO:
@@ -25,6 +31,12 @@ class PlayerModelSnapshotDTO:
     limb_swing_amount: float
 
     crouch_amount: float
+    first_person_tx: float = 0.0
+    first_person_ty: float = 0.0
+    first_person_tz: float = 0.0
+    first_person_yaw_deg: float = 0.0
+    first_person_pitch_deg: float = 0.0
+    first_person_roll_deg: float = 0.0
 
     is_first_person: bool = True
 

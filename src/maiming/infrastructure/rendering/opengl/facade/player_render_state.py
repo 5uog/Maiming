@@ -12,7 +12,14 @@ class FirstPersonRenderState:
     swing_progress: float
     prev_swing_progress: float
     show_arm: bool
+    show_view_model: bool
     slim_arm: bool
+    view_bob_x: float = 0.0
+    view_bob_y: float = 0.0
+    view_bob_z: float = 0.0
+    view_bob_yaw_deg: float = 0.0
+    view_bob_pitch_deg: float = 0.0
+    view_bob_roll_deg: float = 0.0
 
 @dataclass(frozen=True)
 class PlayerRenderState:

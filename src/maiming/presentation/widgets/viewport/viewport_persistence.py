@@ -32,6 +32,7 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
         runtime.invert_x = bool(ps.invert_x)
         runtime.invert_y = bool(ps.invert_y)
         runtime.outline_selection = bool(ps.outline_selection)
+        runtime.cloud_wire = bool(getattr(ps, "cloud_wireframe", False))
         runtime.world_wire = bool(ps.world_wireframe)
         runtime.shadow_enabled = bool(ps.shadow_enabled)
         runtime.sun_az_deg = float(ps.sun_az_deg)
@@ -43,6 +44,14 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
         runtime.creative_mode = bool(getattr(ps, "creative_mode", getattr(ps, "build_mode", False)))
         runtime.auto_jump_enabled = bool(ps.auto_jump_enabled)
         runtime.auto_sprint_enabled = bool(getattr(ps, "auto_sprint_enabled", False))
+        runtime.hide_hud = bool(getattr(ps, "hide_hud", False))
+        runtime.hide_hand = bool(getattr(ps, "hide_hand", False))
+        runtime.fullscreen = bool(getattr(ps, "fullscreen", False))
+        runtime.view_bobbing_enabled = bool(getattr(ps, "view_bobbing_enabled", True))
+        runtime.camera_shake_enabled = bool(getattr(ps, "camera_shake_enabled", True))
+        runtime.view_bobbing_strength = float(getattr(ps, "view_bobbing_strength", 0.35))
+        runtime.camera_shake_strength = float(getattr(ps, "camera_shake_strength", 0.20))
+        runtime.hud_visible = bool(getattr(ps, "hud_visible", False))
         runtime.render_distance_chunks = int(ps.render_distance_chunks)
         runtime.creative_hotbar_slots = list(st.inventory.creative_hotbar_slots)
         runtime.creative_selected_hotbar_index = int(st.inventory.creative_selected_hotbar_index)
@@ -69,7 +78,6 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
             session.world.replace_all(blocks={k: str(v) for (k, v) in pw.blocks.items()}, revision=int(max(1, int(pw.revision))))
 
     runtime.normalize()
-    runtime.hud_visible = False
     renderer.set_outline_selection_enabled(bool(runtime.outline_selection))
     renderer.set_world_wireframe(bool(runtime.world_wire))
     renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
@@ -82,9 +90,9 @@ def apply_persisted_state_if_present(*, project_root: Path, session: SessionMana
 
     return runtime
 
-def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | None, invert_y: bool | None, outline_selection: bool | None, cloud_enabled: bool | None, cloud_density: int | None, cloud_seed: int | None, cloud_flow_direction: str | None, creative_mode: bool | None, auto_jump_enabled: bool | None, auto_sprint_enabled: bool | None, world_wire: bool | None, shadow_enabled: bool | None, sun_az_deg: float | None, sun_el_deg: float | None, render_distance_chunks: int | None) -> ViewportRuntimeState:
+def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | None, invert_y: bool | None, outline_selection: bool | None, cloud_wire: bool | None, cloud_enabled: bool | None, cloud_density: int | None, cloud_seed: int | None, cloud_flow_direction: str | None, creative_mode: bool | None, auto_jump_enabled: bool | None, auto_sprint_enabled: bool | None, hide_hud: bool | None, hide_hand: bool | None, fullscreen: bool | None, view_bobbing_enabled: bool | None, camera_shake_enabled: bool | None, view_bobbing_strength: float | None, camera_shake_strength: float | None, world_wire: bool | None, shadow_enabled: bool | None, sun_az_deg: float | None, sun_el_deg: float | None, render_distance_chunks: int | None) -> ViewportRuntimeState:
     if runtime is not None:
-        out = ViewportRuntimeState(invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible))
+        out = ViewportRuntimeState(invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible))
         out.normalize()
         return out
 
@@ -96,6 +104,8 @@ def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | No
         out.invert_y = bool(invert_y)
     if outline_selection is not None:
         out.outline_selection = bool(outline_selection)
+    if cloud_wire is not None:
+        out.cloud_wire = bool(cloud_wire)
 
     if cloud_enabled is not None:
         out.cloud_enabled = bool(cloud_enabled)
@@ -112,6 +122,20 @@ def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | No
         out.auto_jump_enabled = bool(auto_jump_enabled)
     if auto_sprint_enabled is not None:
         out.auto_sprint_enabled = bool(auto_sprint_enabled)
+    if hide_hud is not None:
+        out.hide_hud = bool(hide_hud)
+    if hide_hand is not None:
+        out.hide_hand = bool(hide_hand)
+    if fullscreen is not None:
+        out.fullscreen = bool(fullscreen)
+    if view_bobbing_enabled is not None:
+        out.view_bobbing_enabled = bool(view_bobbing_enabled)
+    if camera_shake_enabled is not None:
+        out.camera_shake_enabled = bool(camera_shake_enabled)
+    if view_bobbing_strength is not None:
+        out.view_bobbing_strength = float(view_bobbing_strength)
+    if camera_shake_strength is not None:
+        out.camera_shake_strength = float(camera_shake_strength)
 
     if world_wire is not None:
         out.world_wire = bool(world_wire)
@@ -129,14 +153,14 @@ def _coerce_runtime(*, runtime: ViewportRuntimeState | None, invert_x: bool | No
     out.normalize()
     return out
 
-def save_state(*, project_root: Path, session: SessionManager, renderer: GLRenderer, runtime: ViewportRuntimeState | None = None, invert_x: bool | None = None, invert_y: bool | None = None, outline_selection: bool | None = None, cloud_enabled: bool | None = None, cloud_density: int | None = None, cloud_seed: int | None = None, cloud_flow_direction: str | None = None, creative_mode: bool | None = None, auto_jump_enabled: bool | None = None, auto_sprint_enabled: bool | None = None, world_wire: bool | None = None, shadow_enabled: bool | None = None, sun_az_deg: float | None = None, sun_el_deg: float | None = None, render_distance_chunks: int | None = None) -> None:
+def save_state(*, project_root: Path, session: SessionManager, renderer: GLRenderer, runtime: ViewportRuntimeState | None = None, invert_x: bool | None = None, invert_y: bool | None = None, outline_selection: bool | None = None, cloud_wire: bool | None = None, cloud_enabled: bool | None = None, cloud_density: int | None = None, cloud_seed: int | None = None, cloud_flow_direction: str | None = None, creative_mode: bool | None = None, auto_jump_enabled: bool | None = None, auto_sprint_enabled: bool | None = None, hide_hud: bool | None = None, hide_hand: bool | None = None, fullscreen: bool | None = None, view_bobbing_enabled: bool | None = None, camera_shake_enabled: bool | None = None, view_bobbing_strength: float | None = None, camera_shake_strength: float | None = None, world_wire: bool | None = None, shadow_enabled: bool | None = None, sun_az_deg: float | None = None, sun_el_deg: float | None = None, render_distance_chunks: int | None = None) -> None:
     _ = renderer
 
-    state_runtime = _coerce_runtime(runtime=runtime, invert_x=invert_x, invert_y=invert_y, outline_selection=outline_selection, cloud_enabled=cloud_enabled, cloud_density=cloud_density, cloud_seed=cloud_seed, cloud_flow_direction=cloud_flow_direction, creative_mode=creative_mode, auto_jump_enabled=auto_jump_enabled, auto_sprint_enabled=auto_sprint_enabled, world_wire=world_wire, shadow_enabled=shadow_enabled, sun_az_deg=sun_az_deg, sun_el_deg=sun_el_deg, render_distance_chunks=render_distance_chunks)
+    state_runtime = _coerce_runtime(runtime=runtime, invert_x=invert_x, invert_y=invert_y, outline_selection=outline_selection, cloud_wire=cloud_wire, cloud_enabled=cloud_enabled, cloud_density=cloud_density, cloud_seed=cloud_seed, cloud_flow_direction=cloud_flow_direction, creative_mode=creative_mode, auto_jump_enabled=auto_jump_enabled, auto_sprint_enabled=auto_sprint_enabled, hide_hud=hide_hud, hide_hand=hide_hand, fullscreen=fullscreen, view_bobbing_enabled=view_bobbing_enabled, camera_shake_enabled=camera_shake_enabled, view_bobbing_strength=view_bobbing_strength, camera_shake_strength=camera_shake_strength, world_wire=world_wire, shadow_enabled=shadow_enabled, sun_az_deg=sun_az_deg, sun_el_deg=sun_el_deg, render_distance_chunks=render_distance_chunks)
 
     store = AppStateStore(project_root=Path(project_root))
 
-    settings = PersistedSettings(fov_deg=float(session.settings.fov_deg), mouse_sens_deg_per_px=float(session.settings.mouse_sens_deg_per_px), invert_x=bool(state_runtime.invert_x), invert_y=bool(state_runtime.invert_y), outline_selection=bool(state_runtime.outline_selection), world_wireframe=bool(state_runtime.world_wire), shadow_enabled=bool(state_runtime.shadow_enabled), sun_az_deg=float(state_runtime.sun_az_deg), sun_el_deg=float(state_runtime.sun_el_deg), cloud_enabled=bool(state_runtime.cloud_enabled), cloud_density=int(state_runtime.cloud_density), cloud_seed=int(state_runtime.cloud_seed), cloud_flow_direction=str(state_runtime.cloud_flow_direction), creative_mode=bool(state_runtime.creative_mode), auto_jump_enabled=bool(state_runtime.auto_jump_enabled), auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled), gravity=float(session.settings.movement.gravity), walk_speed=float(session.settings.movement.walk_speed), sprint_speed=float(session.settings.movement.sprint_speed), jump_v0=float(session.settings.movement.jump_v0), auto_jump_cooldown_s=float(session.settings.movement.auto_jump_cooldown_s), fly_speed=float(session.settings.movement.fly_speed), fly_ascend_speed=float(session.settings.movement.fly_ascend_speed), fly_descend_speed=float(session.settings.movement.fly_descend_speed), render_distance_chunks=int(state_runtime.render_distance_chunks), hud_visible=bool(state_runtime.hud_visible))
+    settings = PersistedSettings(fov_deg=float(session.settings.fov_deg), mouse_sens_deg_per_px=float(session.settings.mouse_sens_deg_per_px), invert_x=bool(state_runtime.invert_x), invert_y=bool(state_runtime.invert_y), outline_selection=bool(state_runtime.outline_selection), cloud_wireframe=bool(state_runtime.cloud_wire), world_wireframe=bool(state_runtime.world_wire), shadow_enabled=bool(state_runtime.shadow_enabled), sun_az_deg=float(state_runtime.sun_az_deg), sun_el_deg=float(state_runtime.sun_el_deg), cloud_enabled=bool(state_runtime.cloud_enabled), cloud_density=int(state_runtime.cloud_density), cloud_seed=int(state_runtime.cloud_seed), cloud_flow_direction=str(state_runtime.cloud_flow_direction), creative_mode=bool(state_runtime.creative_mode), auto_jump_enabled=bool(state_runtime.auto_jump_enabled), auto_sprint_enabled=bool(state_runtime.auto_sprint_enabled), hide_hud=bool(state_runtime.hide_hud), hide_hand=bool(state_runtime.hide_hand), fullscreen=bool(state_runtime.fullscreen), view_bobbing_enabled=bool(state_runtime.view_bobbing_enabled), camera_shake_enabled=bool(state_runtime.camera_shake_enabled), view_bobbing_strength=float(state_runtime.view_bobbing_strength), camera_shake_strength=float(state_runtime.camera_shake_strength), gravity=float(session.settings.movement.gravity), walk_speed=float(session.settings.movement.walk_speed), sprint_speed=float(session.settings.movement.sprint_speed), jump_v0=float(session.settings.movement.jump_v0), auto_jump_cooldown_s=float(session.settings.movement.auto_jump_cooldown_s), fly_speed=float(session.settings.movement.fly_speed), fly_ascend_speed=float(session.settings.movement.fly_ascend_speed), fly_descend_speed=float(session.settings.movement.fly_descend_speed), render_distance_chunks=int(state_runtime.render_distance_chunks), hud_visible=bool(state_runtime.hud_visible))
 
     inventory = PersistedInventory(creative_hotbar_slots=tuple(state_runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(state_runtime.creative_selected_hotbar_index), survival_hotbar_slots=tuple(state_runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(state_runtime.survival_selected_hotbar_index))
 

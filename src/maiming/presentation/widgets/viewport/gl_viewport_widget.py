@@ -9,6 +9,7 @@ from PyQt6.QtGui import QMouseEvent, QKeyEvent, QWheelEvent
 from PyQt6.QtWidgets import QMessageBox
 
 from ....core.math.vec3 import Vec3
+from ....core.math.view_angles import forward_from_yaw_pitch_deg
 from ....application.session.fixed_step_runner import FixedStepRunner
 from ....application.session.session_manager import SessionManager
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
@@ -35,6 +36,7 @@ from .viewport_world_upload import WorldUploadTracker
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
+    fullscreen_changed = pyqtSignal(bool)
 
     def __init__(self, project_root: Path, parent=None, loop_params: GameLoopParams = DEFAULT_GAME_LOOP_PARAMS) -> None:
         super().__init__(parent)
@@ -76,6 +78,13 @@ class GLViewportWidget(QOpenGLWidget):
         self._settings.sens_changed.connect(self._set_sens)
         self._settings.invert_x_changed.connect(self._set_invert_x)
         self._settings.invert_y_changed.connect(self._set_invert_y)
+        self._settings.fullscreen_changed.connect(self._set_fullscreen)
+        self._settings.hide_hud_changed.connect(self._set_hide_hud)
+        self._settings.hide_hand_changed.connect(self._set_hide_hand)
+        self._settings.view_bobbing_changed.connect(self._set_view_bobbing_enabled)
+        self._settings.camera_shake_changed.connect(self._set_camera_shake_enabled)
+        self._settings.view_bobbing_strength_changed.connect(self._set_view_bobbing_strength)
+        self._settings.camera_shake_strength_changed.connect(self._set_camera_shake_strength)
         self._settings.outline_selection_changed.connect(self._set_outline_selection)
         self._settings.cloud_wireframe_changed.connect(self._set_cloud_wire)
         self._settings.clouds_enabled_changed.connect(self._set_cloud_enabled)
@@ -136,6 +145,8 @@ class GLViewportWidget(QOpenGLWidget):
         self._apply_runtime_to_renderer()
         self._sync_hotbar_widgets()
         self._first_person_motion.prime(self._current_block_id())
+        self._first_person_motion.set_view_model_visible(not bool(self._state.hide_hand))
+        self._sync_gameplay_hud_visibility()
 
     def _sync_state_from_renderer_sun(self) -> None:
         az, el = self._renderer.sun_angles()
@@ -248,15 +259,64 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud = hud
         self._hud.setParent(self)
         self._hud.setGeometry(0, 0, max(1, self.width()), max(1, self.height()))
-        self._hud.setVisible(bool(self._state.hud_visible))
-        if bool(self._state.hud_visible):
-            self._hud.show()
-            self._hotbar.raise_()
-            self._crosshair.raise_()
-            self._hud.raise_()
+        self._sync_gameplay_hud_visibility()
 
     def _invalidate_selection_target(self) -> None:
         self._selection_state.invalidate()
+
+    def fullscreen_enabled(self) -> bool:
+        return bool(self._state.fullscreen)
+
+    def _make_render_snapshot(self):
+        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength))
+
+    @staticmethod
+    def _effective_camera_from_snapshot(snapshot) -> tuple[Vec3, float, float, float, Vec3]:
+        cam = snapshot.camera
+        eye = Vec3(float(cam.eye_x) + float(cam.shake_tx), float(cam.eye_y) + float(cam.shake_ty), float(cam.eye_z) + float(cam.shake_tz))
+        yaw_deg = float(cam.yaw_deg) + float(cam.shake_yaw_deg)
+        pitch_deg = float(cam.pitch_deg) + float(cam.shake_pitch_deg)
+        roll_deg = float(cam.shake_roll_deg)
+        direction = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
+        return (eye, float(yaw_deg), float(pitch_deg), float(roll_deg), direction)
+
+    def _gameplay_hud_active(self) -> bool:
+        return (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.inventory_open())
+
+    def _debug_hud_active(self) -> bool:
+        return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
+
+    def _sync_gameplay_hud_visibility(self) -> None:
+        show_gameplay_hud = bool(self._gameplay_hud_active())
+        self._crosshair.setVisible(bool(show_gameplay_hud))
+        self._hotbar.setVisible(bool(show_gameplay_hud))
+
+        if self._hud is not None:
+            self._hud.setVisible(bool(self._debug_hud_active()))
+            if bool(self._debug_hud_active()):
+                self._hud.raise_()
+
+        if bool(show_gameplay_hud):
+            self._hotbar.raise_()
+            self._crosshair.raise_()
+            if self._hud is not None and bool(self._debug_hud_active()):
+                self._hud.raise_()
+
+    def _set_dead_overlay(self, on: bool) -> None:
+        self._overlays.set_dead(bool(on))
+        self._sync_gameplay_hud_visibility()
+
+    def _set_paused_overlay(self, on: bool) -> None:
+        self._overlays.set_paused(bool(on))
+        self._sync_gameplay_hud_visibility()
+
+    def _set_settings_overlay(self, on: bool) -> None:
+        self._overlays.set_settings_open(bool(on))
+        self._sync_gameplay_hud_visibility()
+
+    def _set_inventory_overlay(self, on: bool) -> None:
+        self._overlays.set_inventory_open(bool(on))
+        self._sync_gameplay_hud_visibility()
 
     def initializeGL(self) -> None:
         try:
@@ -290,6 +350,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._apply_runtime_to_renderer()
         self._sync_hotbar_widgets()
         self._sync_cloud_motion_pause()
+        self._sync_gameplay_hud_visibility()
 
         self._runner.start()
         self._sim_timer.start()
@@ -298,8 +359,6 @@ class GLViewportWidget(QOpenGLWidget):
     def resizeGL(self, w: int, h: int) -> None:
         if self._hud is not None:
             self._hud.setGeometry(0, 0, max(1, w), max(1, h))
-            if bool(self._state.hud_visible):
-                self._hud.raise_()
 
         self._overlay.setGeometry(0, 0, max(1, w), max(1, h))
         self._settings.setGeometry(0, 0, max(1, w), max(1, h))
@@ -317,19 +376,22 @@ class GLViewportWidget(QOpenGLWidget):
         elif self._overlays.inventory_open():
             self._inventory.raise_()
         else:
-            self._hotbar.raise_()
-            self._crosshair.raise_()
+            self._sync_gameplay_hud_visibility()
+            return
+
+        self._sync_gameplay_hud_visibility()
 
     def paintGL(self) -> None:
         paint_t0 = time.perf_counter()
         self._hud_ctl.on_render_frame()
 
-        snap = self._session.make_snapshot()
+        snap = self._make_render_snapshot()
         eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
+        render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = self._effective_camera_from_snapshot(snap)
 
         self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
 
-        self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach))
+        self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
 
         selection_target = self._selection_state.target()
         if selection_target is None:
@@ -350,10 +412,10 @@ class GLViewportWidget(QOpenGLWidget):
         pl = snap.player_model
         motion = self._first_person_motion.sample()
         visible_def = None if motion.visible_block_id is None else self._session.block_registry.get(str(motion.visible_block_id))
-        first_person = FirstPersonRenderState(visible_block_id=motion.visible_block_id, visible_block_kind=None if visible_def is None else str(visible_def.kind), target_block_id=motion.target_block_id, equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), slim_arm=bool(motion.slim_arm))
+        first_person = FirstPersonRenderState(visible_block_id=motion.visible_block_id, visible_block_kind=None if visible_def is None else str(visible_def.kind), target_block_id=motion.target_block_id, equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), show_view_model=bool(motion.show_view_model), slim_arm=bool(motion.slim_arm), view_bob_x=float(pl.first_person_tx), view_bob_y=float(pl.first_person_ty), view_bob_z=float(pl.first_person_tz), view_bob_yaw_deg=float(pl.first_person_yaw_deg), view_bob_pitch_deg=float(pl.first_person_pitch_deg), view_bob_roll_deg=float(pl.first_person_roll_deg))
         player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person), first_person=first_person)
 
-        self._renderer.render(w=fb_w, h=fb_h, eye=Vec3(cam.eye_x, cam.eye_y, cam.eye_z), yaw_deg=cam.yaw_deg, pitch_deg=cam.pitch_deg, fov_deg=cam.fov_deg, render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state)
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state)
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -368,26 +430,26 @@ class GLViewportWidget(QOpenGLWidget):
     def _sync_settings_values(self) -> None:
         self._sync_state_from_renderer_sun()
 
-        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, creative_mode=self._state.creative_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(self._session.settings.movement.fly_speed), fly_ascend_speed=float(self._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(self._session.settings.movement.fly_descend_speed), render_distance_chunks=int(self._state.render_distance_chunks))
+        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, fullscreen=self._state.fullscreen, hide_hud=self._state.hide_hud, hide_hand=self._state.hide_hand, view_bobbing_enabled=self._state.view_bobbing_enabled, camera_shake_enabled=self._state.camera_shake_enabled, view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, creative_mode=self._state.creative_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(self._session.settings.movement.fly_speed), fly_ascend_speed=float(self._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(self._session.settings.movement.fly_descend_speed), render_distance_chunks=int(self._state.render_distance_chunks))
 
     def _respawn(self) -> None:
         self._session.respawn()
         self._invalidate_selection_target()
         self._renderer.clear_selection()
-        self._overlays.set_dead(False)
+        self._set_dead_overlay(False)
 
     def _resume_from_overlay(self) -> None:
-        self._overlays.set_paused(False)
+        self._set_paused_overlay(False)
         self._sync_cloud_motion_pause()
 
     def _open_settings_from_pause(self) -> None:
         self._sync_settings_values()
-        self._overlays.set_settings_open(True)
+        self._set_settings_overlay(True)
         self._sync_cloud_motion_pause()
 
     def _back_from_settings(self) -> None:
         self._sync_settings_values()
-        self._overlays.set_settings_open(False)
+        self._set_settings_overlay(False)
         self._sync_cloud_motion_pause()
 
     def _set_fov(self, fov: float) -> None:
@@ -401,6 +463,35 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_invert_y(self, on: bool) -> None:
         self._state.invert_y = bool(on)
+
+    def _set_fullscreen(self, on: bool) -> None:
+        on = bool(on)
+        if on == bool(self._state.fullscreen):
+            return
+        self._state.fullscreen = bool(on)
+        self.fullscreen_changed.emit(bool(self._state.fullscreen))
+
+    def _set_hide_hud(self, on: bool) -> None:
+        self._state.hide_hud = bool(on)
+        self._sync_gameplay_hud_visibility()
+
+    def _set_hide_hand(self, on: bool) -> None:
+        self._state.hide_hand = bool(on)
+        self._first_person_motion.set_view_model_visible(not bool(self._state.hide_hand))
+
+    def _set_view_bobbing_enabled(self, on: bool) -> None:
+        self._state.view_bobbing_enabled = bool(on)
+
+    def _set_camera_shake_enabled(self, on: bool) -> None:
+        self._state.camera_shake_enabled = bool(on)
+
+    def _set_view_bobbing_strength(self, strength: float) -> None:
+        self._state.view_bobbing_strength = float(strength)
+        self._state.normalize()
+
+    def _set_camera_shake_strength(self, strength: float) -> None:
+        self._state.camera_shake_strength = float(strength)
+        self._state.normalize()
 
     def _set_outline_selection(self, on: bool) -> None:
         self._state.outline_selection = bool(on)
@@ -501,14 +592,14 @@ class GLViewportWidget(QOpenGLWidget):
         self._sync_first_person_target()
 
     def _on_inventory_closed(self) -> None:
-        self._overlays.set_inventory_open(False)
+        self._set_inventory_overlay(False)
 
     def _on_step(self, dt: float) -> None:
         self._inp.poll_relative_mouse_delta()
         fr, md = self._inp.consume(invert_x=self._state.invert_x, invert_y=self._state.invert_y)
 
         if float(self._session.player.position.y) < -64.0:
-            self._overlays.set_dead(True)
+            self._set_dead_overlay(True)
             return
 
         sprint = bool(fr.sprint)
@@ -522,13 +613,13 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
 
         if float(self._session.player.position.y) < -64.0:
-            self._overlays.set_dead(True)
+            self._set_dead_overlay(True)
             return
 
         if not self._hud_ctl.should_emit():
             return
 
-        if not bool(self._state.hud_visible):
+        if not bool(self._debug_hud_active()):
             return
 
         dpr = float(self.devicePixelRatioF())
@@ -552,10 +643,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         if int(e.key()) == int(Qt.Key.Key_F3):
             self._state.hud_visible = not bool(self._state.hud_visible)
-            if self._hud is not None:
-                self._hud.setVisible(bool(self._state.hud_visible))
-                if bool(self._state.hud_visible):
-                    self._hud.raise_()
+            self._sync_gameplay_hud_visibility()
             return
 
         if int(e.key()) == int(Qt.Key.Key_Escape):
@@ -563,7 +651,7 @@ class GLViewportWidget(QOpenGLWidget):
                 return
 
             if self._overlays.inventory_open():
-                self._overlays.set_inventory_open(False)
+                self._set_inventory_overlay(False)
                 return
 
             if self._overlays.settings_open():
@@ -571,11 +659,11 @@ class GLViewportWidget(QOpenGLWidget):
                 return
 
             if self._overlays.paused():
-                self._overlays.set_paused(False)
+                self._set_paused_overlay(False)
                 self._sync_cloud_motion_pause()
             else:
                 self._sync_settings_values()
-                self._overlays.set_paused(True)
+                self._set_paused_overlay(True)
                 self._sync_cloud_motion_pause()
             return
 
@@ -585,7 +673,7 @@ class GLViewportWidget(QOpenGLWidget):
             return
 
         if int(e.key()) == int(Qt.Key.Key_E) and (not self._overlays.paused()) and (not self._overlays.dead()):
-            self._overlays.set_inventory_open(not self._overlays.inventory_open())
+            self._set_inventory_overlay(not self._overlays.inventory_open())
             return
 
         if (not self._overlays.paused()) and (not self._overlays.inventory_open()) and (not self._overlays.dead()):
@@ -629,11 +717,15 @@ class GLViewportWidget(QOpenGLWidget):
 
         b = e.button()
         if b == Qt.MouseButton.LeftButton:
-            self._session.break_block(reach=float(self._state.reach))
+            snap = self._make_render_snapshot()
+            render_eye, _render_yaw_deg, _render_pitch_deg, _render_roll_deg, render_direction = self._effective_camera_from_snapshot(snap)
+            self._session.break_block(reach=float(self._state.reach), origin=render_eye, direction=render_direction)
             self._first_person_motion.trigger_left_swing()
             self._invalidate_selection_target()
         elif b == Qt.MouseButton.RightButton:
-            success = self._session.place_block(block_id=self._current_block_id(), reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()))
+            snap = self._make_render_snapshot()
+            render_eye, _render_yaw_deg, _render_pitch_deg, _render_roll_deg, render_direction = self._effective_camera_from_snapshot(snap)
+            success = self._session.place_block(block_id=self._current_block_id(), reach=float(self._state.reach), crouching=bool(self._inp.crouch_held()), origin=render_eye, direction=render_direction)
             self._first_person_motion.trigger_right_swing(success=bool(success))
             if bool(success):
                 self._invalidate_selection_target()

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3
 from ...application.session.session_manager import SessionManager
+from ...domain.config.render_distance import clamp_render_distance_chunks
 from ...infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...infrastructure.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload
@@ -215,7 +216,7 @@ class HudController:
         else:
             sel_line = "Empty Hand Selected\n"
 
-        rd = int(max(2, min(16, int(render_distance_chunks))))
+        rd = clamp_render_distance_chunks(int(render_distance_chunks))
 
         lines: list[str] = []
         lines.append(f"FPS {fps.render_fps:.1f} | SIM {fps.sim_fps:.1f} | T {t_txt}  {vs}")

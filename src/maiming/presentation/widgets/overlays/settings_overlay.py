@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider, QCheckBox, QFrame, QSizePolicy, QStackedWidget, QScrollArea, QDoubleSpinBox, QComboBox
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ....domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
-from ...config.pause_overlay_params import PauseOverlayParams, DEFAULT_PAUSE_OVERLAY_PARAMS
+from ...config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
+from ..common.settings_controls import BedrockToggleRow, WheelPassthroughDoubleSpinBox, WheelPassthroughSlider
 
-_CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (("east_to_west", "East → West"), ("west_to_east", "West → East"), ("south_to_north", "South → North"), ("north_to_south", "North → South"))
+_CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (("east_to_west", "East -> West"), ("west_to_east", "West -> East"), ("south_to_north", "South -> North"), ("north_to_south", "North -> South"))
 
 class AdvancedScalarControl(QWidget):
     value_changed = pyqtSignal(float)
@@ -35,11 +36,11 @@ class AdvancedScalarControl(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
 
-        self._slider = QSlider(Qt.Orientation.Horizontal, self)
+        self._slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, self)
         self._slider.setRange(int(round(float(self._min) * float(self._scale))), int(round(float(self._max) * float(self._scale))))
         row.addWidget(self._slider, stretch=1)
 
-        self._spin = QDoubleSpinBox(self)
+        self._spin = WheelPassthroughDoubleSpinBox(self)
         self._spin.setDecimals(int(self._decimals))
         self._spin.setRange(float(self._min), float(self._max))
         self._spin.setSingleStep(max(10.0 ** (-int(self._decimals)), 1.0 / float(self._scale)))
@@ -121,6 +122,13 @@ class SettingsOverlay(QWidget):
     sens_changed = pyqtSignal(float)
     invert_x_changed = pyqtSignal(bool)
     invert_y_changed = pyqtSignal(bool)
+    fullscreen_changed = pyqtSignal(bool)
+    hide_hud_changed = pyqtSignal(bool)
+    hide_hand_changed = pyqtSignal(bool)
+    view_bobbing_changed = pyqtSignal(bool)
+    camera_shake_changed = pyqtSignal(bool)
+    view_bobbing_strength_changed = pyqtSignal(float)
+    camera_shake_strength_changed = pyqtSignal(float)
 
     outline_selection_changed = pyqtSignal(bool)
 
@@ -168,8 +176,8 @@ class SettingsOverlay(QWidget):
         panel = QFrame(self)
         panel.setObjectName("panel")
         panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        panel.setMinimumWidth(920)
-        panel.setMinimumHeight(580)
+        panel.setMinimumWidth(960)
+        panel.setMinimumHeight(620)
 
         pv = QVBoxLayout(panel)
         pv.setContentsMargins(18, 16, 18, 16)
@@ -190,7 +198,7 @@ class SettingsOverlay(QWidget):
 
         pv.addLayout(title_row)
 
-        subtitle = QLabel("Visual, Controls, and Game & Player (Advanced) now live in separate tabs.", panel)
+        subtitle = QLabel("Video, Controls, and Game Player settings are available in separate tabs.", panel)
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         pv.addWidget(subtitle)
@@ -198,11 +206,11 @@ class SettingsOverlay(QWidget):
         tab_row = QHBoxLayout()
         tab_row.setSpacing(8)
 
-        self._tab_visual = self._make_tab_button("Visual", 0, panel)
+        self._tab_video = self._make_tab_button("Video", 0, panel)
         self._tab_controls = self._make_tab_button("Controls", 1, panel)
-        self._tab_game = self._make_tab_button("Game & Player (Advanced)", 2, panel)
+        self._tab_game = self._make_tab_button("Game Player", 2, panel)
 
-        tab_row.addWidget(self._tab_visual)
+        tab_row.addWidget(self._tab_video)
         tab_row.addWidget(self._tab_controls)
         tab_row.addWidget(self._tab_game)
         tab_row.addStretch(1)
@@ -212,7 +220,7 @@ class SettingsOverlay(QWidget):
         self._stack = QStackedWidget(panel)
         pv.addWidget(self._stack, stretch=1)
 
-        self._build_visual_tab()
+        self._build_video_tab()
         self._build_controls_tab()
         self._build_game_tab()
 
@@ -273,16 +281,50 @@ class SettingsOverlay(QWidget):
             return "west_to_east"
         return str(data)
 
-    def _build_visual_tab(self) -> None:
+    def _new_slider(self, parent: QWidget, min_value: int, max_value: int) -> WheelPassthroughSlider:
+        slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, parent)
+        slider.setRange(int(min_value), int(max_value))
+        return slider
+
+    def _add_toggle(self, layout: QVBoxLayout, parent: QWidget, text: str, slot) -> BedrockToggleRow:
+        row = BedrockToggleRow(str(text), parent)
+        row.toggled.connect(slot)
+        layout.addWidget(row)
+        return row
+
+    def _build_video_tab(self) -> None:
         scroll, host, lay = self._make_scroll_page()
 
-        lay.addWidget(self._section(host, "Camera"))
+        lay.addWidget(self._section(host, "Display"))
+        self._tg_fullscreen = self._add_toggle(lay, host, "Fullscreen", self.fullscreen_changed.emit)
+        self._tg_hide_hud = self._add_toggle(lay, host, "Hide HUD", self.hide_hud_changed.emit)
+        self._tg_hide_hand = self._add_toggle(lay, host, "Hide Hand", self.hide_hand_changed.emit)
+        self._tg_view_bobbing = self._add_toggle(lay, host, "View Bobbing", self._on_view_bobbing_toggled)
+
+        bob_row = QVBoxLayout()
+        self._lbl_view_bobbing_strength = QLabel("View Bobbing strength: 35%", host)
+        self._lbl_view_bobbing_strength.setObjectName("valueLabel")
+        self._sld_view_bobbing_strength = self._new_slider(host, int(self._params.bob_strength_percent_min), int(self._params.bob_strength_percent_max))
+        self._sld_view_bobbing_strength.valueChanged.connect(self._on_view_bobbing_strength)
+        bob_row.addWidget(self._lbl_view_bobbing_strength)
+        bob_row.addWidget(self._sld_view_bobbing_strength)
+        lay.addLayout(bob_row)
+
+        self._tg_camera_shake = self._add_toggle(lay, host, "Camera Shake", self._on_camera_shake_toggled)
+
+        shake_row = QVBoxLayout()
+        self._lbl_camera_shake_strength = QLabel("Camera Shake strength: 20%", host)
+        self._lbl_camera_shake_strength.setObjectName("valueLabel")
+        self._sld_camera_shake_strength = self._new_slider(host, int(self._params.shake_strength_percent_min), int(self._params.shake_strength_percent_max))
+        self._sld_camera_shake_strength.valueChanged.connect(self._on_camera_shake_strength)
+        shake_row.addWidget(self._lbl_camera_shake_strength)
+        shake_row.addWidget(self._sld_camera_shake_strength)
+        lay.addLayout(shake_row)
 
         fov_row = QVBoxLayout()
         self._lbl_fov = QLabel("FOV: 80", host)
         self._lbl_fov.setObjectName("valueLabel")
-        self._sld_fov = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_fov.setRange(int(self._params.fov_min), int(self._params.fov_max))
+        self._sld_fov = self._new_slider(host, int(self._params.fov_min), int(self._params.fov_max))
         self._sld_fov.valueChanged.connect(self._on_fov)
         fov_row.addWidget(self._lbl_fov)
         fov_row.addWidget(self._sld_fov)
@@ -295,46 +337,22 @@ class SettingsOverlay(QWidget):
         rd_row = QVBoxLayout()
         self._lbl_rd = QLabel("Render distance: 6 chunks", host)
         self._lbl_rd.setObjectName("valueLabel")
-        self._sld_rd = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_rd.setRange(int(self._params.render_dist_min), int(self._params.render_dist_max))
+        self._sld_rd = self._new_slider(host, int(self._params.render_dist_min), int(self._params.render_dist_max))
         self._sld_rd.valueChanged.connect(self._on_rd)
         rd_row.addWidget(self._lbl_rd)
         rd_row.addWidget(self._sld_rd)
         lay.addLayout(rd_row)
 
-        world_toggle_row = QHBoxLayout()
-
-        self._cb_outline_sel = QCheckBox("Outline selection", host)
-        self._cb_outline_sel.toggled.connect(self.outline_selection_changed.emit)
-        world_toggle_row.addWidget(self._cb_outline_sel)
-
-        self._cb_world_wire = QCheckBox("World wireframe", host)
-        self._cb_world_wire.toggled.connect(self.world_wireframe_changed.emit)
-        world_toggle_row.addWidget(self._cb_world_wire)
-
-        self._cb_shadow_enabled = QCheckBox("Enable shadow map", host)
-        self._cb_shadow_enabled.toggled.connect(self.shadow_enabled_changed.emit)
-        world_toggle_row.addWidget(self._cb_shadow_enabled)
-
-        world_toggle_row.addStretch(1)
-        lay.addLayout(world_toggle_row)
+        self._tg_outline_sel = self._add_toggle(lay, host, "Outline selection", self.outline_selection_changed.emit)
+        self._tg_world_wire = self._add_toggle(lay, host, "World wireflame", self.world_wireframe_changed.emit)
+        self._tg_shadow_enabled = self._add_toggle(lay, host, "Shadow map", self.shadow_enabled_changed.emit)
 
         lay.addWidget(self._sep(host))
 
         lay.addWidget(self._section(host, "Clouds"))
 
-        clouds_toggle_row = QHBoxLayout()
-
-        self._cb_clouds_enabled = QCheckBox("Show clouds", host)
-        self._cb_clouds_enabled.toggled.connect(self.clouds_enabled_changed.emit)
-        clouds_toggle_row.addWidget(self._cb_clouds_enabled)
-
-        self._cb_cloud_wire = QCheckBox("Cloud wireframe", host)
-        self._cb_cloud_wire.toggled.connect(self.cloud_wireframe_changed.emit)
-        clouds_toggle_row.addWidget(self._cb_cloud_wire)
-
-        clouds_toggle_row.addStretch(1)
-        lay.addLayout(clouds_toggle_row)
+        self._tg_clouds_enabled = self._add_toggle(lay, host, "Show clouds", self.clouds_enabled_changed.emit)
+        self._tg_cloud_wire = self._add_toggle(lay, host, "Cloud wireflame", self.cloud_wireframe_changed.emit)
 
         cloud_flow_row = QHBoxLayout()
         self._lbl_cloud_flow = QLabel("Cloud flow direction", host)
@@ -352,8 +370,7 @@ class SettingsOverlay(QWidget):
         cloud_density_row = QVBoxLayout()
         self._lbl_cloud_density = QLabel("Cloud density: 1", host)
         self._lbl_cloud_density.setObjectName("valueLabel")
-        self._sld_cloud_density = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_cloud_density.setRange(0, 4)
+        self._sld_cloud_density = self._new_slider(host, 0, 4)
         self._sld_cloud_density.valueChanged.connect(self._on_cloud_density)
         cloud_density_row.addWidget(self._lbl_cloud_density)
         cloud_density_row.addWidget(self._sld_cloud_density)
@@ -362,8 +379,7 @@ class SettingsOverlay(QWidget):
         cloud_seed_row = QVBoxLayout()
         self._lbl_cloud_seed = QLabel("Cloud seed: 1337", host)
         self._lbl_cloud_seed.setObjectName("valueLabel")
-        self._sld_cloud_seed = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_cloud_seed.setRange(0, 9999)
+        self._sld_cloud_seed = self._new_slider(host, 0, 9999)
         self._sld_cloud_seed.valueChanged.connect(self._on_cloud_seed)
         cloud_seed_row.addWidget(self._lbl_cloud_seed)
         cloud_seed_row.addWidget(self._sld_cloud_seed)
@@ -376,8 +392,7 @@ class SettingsOverlay(QWidget):
         sun_az_row = QVBoxLayout()
         self._lbl_sun_az = QLabel("Sun azimuth: 45 deg", host)
         self._lbl_sun_az.setObjectName("valueLabel")
-        self._sld_sun_az = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sun_az.setRange(int(self._params.sun_az_min), int(self._params.sun_az_max))
+        self._sld_sun_az = self._new_slider(host, int(self._params.sun_az_min), int(self._params.sun_az_max))
         self._sld_sun_az.valueChanged.connect(self._on_sun_az)
         sun_az_row.addWidget(self._lbl_sun_az)
         sun_az_row.addWidget(self._sld_sun_az)
@@ -386,8 +401,7 @@ class SettingsOverlay(QWidget):
         sun_el_row = QVBoxLayout()
         self._lbl_sun_el = QLabel("Sun elevation: 60 deg", host)
         self._lbl_sun_el.setObjectName("valueLabel")
-        self._sld_sun_el = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sun_el.setRange(int(self._params.sun_el_min), int(self._params.sun_el_max))
+        self._sld_sun_el = self._new_slider(host, int(self._params.sun_el_min), int(self._params.sun_el_max))
         self._sld_sun_el.valueChanged.connect(self._on_sun_el)
         sun_el_row.addWidget(self._lbl_sun_el)
         sun_el_row.addWidget(self._sld_sun_el)
@@ -404,8 +418,7 @@ class SettingsOverlay(QWidget):
         sens_row = QVBoxLayout()
         self._lbl_sens = QLabel("Mouse sensitivity: 0.090 deg/px", host)
         self._lbl_sens.setObjectName("valueLabel")
-        self._sld_sens = QSlider(Qt.Orientation.Horizontal, host)
-        self._sld_sens.setRange(int(self._params.sens_milli_min), int(self._params.sens_milli_max))
+        self._sld_sens = self._new_slider(host, int(self._params.sens_milli_min), int(self._params.sens_milli_max))
         self._sld_sens.valueChanged.connect(self._on_sens)
         sens_row.addWidget(self._lbl_sens)
         sens_row.addWidget(self._sld_sens)
@@ -438,13 +451,8 @@ class SettingsOverlay(QWidget):
         lay.addWidget(self._sep(host))
         lay.addWidget(self._section(host, "Player Options"))
 
-        self._cb_auto_jump = QCheckBox("Auto-Jump (Bedrock-style)", host)
-        self._cb_auto_jump.toggled.connect(self.auto_jump_changed.emit)
-        lay.addWidget(self._cb_auto_jump)
-
-        self._cb_auto_sprint = QCheckBox("Auto-Sprint (forward input)", host)
-        self._cb_auto_sprint.toggled.connect(self.auto_sprint_changed.emit)
-        lay.addWidget(self._cb_auto_sprint)
+        self._tg_auto_jump = self._add_toggle(lay, host, "Auto-Jump", self.auto_jump_changed.emit)
+        self._tg_auto_sprint = self._add_toggle(lay, host, "Auto-Sprint", self.auto_sprint_changed.emit)
 
         lay.addWidget(self._sep(host))
         lay.addWidget(self._section(host, "Movement Parameters"))
@@ -511,11 +519,15 @@ class SettingsOverlay(QWidget):
         i = int(max(0, min(2, int(index))))
         self._stack.setCurrentIndex(i)
 
-        self._tab_visual.setChecked(i == 0)
+        self._tab_video.setChecked(i == 0)
         self._tab_controls.setChecked(i == 1)
         self._tab_game.setChecked(i == 2)
 
-    def sync_values(self, *, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, outline_selection: bool, cloud_wire: bool, clouds_enabled: bool, cloud_density: int, cloud_seed: int, cloud_flow_direction: str, world_wire: bool, shadow_enabled: bool, sun_az_deg: float, sun_el_deg: float, creative_mode: bool, auto_jump_enabled: bool, auto_sprint_enabled: bool, gravity: float, walk_speed: float, sprint_speed: float, jump_v0: float, auto_jump_cooldown_s: float, fly_speed: float, fly_ascend_speed: float, fly_descend_speed: float, render_distance_chunks: int) -> None:
+    @staticmethod
+    def _sync_toggle(row: BedrockToggleRow, checked: bool) -> None:
+        row.sync_checked(bool(checked))
+
+    def sync_values(self, *, fov_deg: float, sens_deg_per_px: float, inv_x: bool, inv_y: bool, fullscreen: bool, hide_hud: bool, hide_hand: bool, view_bobbing_enabled: bool, camera_shake_enabled: bool, view_bobbing_strength: float, camera_shake_strength: float, outline_selection: bool, cloud_wire: bool, clouds_enabled: bool, cloud_density: int, cloud_seed: int, cloud_flow_direction: str, world_wire: bool, shadow_enabled: bool, sun_az_deg: float, sun_el_deg: float, creative_mode: bool, auto_jump_enabled: bool, auto_sprint_enabled: bool, gravity: float, walk_speed: float, sprint_speed: float, jump_v0: float, auto_jump_cooldown_s: float, fly_speed: float, fly_ascend_speed: float, fly_descend_speed: float, render_distance_chunks: int) -> None:
         fov_i = int(round(float(fov_deg)))
         fov_i = max(int(self._params.fov_min), min(int(self._params.fov_max), fov_i))
         self._sld_fov.blockSignals(True)
@@ -560,25 +572,31 @@ class SettingsOverlay(QWidget):
         self._cb_inv_x.blockSignals(False)
         self._cb_inv_y.blockSignals(False)
 
-        self._cb_outline_sel.blockSignals(True)
-        self._cb_outline_sel.setChecked(bool(outline_selection))
-        self._cb_outline_sel.blockSignals(False)
+        self._sync_toggle(self._tg_fullscreen, bool(fullscreen))
+        self._sync_toggle(self._tg_hide_hud, bool(hide_hud))
+        self._sync_toggle(self._tg_hide_hand, bool(hide_hand))
+        self._sync_toggle(self._tg_view_bobbing, bool(view_bobbing_enabled))
+        self._sync_toggle(self._tg_camera_shake, bool(camera_shake_enabled))
 
-        self._cb_cloud_wire.blockSignals(True)
-        self._cb_cloud_wire.setChecked(bool(cloud_wire))
-        self._cb_cloud_wire.blockSignals(False)
+        vb_percent = int(round(max(0.0, min(1.0, float(view_bobbing_strength))) * 100.0))
+        self._sld_view_bobbing_strength.blockSignals(True)
+        self._sld_view_bobbing_strength.setValue(vb_percent)
+        self._sld_view_bobbing_strength.blockSignals(False)
+        self._lbl_view_bobbing_strength.setText(f"View Bobbing strength: {vb_percent}%")
+        self._sld_view_bobbing_strength.setEnabled(bool(view_bobbing_enabled))
 
-        self._cb_world_wire.blockSignals(True)
-        self._cb_world_wire.setChecked(bool(world_wire))
-        self._cb_world_wire.blockSignals(False)
+        cs_percent = int(round(max(0.0, min(1.0, float(camera_shake_strength))) * 100.0))
+        self._sld_camera_shake_strength.blockSignals(True)
+        self._sld_camera_shake_strength.setValue(cs_percent)
+        self._sld_camera_shake_strength.blockSignals(False)
+        self._lbl_camera_shake_strength.setText(f"Camera Shake strength: {cs_percent}%")
+        self._sld_camera_shake_strength.setEnabled(bool(camera_shake_enabled))
 
-        self._cb_shadow_enabled.blockSignals(True)
-        self._cb_shadow_enabled.setChecked(bool(shadow_enabled))
-        self._cb_shadow_enabled.blockSignals(False)
-
-        self._cb_clouds_enabled.blockSignals(True)
-        self._cb_clouds_enabled.setChecked(bool(clouds_enabled))
-        self._cb_clouds_enabled.blockSignals(False)
+        self._sync_toggle(self._tg_outline_sel, bool(outline_selection))
+        self._sync_toggle(self._tg_world_wire, bool(world_wire))
+        self._sync_toggle(self._tg_shadow_enabled, bool(shadow_enabled))
+        self._sync_toggle(self._tg_clouds_enabled, bool(clouds_enabled))
+        self._sync_toggle(self._tg_cloud_wire, bool(cloud_wire))
 
         idx = self._cloud_flow_index_for_value(str(cloud_flow_direction))
         self._cmb_cloud_flow.blockSignals(True)
@@ -602,13 +620,8 @@ class SettingsOverlay(QWidget):
         self._btn_mode_toggle.blockSignals(False)
         self._update_mode_toggle_text(bool(creative_mode))
 
-        self._cb_auto_jump.blockSignals(True)
-        self._cb_auto_jump.setChecked(bool(auto_jump_enabled))
-        self._cb_auto_jump.blockSignals(False)
-
-        self._cb_auto_sprint.blockSignals(True)
-        self._cb_auto_sprint.setChecked(bool(auto_sprint_enabled))
-        self._cb_auto_sprint.blockSignals(False)
+        self._sync_toggle(self._tg_auto_jump, bool(auto_jump_enabled))
+        self._sync_toggle(self._tg_auto_sprint, bool(auto_sprint_enabled))
 
         self._ctl_gravity.set_value(float(gravity))
         self._ctl_walk_speed.set_value(float(walk_speed))
@@ -627,6 +640,26 @@ class SettingsOverlay(QWidget):
         s = float(v) / float(self._params.sens_scale)
         self._lbl_sens.setText(f"Mouse sensitivity: {s:.3f} deg/px")
         self.sens_changed.emit(s)
+
+    def _on_view_bobbing_toggled(self, on: bool) -> None:
+        enabled = bool(on)
+        self._sld_view_bobbing_strength.setEnabled(enabled)
+        self.view_bobbing_changed.emit(enabled)
+
+    def _on_camera_shake_toggled(self, on: bool) -> None:
+        enabled = bool(on)
+        self._sld_camera_shake_strength.setEnabled(enabled)
+        self.camera_shake_changed.emit(enabled)
+
+    def _on_view_bobbing_strength(self, v: int) -> None:
+        percent = int(max(int(self._params.bob_strength_percent_min), min(int(self._params.bob_strength_percent_max), int(v))))
+        self._lbl_view_bobbing_strength.setText(f"View Bobbing strength: {percent}%")
+        self.view_bobbing_strength_changed.emit(float(percent) / 100.0)
+
+    def _on_camera_shake_strength(self, v: int) -> None:
+        percent = int(max(int(self._params.shake_strength_percent_min), min(int(self._params.shake_strength_percent_max), int(v))))
+        self._lbl_camera_shake_strength.setText(f"Camera Shake strength: {percent}%")
+        self.camera_shake_strength_changed.emit(float(percent) / 100.0)
 
     def _on_rd(self, v: int) -> None:
         rv = int(v)

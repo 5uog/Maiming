@@ -197,9 +197,9 @@ class RendererBackend:
         self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
         self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None = None) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float = 0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None = None) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state)
+        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state)

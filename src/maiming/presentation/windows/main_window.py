@@ -14,6 +14,19 @@ class MainWindow(QMainWindow):
         self._project_root = Path(project_root)
         self._screen = GameScreen(project_root=self._project_root)
         self.setCentralWidget(self._screen)
+        self._screen.viewport.fullscreen_changed.connect(self._apply_fullscreen)
+
+    def wants_fullscreen(self) -> bool:
+        return bool(self._screen.viewport.fullscreen_enabled())
+
+    def _apply_fullscreen(self, on: bool) -> None:
+        if bool(on):
+            if not self.isFullScreen():
+                self.showFullScreen()
+            return
+
+        if self.isFullScreen():
+            self.showNormal()
 
     def closeEvent(self, e) -> None:
         try:
@@ -42,6 +55,9 @@ def run_app(*, project_root: Path) -> None:
     w.setWindowTitle("Maiming")
     w.resize(1280, 720)
     w.setMinimumSize(1280, 720)
-    w.show()
+    if bool(w.wants_fullscreen()):
+        w.showFullScreen()
+    else:
+        w.show()
 
     app.exec()

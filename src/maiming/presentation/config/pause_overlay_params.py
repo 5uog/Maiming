@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ...application.session.session_settings import SessionSettings
+from ...domain.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, RENDER_DISTANCE_MIN_CHUNKS
 
 @dataclass(frozen=True)
 class PauseOverlayParams:
@@ -21,8 +22,14 @@ class PauseOverlayParams:
     sun_el_min: int = 0
     sun_el_max: int = 90
 
-    render_dist_min: int = 2
-    render_dist_max: int = 16
+    render_dist_min: int = int(RENDER_DISTANCE_MIN_CHUNKS)
+    render_dist_max: int = int(RENDER_DISTANCE_MAX_CHUNKS)
+
+    bob_strength_percent_min: int = 0
+    bob_strength_percent_max: int = 100
+
+    shake_strength_percent_min: int = 0
+    shake_strength_percent_max: int = 100
 
     gravity_milli_min: int = int(SessionSettings.GRAVITY_MIN * 100.0)
     gravity_milli_max: int = int(SessionSettings.GRAVITY_MAX * 100.0)

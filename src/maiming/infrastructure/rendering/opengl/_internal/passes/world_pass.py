@@ -8,6 +8,7 @@ import numpy as np
 from OpenGL.GL import glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE
 
 from ......core.math.vec3 import Vec3
+from ......domain.config.render_distance import clamp_render_distance_chunks
 from ......domain.world.chunking import ChunkKey
 from ..gl.shader_program import ShaderProgram
 from ..gl.gl_state_guard import GLStateGuard
@@ -79,7 +80,7 @@ class WorldPass:
 
         self._batch.prepare()
 
-        rd = int(max(2, min(16, int(inp.render_distance_chunks))))
+        rd = clamp_render_distance_chunks(int(inp.render_distance_chunks))
         cam = inp.camera_chunk
         view_proj = inp.view_proj.astype(np.float32, copy=False)
 

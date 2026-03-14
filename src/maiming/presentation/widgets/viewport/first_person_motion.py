@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 _EQUIP_RATE_PER_SECOND = 8.0
-_SWAP_THRESHOLD = 0.1
+_SWAP_THRESHOLD = 0.05
 _SWING_DURATION_S = 6.0 / 20.0
 
 def _normalize_block_id(block_id: str | None) -> str | None:
@@ -21,6 +21,7 @@ class FirstPersonMotionSample:
     swing_progress: float
     prev_swing_progress: float
     show_arm: bool
+    show_view_model: bool
     slim_arm: bool
 
 class FirstPersonMotionController:
@@ -35,6 +36,7 @@ class FirstPersonMotionController:
         self.prev_swing_progress: float = 0.0
 
         self.show_arm: bool = True
+        self.show_view_model: bool = True
         self.slim_arm: bool = bool(slim_arm)
 
         self._equip_lowering: bool = False
@@ -63,6 +65,9 @@ class FirstPersonMotionController:
         if self.visible_block_id != self.target_block_id:
             self._equip_lowering = True
             self._equip_raising = False
+
+    def set_view_model_visible(self, visible: bool) -> None:
+        self.show_view_model = bool(visible)
 
     def trigger_left_swing(self) -> None:
         self._start_swing()
@@ -114,4 +119,4 @@ class FirstPersonMotionController:
                 self._swing_active = False
 
     def sample(self) -> FirstPersonMotionSample:
-        return FirstPersonMotionSample(visible_block_id=self.visible_block_id, target_block_id=self.target_block_id, equip_progress=float(self.equip_progress), prev_equip_progress=float(self.prev_equip_progress), swing_progress=float(self.swing_progress), prev_swing_progress=float(self.prev_swing_progress), show_arm=bool(self.show_arm), slim_arm=bool(self.slim_arm))
+        return FirstPersonMotionSample(visible_block_id=self.visible_block_id, target_block_id=self.target_block_id, equip_progress=float(self.equip_progress), prev_equip_progress=float(self.prev_equip_progress), swing_progress=float(self.swing_progress), prev_swing_progress=float(self.prev_swing_progress), show_arm=bool(self.show_arm), show_view_model=bool(self.show_view_model), slim_arm=bool(self.slim_arm))

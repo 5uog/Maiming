@@ -2,6 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+from ....domain.config.render_distance import clamp_render_distance_chunks
 from ....domain.inventory.hotbar import HOTBAR_SIZE, current_hotbar_block_id, cycle_hotbar_index, normalize_hotbar_index, normalize_hotbar_slots, with_hotbar_assignment
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
@@ -32,6 +33,13 @@ class ViewportRuntimeState:
     reach: float = 5.0
     auto_jump_enabled: bool = False
     auto_sprint_enabled: bool = False
+    hide_hud: bool = False
+    hide_hand: bool = False
+    fullscreen: bool = False
+    view_bobbing_enabled: bool = True
+    camera_shake_enabled: bool = True
+    view_bobbing_strength: float = 0.35
+    camera_shake_strength: float = 0.20
 
     render_distance_chunks: int = 6
 
@@ -48,7 +56,9 @@ class ViewportRuntimeState:
         self.cloud_seed = int(max(0, min(9999, int(self.cloud_seed))))
         self.cloud_flow_direction = normalize_cloud_flow_direction(str(self.cloud_flow_direction))
 
-        self.render_distance_chunks = int(max(2, min(16, int(self.render_distance_chunks))))
+        self.render_distance_chunks = clamp_render_distance_chunks(int(self.render_distance_chunks))
+        self.view_bobbing_strength = max(0.0, min(1.0, float(self.view_bobbing_strength)))
+        self.camera_shake_strength = max(0.0, min(1.0, float(self.camera_shake_strength)))
 
         reach = float(self.reach)
         self.reach = 0.0 if reach < 0.0 else reach

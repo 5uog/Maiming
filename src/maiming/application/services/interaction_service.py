@@ -2,6 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+from ...core.math.vec3 import Vec3
 from ...domain.world.world_state import WorldState
 from ...domain.entities.player_entity import PlayerEntity
 
@@ -30,13 +31,13 @@ class InteractionService:
     def create(cls, *, world: WorldState, player: PlayerEntity, block_registry: BlockRegistry) -> "InteractionService":
         return cls(world=world, player=player, block_registry=block_registry)
 
-    def _pick_target(self, reach: float) -> BlockPick | None:
-        eye = self.player.eye_pos()
-        direction = self.player.view_forward()
+    def _pick_target(self, reach: float, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> BlockPick | None:
+        eye = self.player.eye_pos() if origin is None else origin
+        direction = self.player.view_forward() if direction is None else direction
         return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)
 
-    def break_block(self, reach: float = 5.0) -> bool:
-        hit = self._pick_target(reach=float(reach))
+    def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> bool:
+        hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
             return False
 
@@ -138,8 +139,8 @@ class InteractionService:
 
         return self._apply_place_state(cell=place_cell, place_state=str(place_state))
 
-    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False) -> bool:
-        hit = self._pick_target(reach=float(reach))
+    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None) -> bool:
+        hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
             return False
 

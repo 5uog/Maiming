@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, Future
 import numpy as np
 
 from ....core.math.vec3 import Vec3
+from ....domain.config.render_distance import clamp_render_distance_chunks
 from ....domain.world.chunking import ChunkKey, chunk_key, normalize_chunk_key
 from ....domain.world.world_state import WorldState
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
@@ -177,7 +178,7 @@ class WorldUploadTracker:
             return
 
         center = self._center_chunk(eye)
-        rd = int(max(2, min(16, int(render_distance_chunks))))
+        rd = clamp_render_distance_chunks(int(render_distance_chunks))
 
         visible = self._needed_chunks(existing, center, rd, y_pad=1)
         prefetch = self._needed_chunks(existing, center, rd + 2, y_pad=1)

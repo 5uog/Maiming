@@ -19,6 +19,7 @@ from ..passes.world_pass import WorldDrawInputs, WorldPass
 from ..pipeline.light_space import compute_light_view_proj
 from ..scene.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ..scene.player_model_pose import build_player_model_pose
+from ..scene.transform_matrices import rotate_z_deg_matrix
 from ...facade.gl_renderer_params import GLRendererParams
 from ...facade.player_render_state import PlayerRenderState
 from ...facade.render_metrics import PassFrameMetrics, RendererFrameMetrics
@@ -56,7 +57,7 @@ class FramePipeline:
         ok = bool(self.cfg.shadow.enabled and info.ok and int(info.tex_id) != 0 and int(info.inst_count) > 0)
         return (ok, int(info.size) if ok else 0)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None) -> RendererFrameMetrics:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None) -> RendererFrameMetrics:
         use_light_space = bool(self.state.shadow_enabled or self.state.debug_shadow)
         if bool(use_light_space):
             shadow_info_pre = self.shadow_pass.info()
@@ -73,6 +74,8 @@ class FramePipeline:
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
         view = mat4.look_dir(eye, forward)
+        if abs(float(roll_deg)) > 1e-6:
+            view = mat4.mul(rotate_z_deg_matrix(float(roll_deg)), view)
         proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(self.cfg.camera.z_near), float(self.cfg.camera.z_far))
         vp = mat4.mul(proj, view)
 
@@ -107,7 +110,7 @@ class FramePipeline:
         self.selection.draw(view_proj=vp)
 
         first_person = None if player_state is None else player_state.first_person
-        if first_person is not None and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
+        if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
             hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))

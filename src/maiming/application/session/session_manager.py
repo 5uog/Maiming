@@ -214,9 +214,14 @@ class SessionManager:
         self._update_player_walk_phase(float(dt))
         return bool(jump_pulse)
 
-    def make_snapshot(self) -> RenderSnapshotDTO:
+    def make_snapshot(self, *, enable_view_bobbing: bool = True, enable_camera_shake: bool = True, view_bobbing_strength: float = 0.35, camera_shake_strength: float = 0.20) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
-        cam = CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg)
+        cam_shake_tx = 0.0
+        cam_shake_ty = 0.0
+        cam_shake_tz = 0.0
+        cam_shake_yaw_deg = 0.0
+        cam_shake_pitch_deg = 0.0
+        cam_shake_roll_deg = 0.0
 
         p = self.player
         speed = math.hypot(float(p.velocity.x), float(p.velocity.z))
@@ -225,14 +230,73 @@ class SessionManager:
             crouch_amount = float(max(0.0, min(1.0, float(p.crouch_eye_offset) / float(p.crouch_eye_drop))))
 
         walk_speed = max(1e-6, float(self.settings.movement.walk_speed))
-        limb_swing_amount = 0.5 * min(float(_PLAYER_WALK_MAX_SWING_SCALE), float(speed) / float(walk_speed))
+        speed_ratio = clampf(float(speed) / float(walk_speed), 0.0, float(_PLAYER_WALK_MAX_SWING_SCALE))
+        limb_swing_amount = 0.5 * float(speed_ratio)
 
-        player_model = PlayerModelSnapshotDTO(base_x=float(p.position.x), base_y=float(p.position.y), base_z=float(p.position.z), body_yaw_deg=float(p.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(p.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), is_first_person=True)
+        bob = 0.5 * float(speed_ratio)
+        if bool(p.flying):
+            bob *= 0.40
+        elif not bool(p.on_ground):
+            bob *= 0.75
+
+        phase = float(self._player_walk_phase_rad)
+        s = math.sin(float(phase))
+        c = math.cos(float(phase))
+        pitch_wave = abs(math.cos(float(phase) - 0.2))
+        step_eye_offset = float(p.step_eye_offset)
+        view_bobbing_scale = clampf(float(view_bobbing_strength), 0.0, 1.0)
+        camera_shake_scale = clampf(float(camera_shake_strength), 0.0, 1.0)
+
+        fp_tx = float(s * bob * 0.08)
+        fp_ty = float((-abs(c) * bob * 0.10) + step_eye_offset * 0.45)
+        fp_tz = float(-abs(s) * bob * 0.03)
+        fp_yaw_deg = float(s * bob * 1.25)
+        fp_pitch_deg = float(pitch_wave * bob * 6.5)
+        fp_roll_deg = float(s * bob * 4.0)
+
+        cam_shake_tx = float(s * bob * 0.04)
+        cam_shake_ty = float((-abs(c) * bob * 0.06) + step_eye_offset * 0.30)
+        cam_shake_pitch_deg = float(pitch_wave * bob * 5.0)
+        cam_shake_roll_deg = float(s * bob * 3.0)
+
+        fp_tx *= float(view_bobbing_scale)
+        fp_ty *= float(view_bobbing_scale)
+        fp_tz *= float(view_bobbing_scale)
+        fp_yaw_deg *= float(view_bobbing_scale)
+        fp_pitch_deg *= float(view_bobbing_scale)
+        fp_roll_deg *= float(view_bobbing_scale)
+
+        cam_shake_tx *= float(camera_shake_scale)
+        cam_shake_ty *= float(camera_shake_scale)
+        cam_shake_tz *= float(camera_shake_scale)
+        cam_shake_yaw_deg *= float(camera_shake_scale)
+        cam_shake_pitch_deg *= float(camera_shake_scale)
+        cam_shake_roll_deg *= float(camera_shake_scale)
+
+        if not bool(enable_view_bobbing):
+            fp_tx = 0.0
+            fp_ty = 0.0
+            fp_tz = 0.0
+            fp_yaw_deg = 0.0
+            fp_pitch_deg = 0.0
+            fp_roll_deg = 0.0
+
+        if not bool(enable_camera_shake):
+            cam_shake_tx = 0.0
+            cam_shake_ty = 0.0
+            cam_shake_tz = 0.0
+            cam_shake_yaw_deg = 0.0
+            cam_shake_pitch_deg = 0.0
+            cam_shake_roll_deg = 0.0
+
+        cam = CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg, shake_tx=float(cam_shake_tx), shake_ty=float(cam_shake_ty), shake_tz=float(cam_shake_tz), shake_yaw_deg=float(cam_shake_yaw_deg), shake_pitch_deg=float(cam_shake_pitch_deg), shake_roll_deg=float(cam_shake_roll_deg))
+
+        player_model = PlayerModelSnapshotDTO(base_x=float(p.position.x), base_y=float(p.position.y), base_z=float(p.position.z), body_yaw_deg=float(p.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(p.pitch_deg), limb_phase_rad=float(self._player_walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), first_person_tx=float(fp_tx), first_person_ty=float(fp_ty), first_person_tz=float(fp_tz), first_person_yaw_deg=float(fp_yaw_deg), first_person_pitch_deg=float(fp_pitch_deg), first_person_roll_deg=float(fp_roll_deg), is_first_person=True)
 
         return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam, player_model=player_model)
 
-    def break_block(self, reach: float = 5.0) -> bool:
-        return self.interaction.break_block(reach=float(reach))
+    def break_block(self, reach: float = 5.0, *, origin: Vec3 | None = None, direction: Vec3 | None = None) -> bool:
+        return self.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
 
-    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False) -> bool:
-        return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching))
+    def place_block(self, block_id: str | None, reach: float = 5.0, *, crouching: bool = False, origin: Vec3 | None = None, direction: Vec3 | None = None) -> bool:
+        return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)
