@@ -14,22 +14,7 @@ def _default_hotbar_slots() -> list[str]:
     return list(normalize_hotbar_slots(None, size=HOTBAR_SIZE))
 
 def _default_othello_hotbar_slots() -> list[str]:
-    return list(
-        normalize_hotbar_slots(
-            (
-                OTHELLO_START_ITEM_ID,
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                OTHELLO_SETTINGS_ITEM_ID,
-            ),
-            size=HOTBAR_SIZE,
-        )
-    )
+    return list(normalize_hotbar_slots((OTHELLO_START_ITEM_ID, "", "", "", "", "", "", "", OTHELLO_SETTINGS_ITEM_ID), size=HOTBAR_SIZE))
 
 @dataclass
 class ViewportRuntimeState:

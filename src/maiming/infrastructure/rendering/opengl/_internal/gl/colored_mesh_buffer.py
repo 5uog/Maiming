@@ -54,13 +54,7 @@ class ColoredMeshBuffer:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-        return ColoredMeshBuffer(
-            vao=int(vao),
-            vbo=int(vbo),
-            vertex_count=int(vertex_rows.shape[0]),
-            instance_vbo=int(instance_vbo),
-            instance_capacity=0,
-        )
+        return ColoredMeshBuffer(vao=int(vao), vbo=int(vbo), vertex_count=int(vertex_rows.shape[0]), instance_vbo=int(instance_vbo), instance_capacity=0)
 
     def upload_instances(self, instance_data: np.ndarray) -> None:
         data = as_float32_c_array(instance_data)

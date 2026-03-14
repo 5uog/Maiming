@@ -39,18 +39,7 @@ class OthelloPass:
         self._world_prog = None
         self._shadow_prog = None
 
-    def draw(
-        self,
-        *,
-        render_state: OthelloRenderState | None,
-        view_proj: np.ndarray,
-        light_view_proj: np.ndarray,
-        sun_dir: Vec3,
-        debug_shadow: bool,
-        shadow_enabled: bool,
-        shadow: ShadowParams,
-        shadow_info: ShadowMapInfo,
-    ) -> PassFrameMetrics:
+    def draw(self, *, render_state: OthelloRenderState | None, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: ShadowParams, shadow_info: ShadowMapInfo) -> PassFrameMetrics:
         if self._world_prog is None or self._board_mesh is None or self._piece_mesh is None or render_state is None or not bool(render_state.enabled):
             return PassFrameMetrics()
 

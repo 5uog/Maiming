@@ -120,17 +120,7 @@ class RendererBackend:
         self._pipeline = None
         self._last_payload_validation = None
         self._last_frame_metrics = RendererFrameMetrics()
-        self._gl_info = GLInfoSnapshot(
-            vendor="",
-            renderer="",
-            version="",
-            glsl_version="",
-            major_version=0,
-            minor_version=0,
-            glsl_major_version=0,
-            glsl_minor_version=0,
-            context_profile_mask=0
-        )
+        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="", major_version=0, minor_version=0, glsl_major_version=0, glsl_minor_version=0, context_profile_mask=0)
 
     def apply_runtime_state(self) -> None:
         self._cloud.set_wireframe(bool(self._state.cloud_wireframe))
@@ -217,15 +207,4 @@ class RendererBackend:
             self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._last_frame_metrics = self._pipeline.render(
-            w=int(w),
-            h=int(h),
-            eye=eye,
-            yaw_deg=float(yaw_deg),
-            pitch_deg=float(pitch_deg),
-            roll_deg=float(roll_deg),
-            fov_deg=float(fov_deg),
-            render_distance_chunks=int(render_distance_chunks),
-            player_state=player_state,
-            othello_state=othello_state
-        )
+        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state)

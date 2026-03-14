@@ -45,14 +45,7 @@ def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
 
     def face(nx, ny, nz, corners):
         (a, c0, c1, d0) = corners
-        return [
-            (*a, nx, ny, nz, r, g, b),
-            (*c0, nx, ny, nz, r, g, b),
-            (*c1, nx, ny, nz, r, g, b),
-            (*a, nx, ny, nz, r, g, b),
-            (*c1, nx, ny, nz, r, g, b),
-            (*d0, nx, ny, nz, r, g, b),
-        ]
+        return [(*a, nx, ny, nz, r, g, b), (*c0, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*a, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*d0, nx, ny, nz, r, g, b)]
 
     faces: list[tuple[float, ...]] = []
     faces.extend(face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)]))
@@ -161,20 +154,14 @@ def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.nd
 
     if render_state.last_move_index is not None and 0 <= int(render_state.last_move_index) < BOARD_CELL_COUNT:
         x, z = square_center(int(render_state.last_move_index))
-        matrix = compose_matrices(
-            translate_matrix(float(x), float(OTHELLO_HIGHLIGHT_CENTER_Y), float(z)),
-            scale_matrix(0.86, float(OTHELLO_HIGHLIGHT_THICKNESS), 0.86),
-        )
+        matrix = compose_matrices(translate_matrix(float(x), float(OTHELLO_HIGHLIGHT_CENTER_Y), float(z)), scale_matrix(0.86, float(OTHELLO_HIGHLIGHT_THICKNESS), 0.86))
         highlight_rows.append(_instance_row(matrix, _LAST_MOVE_HINT))
 
     for square_index in legal_indices:
         x, z = square_center(square_index)
         tint = _HOVER_HINT if render_state.hover_square_index == square_index else _LEGAL_HINT
         scale = 0.74 if render_state.hover_square_index == square_index else 0.56
-        matrix = compose_matrices(
-            translate_matrix(float(x), float(OTHELLO_HIGHLIGHT_CENTER_Y), float(z)),
-            scale_matrix(float(scale), float(OTHELLO_HIGHLIGHT_THICKNESS), float(scale)),
-        )
+        matrix = compose_matrices(translate_matrix(float(x), float(OTHELLO_HIGHLIGHT_CENTER_Y), float(z)), scale_matrix(float(scale), float(OTHELLO_HIGHLIGHT_THICKNESS), float(scale)))
         highlight_rows.append(_instance_row(matrix, tint))
 
     materialized_board = tuple(render_state.board[:BOARD_CELL_COUNT])
@@ -193,15 +180,7 @@ def build_othello_instance_rows(render_state: OthelloRenderState) -> tuple[np.nd
             if end_angle <= start_angle:
                 end_angle += 360.0
             angle_deg = float(start_angle) + (float(end_angle) - float(start_angle)) * float(progress)
-        matrix = compose_matrices(
-            translate_matrix(float(x), float(OTHELLO_PIECE_BASE_Y) + float(lift), float(z)),
-            rotate_x_deg_matrix(float(angle_deg)),
-            scale_matrix(float(OTHELLO_PIECE_RADIUS) * 2.0, float(OTHELLO_PIECE_THICKNESS), float(OTHELLO_PIECE_RADIUS) * 2.0),
-        )
+        matrix = compose_matrices(translate_matrix(float(x), float(OTHELLO_PIECE_BASE_Y) + float(lift), float(z)), rotate_x_deg_matrix(float(angle_deg)), scale_matrix(float(OTHELLO_PIECE_RADIUS) * 2.0, float(OTHELLO_PIECE_THICKNESS), float(OTHELLO_PIECE_RADIUS) * 2.0))
         piece_rows.append(_instance_row(matrix, _TINT_WHITE))
 
-    return (
-        np.ascontiguousarray(np.vstack(board_rows), dtype=np.float32) if board_rows else np.zeros((0, 20), dtype=np.float32),
-        np.ascontiguousarray(np.vstack(highlight_rows), dtype=np.float32) if highlight_rows else np.zeros((0, 20), dtype=np.float32),
-        np.ascontiguousarray(np.vstack(piece_rows), dtype=np.float32) if piece_rows else np.zeros((0, 20), dtype=np.float32),
-    )
+    return (np.ascontiguousarray(np.vstack(board_rows), dtype=np.float32) if board_rows else np.zeros((0, 20), dtype=np.float32), np.ascontiguousarray(np.vstack(highlight_rows), dtype=np.float32) if highlight_rows else np.zeros((0, 20), dtype=np.float32), np.ascontiguousarray(np.vstack(piece_rows), dtype=np.float32) if piece_rows else np.zeros((0, 20), dtype=np.float32))

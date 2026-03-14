@@ -66,27 +66,7 @@ class GLResources:
 
         empty_vao = int(glGenVertexArrays(1))
 
-        return GLResources(
-            world_prog=world_prog,
-            world_no_shadow_prog=world_no_shadow_prog,
-            shadow_prog=shadow_prog,
-            sun_prog=sun_prog,
-            cloud_prog=cloud_prog,
-            selection_prog=selection_prog,
-            othello_prog=othello_prog,
-            othello_shadow_prog=othello_shadow_prog,
-            chunk_face_payload_prog=chunk_face_payload_prog,
-            first_person_face_prog=first_person_face_prog,
-            player_model_prog=player_model_prog,
-            player_model_no_shadow_prog=player_model_no_shadow_prog,
-            player_model_shadow_prog=player_model_shadow_prog,
-            cloud_mesh=cloud_mesh,
-            player_model_mesh=player_model_mesh,
-            atlas=atlas,
-            skin_texture=skin_texture,
-            empty_vao=empty_vao,
-            blocks=blocks
-        )
+        return GLResources(world_prog=world_prog, world_no_shadow_prog=world_no_shadow_prog, shadow_prog=shadow_prog, sun_prog=sun_prog, cloud_prog=cloud_prog, selection_prog=selection_prog, othello_prog=othello_prog, othello_shadow_prog=othello_shadow_prog, chunk_face_payload_prog=chunk_face_payload_prog, first_person_face_prog=first_person_face_prog, player_model_prog=player_model_prog, player_model_no_shadow_prog=player_model_no_shadow_prog, player_model_shadow_prog=player_model_shadow_prog, cloud_mesh=cloud_mesh, player_model_mesh=player_model_mesh, atlas=atlas, skin_texture=skin_texture, empty_vao=empty_vao, blocks=blocks)
 
     def destroy(self) -> None:
         self.cloud_mesh.destroy()

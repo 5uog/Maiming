@@ -22,13 +22,7 @@ class OthelloAiWorker(QObject):
         self._poll_timer.timeout.connect(self._drain_completed)
 
     def request_move(self, *, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int) -> None:
-        future = self._executor.submit(
-            _compute_ai_move,
-            tuple(int(value) for value in tuple(board)),
-            int(side),
-            str(difficulty),
-            int(seed),
-        )
+        future = self._executor.submit(_compute_ai_move, tuple(int(value) for value in tuple(board)), int(side), str(difficulty), int(seed))
         self._pending.append((int(generation), future))
         if not self._poll_timer.isActive():
             self._poll_timer.start()

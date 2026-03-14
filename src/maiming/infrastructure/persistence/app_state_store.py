@@ -15,20 +15,7 @@ from .json_file_store import JsonFileStore
 from .scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 
 def _default_othello_hotbar_slots() -> tuple[str, ...]:
-    return normalize_hotbar_slots(
-        (
-            OTHELLO_START_ITEM_ID,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            OTHELLO_SETTINGS_ITEM_ID,
-        ),
-        size=DOMAIN_HOTBAR_SIZE,
-    )
+    return normalize_hotbar_slots((OTHELLO_START_ITEM_ID, "", "", "", "", "", "", "", OTHELLO_SETTINGS_ITEM_ID), size=DOMAIN_HOTBAR_SIZE)
 
 @dataclass(frozen=True)
 class PersistedSettings:
@@ -345,13 +332,7 @@ class WorldStateFile:
     othello_space: PersistedOthelloSpace = PersistedOthelloSpace()
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "version": int(self.version),
-            "spaces": {
-                "my_world": self.my_world.to_dict(),
-                "othello": self.othello_space.to_dict(),
-            },
-        }
+        return {"version": int(self.version), "spaces": {"my_world": self.my_world.to_dict(), "othello": self.othello_space.to_dict()}}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "WorldStateFile":
@@ -363,10 +344,7 @@ class WorldStateFile:
         if "spaces" not in d:
             raw_player = d.get("player", {})
             raw_world = d.get("world", {})
-            my_world = PersistedPlaySpace(
-                player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(),
-                world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(revision=0, blocks={}),
-            )
+            my_world = PersistedPlaySpace(player=PersistedPlayer.from_dict(raw_player) if isinstance(raw_player, dict) else PersistedPlayer(), world=PersistedWorld.from_dict(raw_world) if isinstance(raw_world, dict) else PersistedWorld(revision=0, blocks={}))
             return WorldStateFile(version=int(max(2, version)), my_world=my_world, othello_space=PersistedOthelloSpace())
 
         raw_spaces = d.get("spaces", {})
@@ -392,14 +370,7 @@ class AppState:
 
     @staticmethod
     def default() -> "AppState":
-        return AppState(
-            current_space_id=PLAY_SPACE_MY_WORLD,
-            settings=PersistedSettings(),
-            inventory=PersistedInventory(),
-            othello_settings=OthelloSettings(),
-            my_world=PersistedPlaySpace(),
-            othello_space=PersistedOthelloSpace(),
-        )
+        return AppState(current_space_id=PLAY_SPACE_MY_WORLD, settings=PersistedSettings(), inventory=PersistedInventory(), othello_settings=OthelloSettings(), my_world=PersistedPlaySpace(), othello_space=PersistedOthelloSpace())
 
 @dataclass
 class AppStateStore:
@@ -423,28 +394,11 @@ class AppStateStore:
         player_file = PlayerStateFile.from_dict(raw_player or {})
         world_file = WorldStateFile.from_dict(raw_world or {})
 
-        return AppState(
-            current_space_id=normalize_play_space_id(player_file.current_space_id),
-            settings=player_file.settings,
-            inventory=player_file.inventory,
-            othello_settings=player_file.othello_settings.normalized(),
-            my_world=world_file.my_world,
-            othello_space=world_file.othello_space,
-        )
+        return AppState(current_space_id=normalize_play_space_id(player_file.current_space_id), settings=player_file.settings, inventory=player_file.inventory, othello_settings=player_file.othello_settings.normalized(), my_world=world_file.my_world, othello_space=world_file.othello_space)
 
     def save(self, state: AppState) -> None:
-        player_file = PlayerStateFile(
-            version=2,
-            current_space_id=normalize_play_space_id(state.current_space_id),
-            settings=state.settings,
-            inventory=state.inventory,
-            othello_settings=state.othello_settings.normalized(),
-        )
-        world_file = WorldStateFile(
-            version=2,
-            my_world=state.my_world,
-            othello_space=state.othello_space,
-        )
+        player_file = PlayerStateFile(version=2, current_space_id=normalize_play_space_id(state.current_space_id), settings=state.settings, inventory=state.inventory, othello_settings=state.othello_settings.normalized())
+        world_file = WorldStateFile(version=2, my_world=state.my_world, othello_space=state.othello_space)
 
         self._player_store().write(player_file.to_dict())
         self._world_store().write(world_file.to_dict())

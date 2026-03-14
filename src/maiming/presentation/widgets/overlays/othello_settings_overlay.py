@@ -4,16 +4,7 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
-from ....domain.othello.types import (
-    OTHELLO_DIFFICULTY_MEDIUM,
-    OTHELLO_DIFFICULTY_STRONG,
-    OTHELLO_DIFFICULTY_WEAK,
-    OTHELLO_TIME_CONTROL_NONE,
-    OTHELLO_TIME_CONTROL_PER_SIDE_20M,
-    SIDE_BLACK,
-    SIDE_WHITE,
-    OthelloSettings
-)
+from ....domain.othello.types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_STRONG, OTHELLO_DIFFICULTY_WEAK, OTHELLO_TIME_CONTROL_NONE, OTHELLO_TIME_CONTROL_PER_SIDE_20M, SIDE_BLACK, SIDE_WHITE, OthelloSettings
 
 class OthelloSettingsOverlay(QWidget):
     back_requested = pyqtSignal()
@@ -62,34 +53,9 @@ class OthelloSettingsOverlay(QWidget):
         sep.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(sep)
 
-        self._difficulty = self._add_combo(
-            layout,
-            panel,
-            "AI difficulty",
-            (
-                (OTHELLO_DIFFICULTY_WEAK, "Weak"),
-                (OTHELLO_DIFFICULTY_MEDIUM, "Medium"),
-                (OTHELLO_DIFFICULTY_STRONG, "Strong"),
-            ),
-        )
-        self._time_control = self._add_combo(
-            layout,
-            panel,
-            "Time control",
-            (
-                (OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"),
-                (OTHELLO_TIME_CONTROL_NONE, "No limit"),
-            ),
-        )
-        self._player_side = self._add_combo(
-            layout,
-            panel,
-            "Player order",
-            (
-                (SIDE_BLACK, "Player moves first"),
-                (SIDE_WHITE, "Player moves second"),
-            ),
-        )
+        self._difficulty = self._add_combo(layout, panel, "AI difficulty", ((OTHELLO_DIFFICULTY_WEAK, "Weak"), (OTHELLO_DIFFICULTY_MEDIUM, "Medium"), (OTHELLO_DIFFICULTY_STRONG, "Strong")))
+        self._time_control = self._add_combo(layout, panel, "Time control", ((OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"), (OTHELLO_TIME_CONTROL_NONE, "No limit")))
+        self._player_side = self._add_combo(layout, panel, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
 
         btn_save = QPushButton("Save", panel)
         btn_save.setObjectName("menuBtn")
@@ -129,11 +95,7 @@ class OthelloSettingsOverlay(QWidget):
                 return
 
     def _save_and_close(self) -> None:
-        settings = OthelloSettings(
-            difficulty=str(self._difficulty.currentData()),
-            time_control=str(self._time_control.currentData()),
-            player_side=int(self._player_side.currentData()),
-        ).normalized()
+        settings = OthelloSettings(difficulty=str(self._difficulty.currentData()), time_control=str(self._time_control.currentData()), player_side=int(self._player_side.currentData())).normalized()
         self.settings_applied.emit(settings)
         self.back_requested.emit()
 

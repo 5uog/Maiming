@@ -157,21 +157,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._inventory.hotbar_slot_assigned.connect(self._assign_hotbar_slot)
         self._inventory.closed.connect(self._on_inventory_closed)
 
-        self._overlays = ViewportOverlays(
-            refs=OverlayRefs(
-                pause=self._overlay,
-                settings=self._settings,
-                othello_settings=self._othello_settings,
-                inventory=self._inventory,
-                death=self._death,
-                crosshair=self._crosshair,
-                hotbar=self._hotbar,
-                hud_getter=lambda: self._hud,
-                othello_hud_getter=lambda: self._othello_hud,
-            ),
-            runner=self._runner,
-            inp=self._inp,
-        )
+        self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud), runner=self._runner, inp=self._inp)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMouseTracking(True)
@@ -336,12 +322,7 @@ class GLViewportWidget(QOpenGLWidget):
         return bool(self._state.fullscreen)
 
     def _make_render_snapshot(self):
-        return self._session.make_snapshot(
-            enable_view_bobbing=bool(self._state.view_bobbing_enabled),
-            enable_camera_shake=bool(self._state.camera_shake_enabled),
-            view_bobbing_strength=float(self._state.view_bobbing_strength),
-            camera_shake_strength=float(self._state.camera_shake_strength),
-        )
+        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength))
 
     @staticmethod
     def _effective_camera_from_snapshot(snapshot) -> tuple[Vec3, float, float, float, Vec3]:
@@ -354,14 +335,7 @@ class GLViewportWidget(QOpenGLWidget):
         return (eye, float(yaw_deg), float(pitch_deg), float(roll_deg), direction)
 
     def _gameplay_hud_active(self) -> bool:
-        return (
-            (not bool(self._state.hide_hud))
-            and (not self._overlays.dead())
-            and (not self._overlays.paused())
-            and (not self._overlays.settings_open())
-            and (not self._overlays.othello_settings_open())
-            and (not self._overlays.inventory_open())
-        )
+        return ((not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()))
 
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
@@ -437,18 +411,7 @@ class GLViewportWidget(QOpenGLWidget):
         player_color = "Black" if int(state.player_side) == int(SIDE_BLACK) else "White"
         ai_color = "White" if int(state.ai_side) == int(SIDE_WHITE) else "Black"
         difficulty = str(state.settings.difficulty).title()
-        self._othello_hud.set_text(
-            "\n".join(
-                [
-                    str(turn_text),
-                    f"Black {int(black_count)}  White {int(white_count)}",
-                    f"AI {difficulty}  You {player_color}  AI {ai_color}",
-                    f"Black clock: {_format_clock(state.black_time_remaining_s)}",
-                    f"White clock: {_format_clock(state.white_time_remaining_s)}",
-                    str(state.message),
-                ]
-            )
-        )
+        self._othello_hud.set_text("\n".join([str(turn_text), f"Black {int(black_count)}  White {int(white_count)}", f"AI {difficulty}  You {player_color}  AI {ai_color}", f"Black clock: {_format_clock(state.black_time_remaining_s)}", f"White clock: {_format_clock(state.white_time_remaining_s)}", str(state.message)]))
         self._othello_hud.set_title_text(self._othello_title_text(black_count=int(black_count), white_count=int(white_count)))
 
     def _sync_gameplay_hud_visibility(self) -> None:
@@ -563,14 +526,7 @@ class GLViewportWidget(QOpenGLWidget):
             return None
         game_state = self._othello_match.game_state()
         legal_moves = game_state.legal_moves if game_state.status == OTHELLO_GAME_STATE_PLAYER_TURN else ()
-        return OthelloRenderState(
-            enabled=True,
-            board=tuple(game_state.board),
-            legal_move_indices=tuple(int(index) for index in tuple(legal_moves)),
-            hover_square_index=self._othello_hover_square,
-            last_move_index=game_state.last_move_index,
-            animations=tuple(game_state.animations),
-        )
+        return OthelloRenderState(enabled=True, board=tuple(game_state.board), legal_move_indices=tuple(int(index) for index in tuple(legal_moves)), hover_square_index=self._othello_hover_square, last_move_index=game_state.last_move_index, animations=tuple(game_state.animations))
 
     def _refresh_othello_hover_square(self, snapshot) -> None:
         self._othello_hover_square = None
@@ -624,50 +580,10 @@ class GLViewportWidget(QOpenGLWidget):
         pl = snap.player_model
         motion = self._first_person_motion.sample()
         visible_def = None if motion.visible_block_id is None else self._session.block_registry.get(str(motion.visible_block_id))
-        first_person = FirstPersonRenderState(
-            visible_block_id=motion.visible_block_id,
-            visible_block_kind=None if visible_def is None else str(visible_def.kind),
-            target_block_id=motion.target_block_id,
-            equip_progress=float(motion.equip_progress),
-            prev_equip_progress=float(motion.prev_equip_progress),
-            swing_progress=float(motion.swing_progress),
-            prev_swing_progress=float(motion.prev_swing_progress),
-            show_arm=bool(motion.show_arm),
-            show_view_model=bool(motion.show_view_model),
-            slim_arm=bool(motion.slim_arm),
-            view_bob_x=float(pl.first_person_tx),
-            view_bob_y=float(pl.first_person_ty),
-            view_bob_z=float(pl.first_person_tz),
-            view_bob_yaw_deg=float(pl.first_person_yaw_deg),
-            view_bob_pitch_deg=float(pl.first_person_pitch_deg),
-            view_bob_roll_deg=float(pl.first_person_roll_deg),
-        )
-        player_state = PlayerRenderState(
-            base_x=float(pl.base_x),
-            base_y=float(pl.base_y),
-            base_z=float(pl.base_z),
-            body_yaw_deg=float(pl.body_yaw_deg),
-            head_yaw_deg=float(pl.head_yaw_deg),
-            head_pitch_deg=float(pl.head_pitch_deg),
-            limb_phase_rad=float(pl.limb_phase_rad),
-            limb_swing_amount=float(pl.limb_swing_amount),
-            crouch_amount=float(pl.crouch_amount),
-            is_first_person=bool(pl.is_first_person),
-            first_person=first_person,
-        )
+        first_person = FirstPersonRenderState(visible_block_id=motion.visible_block_id, visible_block_kind=None if visible_def is None else str(visible_def.kind), target_block_id=motion.target_block_id, equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), show_view_model=bool(motion.show_view_model), slim_arm=bool(motion.slim_arm), view_bob_x=float(pl.first_person_tx), view_bob_y=float(pl.first_person_ty), view_bob_z=float(pl.first_person_tz), view_bob_yaw_deg=float(pl.first_person_yaw_deg), view_bob_pitch_deg=float(pl.first_person_pitch_deg), view_bob_roll_deg=float(pl.first_person_roll_deg))
+        player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person), first_person=first_person)
 
-        self._renderer.render(
-            w=fb_w,
-            h=fb_h,
-            eye=render_eye,
-            yaw_deg=float(render_yaw_deg),
-            pitch_deg=float(render_pitch_deg),
-            roll_deg=float(render_roll_deg),
-            fov_deg=float(cam.fov_deg),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-            player_state=player_state,
-            othello_state=self._build_othello_render_state(),
-        )
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=self._build_othello_render_state())
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -677,41 +593,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _sync_settings_values(self) -> None:
         self._sync_state_from_renderer_sun()
-        self._settings.sync_values(
-            fov_deg=self._session.settings.fov_deg,
-            sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px,
-            inv_x=self._state.invert_x,
-            inv_y=self._state.invert_y,
-            fullscreen=self._state.fullscreen,
-            hide_hud=self._state.hide_hud,
-            hide_hand=self._state.hide_hand,
-            view_bobbing_enabled=self._state.view_bobbing_enabled,
-            camera_shake_enabled=self._state.camera_shake_enabled,
-            view_bobbing_strength=float(self._state.view_bobbing_strength),
-            camera_shake_strength=float(self._state.camera_shake_strength),
-            outline_selection=self._state.outline_selection,
-            cloud_wire=self._state.cloud_wire,
-            clouds_enabled=self._state.cloud_enabled,
-            cloud_density=int(self._state.cloud_density),
-            cloud_seed=int(self._state.cloud_seed),
-            cloud_flow_direction=str(self._state.cloud_flow_direction),
-            world_wire=self._state.world_wire,
-            shadow_enabled=self._state.shadow_enabled,
-            sun_az_deg=self._state.sun_az_deg,
-            sun_el_deg=self._state.sun_el_deg,
-            creative_mode=self._state.creative_mode,
-            auto_jump_enabled=self._state.auto_jump_enabled,
-            auto_sprint_enabled=self._state.auto_sprint_enabled,
-            gravity=float(self._session.settings.movement.gravity),
-            walk_speed=float(self._session.settings.movement.walk_speed),
-            sprint_speed=float(self._session.settings.movement.sprint_speed),
-            jump_v0=float(self._session.settings.movement.jump_v0),
-            auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s),
-            fly_speed=float(self._session.settings.movement.fly_speed),
-            fly_ascend_speed=float(self._session.settings.movement.fly_ascend_speed),
-            fly_descend_speed=float(self._session.settings.movement.fly_descend_speed),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-        )
+        self._settings.sync_values(fov_deg=self._session.settings.fov_deg, sens_deg_per_px=self._session.settings.mouse_sens_deg_per_px, inv_x=self._state.invert_x, inv_y=self._state.invert_y, fullscreen=self._state.fullscreen, hide_hud=self._state.hide_hud, hide_hand=self._state.hide_hand, view_bobbing_enabled=self._state.view_bobbing_enabled, camera_shake_enabled=self._state.camera_shake_enabled, view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), outline_selection=self._state.outline_selection, cloud_wire=self._state.cloud_wire, clouds_enabled=self._state.cloud_enabled, cloud_density=int(self._state.cloud_density), cloud_seed=int(self._state.cloud_seed), cloud_flow_direction=str(self._state.cloud_flow_direction), world_wire=self._state.world_wire, shadow_enabled=self._state.shadow_enabled, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, creative_mode=self._state.creative_mode, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, gravity=float(self._session.settings.movement.gravity), walk_speed=float(self._session.settings.movement.walk_speed), sprint_speed=float(self._session.settings.movement.sprint_speed), jump_v0=float(self._session.settings.movement.jump_v0), auto_jump_cooldown_s=float(self._session.settings.movement.auto_jump_cooldown_s), fly_speed=float(self._session.settings.movement.fly_speed), fly_ascend_speed=float(self._session.settings.movement.fly_ascend_speed), fly_descend_speed=float(self._session.settings.movement.fly_descend_speed), render_distance_chunks=int(self._state.render_distance_chunks))
 
     def _sync_othello_settings_values(self) -> None:
         self._othello_settings.sync_values(self._state.othello_settings)
@@ -940,13 +822,7 @@ class GLViewportWidget(QOpenGLWidget):
         state = self._othello_match.game_state()
         if int(state.match_generation) != int(generation) or state.status != OTHELLO_GAME_STATE_AI_TURN or (not bool(state.thinking)):
             return
-        self._othello_ai.request_move(
-            generation=int(generation),
-            board=tuple(board),
-            side=int(side),
-            difficulty=str(difficulty),
-            seed=int(seed),
-        )
+        self._othello_ai.request_move(generation=int(generation), board=tuple(board), side=int(side), difficulty=str(difficulty), seed=int(seed))
 
     def _consume_pending_othello_ai_result(self) -> None:
         if self._pending_othello_ai_result is None:
@@ -997,19 +873,7 @@ class GLViewportWidget(QOpenGLWidget):
         if bool(self._state.auto_sprint_enabled) and float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
             sprint = True
 
-        jump_started = self._session.step(
-            dt=float(dt),
-            move_f=fr.move_f,
-            move_s=fr.move_s,
-            jump_held=bool(fr.jump_held),
-            jump_pressed=bool(fr.jump_pressed),
-            sprint=bool(sprint),
-            crouch=bool(fr.crouch),
-            mdx=float(md.dx),
-            mdy=float(md.dy),
-            creative_mode=bool(self._state.creative_mode),
-            auto_jump_enabled=bool(self._state.auto_jump_enabled),
-        )
+        jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
         self._sync_first_person_target()
         self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
@@ -1030,35 +894,7 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(
-            session=self._session,
-            renderer=self._renderer,
-            auto_jump_enabled=self._state.auto_jump_enabled,
-            auto_sprint_enabled=self._state.auto_sprint_enabled,
-            creative_mode=self._state.creative_mode,
-            flying=bool(self._session.player.flying),
-            inventory_open=self._overlays.inventory_open(),
-            selected_block_id=self._current_item_id() or "",
-            reach=self._state.reach,
-            sun_az_deg=self._state.sun_az_deg,
-            sun_el_deg=self._state.sun_el_deg,
-            shadow_enabled=self._state.shadow_enabled,
-            world_wire=self._state.world_wire,
-            cloud_wire=self._state.cloud_wire,
-            cloud_enabled=self._state.cloud_enabled,
-            cloud_density=self._state.cloud_density,
-            cloud_seed=self._state.cloud_seed,
-            debug_shadow=self._state.debug_shadow,
-            fb_w=fb_w,
-            fb_h=fb_h,
-            dpr=dpr,
-            vsync_on=self._state.vsync_on,
-            render_timer_interval_ms=int(self._render_timer.interval()),
-            sim_hz=float(self._loop.sim_hz),
-            render_distance_chunks=int(self._state.render_distance_chunks),
-            paint_ms=float(self._last_paint_ms),
-            selection_pick_ms=float(self._last_selection_pick_ms),
-        )
+        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=self._current_item_id() or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:

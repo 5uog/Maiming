@@ -72,20 +72,7 @@ class FramePipeline:
 
         shadow_metrics = PassFrameMetrics()
         if bool(self.state.shadow_enabled):
-            shadow_metrics = self.shadow_pass.render(
-                light_vp,
-                extra_draw=(
-                    lambda vp: (
-                        lambda player_result, othello_result: (
-                            int(player_result[0]) + int(othello_result[0]),
-                            int(player_result[1]) + int(othello_result[1]),
-                        )
-                    )(
-                        self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp),
-                        self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp),
-                    )
-                ),
-            )
+            shadow_metrics = self.shadow_pass.render(light_vp, extra_draw=(lambda vp: (lambda player_result, othello_result: (int(player_result[0]) + int(othello_result[0]), int(player_result[1]) + int(othello_result[1])))(self.player_pass.draw_shadow(pose=player_pose, light_view_proj=vp), self.othello_pass.draw_shadow(render_state=othello_state, light_view_proj=vp))))
 
         forward = forward_from_yaw_pitch_deg(yaw_deg, pitch_deg)
 
@@ -115,61 +102,15 @@ class FramePipeline:
 
         sel_mode, sx, sy, sz = self.selection.world_inputs()
 
-        world_metrics = self.world_pass.draw(
-            WorldDrawInputs(
-                view_proj=vp,
-                light_view_proj=light_vp,
-                sun_dir=self.state.sun_dir,
-                debug_shadow=bool(self.state.debug_shadow),
-                shadow_enabled=bool(self.state.shadow_enabled),
-                world_wireframe=bool(self.state.world_wireframe),
-                shadow=self.cfg.shadow,
-                shadow_info=shadow_info,
-                camera_chunk=cam_ck,
-                render_distance_chunks=int(render_distance_chunks),
-                sel_mode=int(sel_mode),
-                sel_x=int(sx),
-                sel_y=int(sy),
-                sel_z=int(sz),
-                sel_tint=float(self.sel_tint_strength)
-            )
-        )
+        world_metrics = self.world_pass.draw(WorldDrawInputs(view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), world_wireframe=bool(self.state.world_wireframe), shadow=self.cfg.shadow, shadow_info=shadow_info, camera_chunk=cam_ck, render_distance_chunks=int(render_distance_chunks), sel_mode=int(sel_mode), sel_x=int(sx), sel_y=int(sy), sel_z=int(sz), sel_tint=float(self.sel_tint_strength)))
 
-        player_dc, player_inst = self.player_pass.draw_world(
-            pose=player_pose,
-            view_proj=vp,
-            light_view_proj=light_vp,
-            sun_dir=self.state.sun_dir,
-            debug_shadow=bool(self.state.debug_shadow),
-            shadow_enabled=bool(self.state.shadow_enabled),
-            shadow=self.cfg.shadow,
-            shadow_info=shadow_info
-        )
+        player_dc, player_inst = self.player_pass.draw_world(pose=player_pose, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
 
-        world_metrics = PassFrameMetrics(
-            cpu_ms=float(world_metrics.cpu_ms),
-            draw_calls=int(world_metrics.draw_calls + player_dc),
-            instances=int(world_metrics.instances + player_inst),
-            rendered=bool(world_metrics.rendered or (player_dc > 0))
-        )
+        world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + player_dc), instances=int(world_metrics.instances + player_inst), rendered=bool(world_metrics.rendered or (player_dc > 0)))
 
-        othello_metrics = self.othello_pass.draw(
-            render_state=othello_state,
-            view_proj=vp,
-            light_view_proj=light_vp,
-            sun_dir=self.state.sun_dir,
-            debug_shadow=bool(self.state.debug_shadow),
-            shadow_enabled=bool(self.state.shadow_enabled),
-            shadow=self.cfg.shadow,
-            shadow_info=shadow_info,
-        )
+        othello_metrics = self.othello_pass.draw(render_state=othello_state, view_proj=vp, light_view_proj=light_vp, sun_dir=self.state.sun_dir, debug_shadow=bool(self.state.debug_shadow), shadow_enabled=bool(self.state.shadow_enabled), shadow=self.cfg.shadow, shadow_info=shadow_info)
 
-        world_metrics = PassFrameMetrics(
-            cpu_ms=float(world_metrics.cpu_ms),
-            draw_calls=int(world_metrics.draw_calls + othello_metrics.draw_calls),
-            instances=int(world_metrics.instances + othello_metrics.instances),
-            rendered=bool(world_metrics.rendered or othello_metrics.rendered)
-        )
+        world_metrics = PassFrameMetrics(cpu_ms=float(world_metrics.cpu_ms), draw_calls=int(world_metrics.draw_calls + othello_metrics.draw_calls), instances=int(world_metrics.instances + othello_metrics.instances), rendered=bool(world_metrics.rendered or othello_metrics.rendered))
 
         self.cloud_pass.draw(eye=eye, view_proj=vp, forward=forward, fov_deg=float(fov_deg), aspect=float(w) / max(float(h), 1.0), sun_dir=self.state.sun_dir)
 
@@ -179,23 +120,10 @@ class FramePipeline:
         if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
-            hand_vp = mat4.perspective(
-                hand_fov_deg,
-                (w / max(h, 1)),
-                float(FIRST_PERSON_HAND_NEAR),
-                float(self.cfg.camera.z_far)
-            )
+            hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
             if first_person.visible_block_id is not None:
-                self.held_block_pass.draw(
-                    first_person=first_person,
-                    view_proj=hand_vp,
-                    sun_dir=self.state.sun_dir
-                )
+                self.held_block_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             else:
-                self.first_person_arm_pass.draw(
-                    first_person=first_person,
-                    view_proj=hand_vp,
-                    sun_dir=self.state.sun_dir
-                )
+                self.first_person_arm_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
 
         return RendererFrameMetrics(world=world_metrics, shadow=shadow_metrics)
