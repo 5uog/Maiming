@@ -10,6 +10,7 @@ from ......core.grid.face_index import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_
 from ......domain.blocks.block_definition import BlockDefinition
 from ......domain.blocks.models.common import LocalBox
 from ......domain.blocks.models.dimensions import px_box
+from ......domain.blocks.models.wall import boxes_for_wall
 from ......domain.blocks.models.fence_gate import boxes_for_fence_gate
 from ......domain.blocks.models.slab import boxes_for_slab
 from ......domain.blocks.models.stairs import boxes_for_stairs
@@ -90,6 +91,8 @@ _FENCE_INVENTORY_BOXES: tuple[TexturedBox, ...] = (
     TexturedBox(box=px_box(7, 6, -2, 9, 9, 18), face_uv_pixels={FACE_POS_X: (9.0, 6.0, 11.0, 9.0), FACE_NEG_X: (7.0, 6.0, 9.0, 9.0), FACE_POS_Y: (7.0, 0.0, 9.0, 4.0), FACE_NEG_Y: (9.0, 0.0, 11.0, 4.0), FACE_POS_Z: (7.0, 4.0, 9.0, 7.0), FACE_NEG_Z: (11.0, 4.0, 13.0, 7.0)}),
     TexturedBox(box=px_box(7, 12, -2, 9, 15, 18), face_uv_pixels={FACE_POS_X: (9.0, 12.0, 11.0, 15.0), FACE_NEG_X: (7.0, 12.0, 9.0, 15.0), FACE_POS_Y: (7.0, 7.0, 9.0, 11.0), FACE_NEG_Y: (9.0, 7.0, 11.0, 11.0), FACE_POS_Z: (7.0, 9.0, 9.0, 12.0), FACE_NEG_Z: (11.0, 9.0, 13.0, 12.0)}),
 )
+_WALL_INVENTORY_BOXES: tuple[TexturedBox, ...] = tuple(TexturedBox(box=b) for b in boxes_for_wall(props={"north": "low", "south": "low", "east": "none", "west": "none", "up": "true"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0))
+_HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0, "stairs": 1.0, "wall": 1.16, "fence": 1.12, "fence_gate": 1.72}
 
 _ALEX_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
 _ALEX_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
@@ -139,20 +142,26 @@ def held_block_model_boxes(block_id: str | None, def_lookup: DefLookup) -> tuple
     if block_def is None:
         return ()
 
-    return held_block_model_boxes_for_kind(str(block_def.kind))
+    return held_block_model_boxes_for_kind(block_def.kind_name())
 
 def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]:
-    normalized = "" if kind is None else str(kind)
+    normalized = "" if kind is None else str(kind).strip().lower()
     if normalized == "slab":
         return tuple(TexturedBox(box=b) for b in boxes_for_slab({"type": "bottom"}))
     if normalized == "stairs":
         boxes = boxes_for_stairs(base_id="minecraft:stone_stairs", props={"facing": "east", "half": "bottom", "shape": "straight"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0)
         return tuple(TexturedBox(box=b) for b in boxes)
+    if normalized == "wall":
+        return _WALL_INVENTORY_BOXES
     if normalized == "fence":
         return _FENCE_INVENTORY_BOXES
     if normalized == "fence_gate":
         return tuple(TexturedBox(box=b) for b in boxes_for_fence_gate({"facing": "south", "open": "false", "in_wall": "false"}))
     return (TexturedBox(box=LocalBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)),)
+
+def _held_block_kind_scale_multiplier(kind: str | None) -> float:
+    normalized = "" if kind is None else str(kind).strip().lower()
+    return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))
 
 def _empty_face_rows() -> tuple[np.ndarray, ...]:
     return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
@@ -302,8 +311,9 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
         return _empty_face_rows()
 
     block_def = def_lookup(str(first_person.visible_block_id))
-    kind = "" if block_def is None else str(block_def.kind)
-    parent_transform = _fitted_first_person_parent_transform(boxes=[textured_box.box for textured_box in boxes], projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier))))
+    kind = "" if block_def is None else str(block_def.kind_name())
+    kind_scale = _held_block_kind_scale_multiplier(kind)
+    parent_transform = _fitted_first_person_parent_transform(boxes=[textured_box.box for textured_box in boxes], projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(kind_scale))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(kind_scale))))
 
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
     local_boxes = [textured_box.box for textured_box in boxes]
