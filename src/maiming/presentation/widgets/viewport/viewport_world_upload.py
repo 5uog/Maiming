@@ -31,6 +31,14 @@ class WorldUploadTracker:
         self._resident_rev: Dict[ChunkKey, int] = {}
         self._results: "queue.Queue[_BuildResult]" = queue.Queue()
 
+    def reset(self, renderer: GLRenderer) -> None:
+        self._evict_far_chunks(renderer=renderer, keep=set())
+        while True:
+            try:
+                self._results.get_nowait()
+            except queue.Empty:
+                break
+
     def _retire_finished(self) -> None:
         for ck, fut in list(self._pending.items()):
             if not fut.done():

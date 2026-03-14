@@ -13,6 +13,7 @@ from .._internal.compute.chunk_face_payload_builder import ChunkFacePayloadBuild
 from .._internal.passes.cloud_pass import CloudPass
 from .._internal.passes.first_person_arm_pass import FirstPersonArmPass
 from .._internal.passes.held_block_pass import HeldBlockPass
+from .._internal.passes.othello_pass import OthelloPass
 from .._internal.passes.player_model_pass import PlayerModelPass
 from .._internal.passes.selection_pass import SelectionPass
 from .._internal.passes.shadow_map_pass import ShadowMapPass
@@ -25,6 +26,7 @@ from .block_visual_resolver import BlockVisualResolver
 from .gl_info_probe import GLInfoSnapshot, probe_gl_info
 from .gl_renderer_params import GLRendererParams
 from .gl_resources import GLResources
+from .othello_render_state import OthelloRenderState
 from .player_render_state import PlayerRenderState
 from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState
@@ -60,6 +62,7 @@ class RendererBackend:
         self._held_block = HeldBlockPass()
         self._sun = SunPass(self._cfg.sun)
         self._cloud = CloudPass(self._cfg.clouds, self._cfg.camera)
+        self._othello = OthelloPass()
         self._selection_pass = SelectionPass()
         self._gpu_payload_builder = ChunkFacePayloadBuilder()
 
@@ -89,11 +92,12 @@ class RendererBackend:
         self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
         self._sun.initialize(self._res.sun_prog, int(self._res.empty_vao))
         self._cloud.initialize(self._res.cloud_prog, self._res.cloud_mesh)
+        self._othello.initialize(world_prog=self._res.othello_prog, shadow_prog=self._res.othello_shadow_prog)
         self._selection_pass.initialize(self._res.selection_prog)
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
-        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, sun_pass=self._sun, cloud_pass=self._cloud, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
 
         self.apply_runtime_state()
 
@@ -104,6 +108,7 @@ class RendererBackend:
         self._player.destroy()
         self._first_person_arm.destroy()
         self._held_block.destroy()
+        self._othello.destroy()
         self._selection_pass.destroy()
 
         if self._res is not None:
@@ -115,7 +120,17 @@ class RendererBackend:
         self._pipeline = None
         self._last_payload_validation = None
         self._last_frame_metrics = RendererFrameMetrics()
-        self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="", major_version=0, minor_version=0, glsl_major_version=0, glsl_minor_version=0, context_profile_mask=0)
+        self._gl_info = GLInfoSnapshot(
+            vendor="",
+            renderer="",
+            version="",
+            glsl_version="",
+            major_version=0,
+            minor_version=0,
+            glsl_major_version=0,
+            glsl_minor_version=0,
+            context_profile_mask=0
+        )
 
     def apply_runtime_state(self) -> None:
         self._cloud.set_wireframe(bool(self._state.cloud_wireframe))
@@ -197,9 +212,20 @@ class RendererBackend:
         self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
         self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float = 0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None = None) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float = 0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None = None, othello_state: OthelloRenderState | None = None) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
 
-        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state)
+        self._last_frame_metrics = self._pipeline.render(
+            w=int(w),
+            h=int(h),
+            eye=eye,
+            yaw_deg=float(yaw_deg),
+            pitch_deg=float(pitch_deg),
+            roll_deg=float(roll_deg),
+            fov_deg=float(fov_deg),
+            render_distance_chunks=int(render_distance_chunks),
+            player_state=player_state,
+            othello_state=othello_state
+        )

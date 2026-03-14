@@ -41,7 +41,7 @@ def run_app(*, project_root: Path) -> None:
     root = Path(project_root)
 
     app = QApplication([])
-    app.setApplicationName("Maiming v2.5")
+    app.setApplicationName("Maiming v3")
 
     fonts = install_minecraft_fonts(font_dir=(root / "assets" / "fonts"))
     if bool(fonts.ok):

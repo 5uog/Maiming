@@ -1,101 +1,85 @@
 <!-- FILE: README.md -->
-# Maiming v2.5
+# Maiming v3
 
-Maiming is a deterministic Bedrock-movement sandbox and OpenGL 4.3 Core Profile desktop renderer for block-accurate Minecraft PvP aiming studies. The current development layout intentionally preserves the existing `python -m main` startup route while allowing a narrowly selected subset of arithmetic-dominant modules to be compiled in place as native extension modules. The generated C sources are emitted under `build/cython`, while the compiled extension binaries are emitted under the ordinary package paths inside `src/maiming` so that the normal import graph continues to work without any entry-point change.
+Maiming is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and an OpenGL 4.3 Core Profile renderer. The present codebase contains a persistent flat sandbox, a separate Othello play space, state-dependent block-shape logic for a limited set of structural block families, and a narrowly selected native-acceleration path for arithmetic-intensive kernels. It does not presently constitute a rule-complete reproduction of Minecraft Bedrock Edition or Minecraft Java Edition, and it should not be represented as a finished system.
 
-## Runtime assumptions
+The repository should instead be read as an engineering workbench. The implemented systems are those that are currently useful for rendering, collision, picking, input, persistence, and deterministic numerical inspection. Where Minecraft-derived semantics are present, they are local design targets for specific subsystems rather than a claim of full game equivalence across movement, combat, world generation, inventory logic, redstone, networking, or content coverage.
 
-This repository assumes Python 3.14.x, PyQt6 6.6 or newer, NumPy 1.26 or newer, PyOpenGL 3.1.7 or newer, and an OpenGL 4.3 Core Profile context. On Windows, the Visual Studio Build Tools C++ workload is assumed to be already installed.
+## Runtime envelope
 
-## Why the Cython target set is intentionally narrow
+The development instructions below assume Python 3.14.x, PyQt6 6.6 or newer, NumPy 1.26 or newer, PyOpenGL 3.1.7 or newer, and a working OpenGL 4.3 Core Profile context. On Windows, the Microsoft Visual Studio Build Tools C++ workload is assumed to already be installed before any local native build is attempted.
 
-The native build is intentionally restricted to `maiming.core.geometry.intersection`, `maiming.core.grid.voxel_dda`, and `maiming.core.math.view_angles`. These modules are dominated by scalar arithmetic, geometric branching, and tight per-call numerical work. By contrast, the scene-assembly and block-shape traversal layers are dominated by Python object traffic, Python callback dispatch, dictionary access, dataclass materialization, and heterogeneous container iteration. Compiling those broader layers as opaque extension modules did not reduce semantic work, but it did add extension-boundary overhead and worsened frame time in practice. The current build therefore keeps the callback-heavy orchestration layers in Python and compiles only the arithmetic-dominant leaf modules.
+## Current functional scope
 
-## Why the editable install is separated from the native build
+`My World` is the ordinary persistent sandbox space. It currently serves as a flat inspection environment in which the implemented block subset can be placed, broken, rendered, picked, and collided against. The project includes full cubes together with several non-cubic structural forms whose render boxes, collision volumes, and pick volumes are derived from explicit block-state logic. The world model, however, remains intentionally narrow when measured against the breadth of a complete Minecraft implementation.
 
-The editable install and the native extension build are intentionally separated. The editable install is responsible for making the source tree importable in development, while the native build is responsible for compiling the selected extension targets in place. This separation is necessary because the metadata phase of an editable install may evaluate `setup.py` before optional development dependencies have been installed. Therefore the metadata path must not require Cython, while the explicit `build_ext --inplace` path may require it.
+`Play Othello (Reversi)` is a second persistent play space hosted inside the same application shell. It has its own hotbar, match settings, AI opponent, clocks, board interaction path, piece animation path, and rendering path. This mode is a specialized subsystem layered onto the renderer and UI framework. It should be understood as a self-contained application mode rather than as evidence that the surrounding sandbox has reached general game completeness.
 
-## First-time setup
+## Source layout and execution model
 
-Create and activate a virtual environment, then upgrade the packaging toolchain.
+The repository intentionally preserves the existing `python -m main` startup route. `main.py` prepends `src` to `sys.path`, after which control passes into the package entry path under `maiming.api`. This keeps the local development path simple and also permits selected extension modules to be emitted directly under `src/maiming` without requiring a distinct launcher.
 
-    python -m venv .venv
-    .\.venv\Scripts\Activate.ps1
-    python -m pip install --upgrade pip setuptools wheel
+The native build remains deliberately narrow. Only `maiming.core.geometry.intersection`, `maiming.core.grid.voxel_dda`, and `maiming.core.math.view_angles` are compiled in place. Those modules are dominated by scalar arithmetic, geometric branching, and dense numerical work. Broader scene and block orchestration layers remain in Python because they are governed primarily by Python object traffic, callback dispatch, dictionary access, and heterogeneous container traversal, all of which reduce the benefit of opaque extension-module compilation and can worsen end-to-end frame cost when moved wholesale across the extension boundary.
 
-Install the editable package together with the development dependencies.
+The editable install and the explicit native build are intentionally separated. The editable install makes the source tree importable for development. The explicit `build_ext --inplace` path performs the optional native compilation step. This separation prevents editable-install metadata evaluation from depending on Cython at the moment when development dependencies may not yet be installed.
 
-    python -m pip install -e ".[dev]" --no-build-isolation
+## Setup, build, verification, and launch
 
-That command is expected to succeed before any local native build is attempted.
+The following sequence is the intended Windows development path for a clean environment.
 
-## Building the native extensions in place
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -e ".[dev]" --no-build-isolation
+python .\setup.py build_ext --inplace
+python -c "import maiming.core.geometry.intersection as m; print(m.__file__)"
+python -c "import maiming.core.grid.voxel_dda as m; print(m.__file__)"
+python -c "import maiming.core.math.view_angles as m; print(m.__file__)"
+python -m main
+```
 
-After the editable install has completed, build the selected native modules directly into the source tree.
+After the in-place native build has completed on Windows, the three verification commands above should resolve to `.pyd` files rather than the corresponding `.py` sources. If the native build is not required for the task at hand, the application can still be launched through `python -m main` after the editable install.
 
-    python .\setup.py build_ext --inplace
+## Play spaces and controls
 
-If compiler-side parallelism is desired, pass it to `build_ext`.
+The pause menu exposes two persistent destinations. `Play My World` returns to the sandbox space and is disabled while that space is already active. `Play Othello (Reversi)` transfers the session into the dedicated Othello space and is disabled while the user is already there. Each space persists its own player transform and session-specific state.
 
-    python .\setup.py build_ext --inplace -j 4
+Within `My World`, the ordinary block interaction path remains active. The block inventory is opened with `E`, world edits persist with the sandbox space, and re-entering the space restores the previous player state and local world modifications.
 
-The setup script intentionally keeps Cython-side parallel fan-out disabled so that the Windows multiprocessing spawn problem is not introduced by the build script itself.
+Within `Play Othello (Reversi)`, block placement, block breaking, and the block inventory overlay are disabled. The Othello hotbar is reserved for control items. Slot `1` contains `Start`, and slot `9` contains `Settings`. Right-clicking `Start` begins a fresh match or restarts the current match under the stored defaults. Right-clicking `Settings` opens the Othello settings dialog, which configures AI strength, time control, and player order for the next match. The default Othello configuration is `Medium`, `20 minutes per side`, and `player moves first`.
 
-## Verifying that the compiled modules are the ones being imported
-
-The development layout is designed so that the compiled extension binaries shadow the corresponding Python source modules at import time when both are present under the same package path. The following commands can be used to confirm that the import resolver is selecting the compiled artifacts rather than the `.py` files.
-
-    python -c "import maiming.core.geometry.intersection as m; print(m.__file__)"
-    python -c "import maiming.core.grid.voxel_dda as m; print(m.__file__)"
-    python -c "import maiming.core.math.view_angles as m; print(m.__file__)"
-
-On Windows, each printed path should resolve to a `.pyd` file after the in-place native build has completed.
-
-## Running the application
-
-After the in-place native build has completed, keep using the existing startup command.
-
-    python -m main
-
-This works because `main.py` prepends `src` to `sys.path`, and the compiled extension modules are emitted in place under that same source tree.
+Disc placement is performed by aiming at a highlighted legal square and pressing the left mouse button. The rendered board is hosted in a separate persistent world space, the match clocks pause while the pause menu or the Othello settings dialog is open, and centered status text is used for AI-thinking, pass, and result states.
 
 ## Rebuild rules during development
 
-If one of the native-accelerated modules is edited, rebuild the extensions again.
+If one of the native-accelerated modules is edited, rerun the in-place extension build.
 
-    python .\setup.py build_ext --inplace
+```powershell
+python .\setup.py build_ext --inplace
+```
 
-If installation metadata, dependency declarations, entry points, or package-data rules are changed, rerun the editable install as well.
+If packaging metadata, dependency declarations, entry-point definitions, or package-data rules are changed, rerun the editable install as well.
 
-    python -m pip install -e ".[dev]" --no-build-isolation
+```powershell
+python -m pip install -e ".[dev]" --no-build-isolation
+```
 
-## Windows `.pyd` lock handling
+## Windows `.pyd` lock behavior
 
-On Windows, a loaded `.pyd` file cannot be overwritten while a Python process still holds it. If `build_ext --inplace` fails with a permission error or file-in-use error, close the running application, close interactive Python sessions, close IDE-integrated Python processes, and then rerun the build.
+On Windows, a loaded `.pyd` file cannot be overwritten while a Python process still holds the module image open. If `build_ext --inplace` fails with a file-in-use or permission error, terminate the running application and any interactive Python processes that imported the target module, then rerun the build.
 
-    taskkill /F /IM python.exe
-    python .\setup.py build_ext --inplace
+```powershell
+taskkill /F /IM python.exe
+python .\setup.py build_ext --inplace
+```
 
-If a specific compiled module is still locked after the application window has already been closed, close the terminal or IDE process that imported it, delete the locked `.pyd` if necessary, and rerun the same command.
+## Packaging
 
-## Building distribution artifacts
+Standard source and wheel packaging remains available through the ordinary frontend.
 
-The standard frontend remains available for packaging the Python source tree and bundled assets.
+```powershell
+python -m build
+```
 
-    python -m build
-
-The explicit local optimization path, however, is intentionally the in-place `build_ext` command shown above. The project keeps editable-install metadata evaluation decoupled from mandatory Cython execution, and the native developer path is therefore an explicit step rather than an implicit side effect of every packaging command.
-
-## Development summary
-
-The intended Windows development sequence is the following.
-
-    python -m venv .venv
-    .\.venv\Scripts\Activate.ps1
-    Get-ChildItem .\src -Recurse -Filter *.pyd | Select-Object FullName
-    Remove-Item .\build -Recurse -Force -ErrorAction SilentlyContinue
-    python -m pip install --upgrade pip setuptools wheel
-    python -m pip install -e ".[dev]" --no-build-isolation
-    python .\setup.py build_ext --inplace
-    python -c "import maiming.core.grid.voxel_dda as m; print(m.__file__)"
-    python -m main
+That packaging path is intentionally distinct from the explicit local optimization path. The repository does not make Cython execution an implicit side effect of every packaging or installation action. Native compilation remains an explicit developer decision.
