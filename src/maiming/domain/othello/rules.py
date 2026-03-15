@@ -1,17 +1,15 @@
 # FILE: src/maiming/domain/othello/rules.py
 from __future__ import annotations
 
+from .board import BOARD_SIZE, row_col_to_square_index, square_index_to_row_col
 from .types import BOARD_CELL_COUNT, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_EMPTY, SIDE_WHITE, normalize_side, other_side
-
-BOARD_SIZE: int = 8
 _DIRECTIONS: tuple[tuple[int, int], ...] = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
 
 def row_col_to_index(row: int, col: int) -> int:
-    return int(row) * BOARD_SIZE + int(col)
+    return row_col_to_square_index(row, col)
 
 def index_to_row_col(index: int) -> tuple[int, int]:
-    idx = max(0, min(BOARD_CELL_COUNT - 1, int(index)))
-    return (idx // BOARD_SIZE, idx % BOARD_SIZE)
+    return square_index_to_row_col(index)
 
 def create_initial_board() -> tuple[int, ...]:
     board = [SIDE_EMPTY] * BOARD_CELL_COUNT

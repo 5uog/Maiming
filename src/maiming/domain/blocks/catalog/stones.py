@@ -8,7 +8,7 @@ from ..families.sandstone_types import SANDSTONE_TYPES
 from ..families.ore_types import ORE_TYPES
 from ..families.special_stone_types import SPECIAL_STONE_TYPES
 from ..families.special_dirt_types import SPECIAL_DIRT_TYPES
-from .common import register_block_variant
+from .variant_recipes import CatalogVariantRecipe, register_catalog_variants
 
 _STONE_LIKE_TAGS = ("stone_like",)
 
@@ -23,37 +23,14 @@ def _variant_display(display: str, suffix: str) -> str:
 def _all_stones() -> tuple[StoneType, ...]:
     return STONE_TYPES + DECORATIVE_STONE_TYPES + SANDSTONE_TYPES + ORE_TYPES + SPECIAL_STONE_TYPES + SPECIAL_DIRT_TYPES
 
-def _register_base(reg: BlockRegistry, v: StoneType) -> None:
-    register_block_variant(reg, block_id=block_id(v), display_name=str(v.display), textures=v.textures, kind=str(v.kind), family="block", is_full_cube=bool(v.is_full_cube), tags=_STONE_LIKE_TAGS)
-
-def _register_slab(reg: BlockRegistry, v: StoneType) -> None:
-    bid = slab_id(v)
-    if bid is None:
-        return
-    register_block_variant(reg, block_id=bid, display_name=_variant_display(str(v.display), "Slab"), textures=v.textures, kind="slab", family="slab", is_full_cube=False, tags=_STONE_LIKE_TAGS)
-
-def _register_stairs(reg: BlockRegistry, v: StoneType) -> None:
-    bid = stairs_id(v)
-    if bid is None:
-        return
-    register_block_variant(reg, block_id=bid, display_name=_variant_display(str(v.display), "Stairs"), textures=v.textures, kind="stairs", family="stairs", is_full_cube=False, tags=_STONE_LIKE_TAGS)
-
-def _register_wall(reg: BlockRegistry, v: StoneType) -> None:
-    bid = wall_id(v)
-    if bid is None:
-        return
-    register_block_variant(reg, block_id=bid, display_name=_variant_display(str(v.display), "Wall"), textures=v.textures, kind="wall", family="wall", is_full_cube=False, tags=_STONE_LIKE_TAGS)
-
-def _register_fence(reg: BlockRegistry, v: StoneType) -> None:
-    bid = fence_id(v)
-    if bid is None:
-        return
-    register_block_variant(reg, block_id=bid, display_name=_variant_display(str(v.display), "Fence"), textures=v.textures, kind="fence", family="fence", is_full_cube=False, tags=_STONE_LIKE_TAGS)
+_STONE_VARIANT_RECIPES: tuple[CatalogVariantRecipe, ...] = (
+    CatalogVariantRecipe(variant_id=lambda stone: block_id(stone), display_name=lambda stone: str(stone.display), kind=lambda stone: str(stone.kind), family="block", is_full_cube=lambda stone: bool(stone.is_full_cube)),
+    CatalogVariantRecipe(variant_id=lambda stone: slab_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Slab"), kind="slab", family="slab", is_full_cube=False),
+    CatalogVariantRecipe(variant_id=lambda stone: stairs_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Stairs"), kind="stairs", family="stairs", is_full_cube=False),
+    CatalogVariantRecipe(variant_id=lambda stone: wall_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Wall"), kind="wall", family="wall", is_full_cube=False),
+    CatalogVariantRecipe(variant_id=lambda stone: fence_id(stone), display_name=lambda stone: _variant_display(str(stone.display), "Fence"), kind="fence", family="fence", is_full_cube=False)
+)
 
 def register_stones(reg: BlockRegistry) -> None:
     for v in _all_stones():
-        _register_base(reg, v)
-        _register_slab(reg, v)
-        _register_stairs(reg, v)
-        _register_wall(reg, v)
-        _register_fence(reg, v)
+        register_catalog_variants(reg, v, textures=v.textures, tags=_STONE_LIKE_TAGS, recipes=_STONE_VARIANT_RECIPES)

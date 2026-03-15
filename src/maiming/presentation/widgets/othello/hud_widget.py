@@ -1,4 +1,4 @@
-# FILE: src/maiming/presentation/widgets/hud/othello_hud_widget.py
+# FILE: src/maiming/presentation/widgets/othello/hud_widget.py
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt

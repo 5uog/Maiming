@@ -2,50 +2,16 @@
 from __future__ import annotations
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QPoint, QByteArray, QMimeData
-from PyQt6.QtGui import QPixmap, QIcon, QDrag, QMouseEvent
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtGui import QPixmap, QMouseEvent
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ..common import hotbar_index_from_key, refresh_widget_style, hotbar_slot_tooltip
+from ..common import DraggableItemButton, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
 from .item_photo_provider import ItemPhotoProvider
 
-_MIME_BLOCK_ID = "application/x-maiming-block-id"
-
-def _block_id_from_mime(mime: QMimeData) -> str | None:
-    if mime.hasFormat(_MIME_BLOCK_ID):
-        try:
-            raw = bytes(mime.data(_MIME_BLOCK_ID)).decode("utf-8", errors="replace")
-        except Exception:
-            raw = ""
-        bid = str(raw).strip()
-        return bid if bid else None
-
-    if mime.hasText():
-        bid = str(mime.text()).strip()
-        return bid if bid else None
-
-    return None
-
-def _start_block_drag(source: QPushButton, block_id: str) -> None:
-    bid = str(block_id).strip()
-    if not bid:
-        return
-
-    drag = QDrag(source)
-    mime = QMimeData()
-    mime.setData(_MIME_BLOCK_ID, QByteArray(bid.encode("utf-8")))
-    mime.setText(bid)
-    drag.setMimeData(mime)
-
-    pm = source.icon().pixmap(source.iconSize())
-    if not pm.isNull():
-        drag.setPixmap(pm)
-
-    drag.exec(Qt.DropAction.CopyAction)
-
-class _InventoryBlockButton(QPushButton):
+class _InventoryBlockButton(DraggableItemButton):
     activated = pyqtSignal(str)
     hovered_block = pyqtSignal(str)
     hover_left = pyqtSignal()
@@ -54,7 +20,7 @@ class _InventoryBlockButton(QPushButton):
         super().__init__(parent)
         self._block_id = str(block_id)
         self._display_name = str(display_name)
-        self._drag_start: QPoint | None = None
+        self.set_drag_item_id(self._block_id)
 
         self.setObjectName("slot")
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -70,10 +36,7 @@ class _InventoryBlockButton(QPushButton):
         return self._block_id
 
     def set_icon_pixmap(self, pm: QPixmap | None) -> None:
-        if pm is None:
-            self.setIcon(QIcon())
-            return
-        self.setIcon(QIcon(pm))
+        apply_item_slot_state(self, item_id=self._block_id, tooltip=f"{self._display_name}\n{self._block_id}", selected=False, pixmap=pm)
 
     def enterEvent(self, e) -> None:
         self.hovered_block.emit(str(self._block_id))
@@ -83,24 +46,7 @@ class _InventoryBlockButton(QPushButton):
         self.hover_left.emit()
         super().leaveEvent(e)
 
-    def mousePressEvent(self, e: QMouseEvent) -> None:
-        if e.button() == Qt.MouseButton.LeftButton:
-            self._drag_start = e.position().toPoint()
-        super().mousePressEvent(e)
-
-    def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if self._drag_start is not None and bool(e.buttons() & Qt.MouseButton.LeftButton):
-            if (e.position().toPoint() - self._drag_start).manhattanLength() >= QApplication.startDragDistance():
-                self._drag_start = None
-                _start_block_drag(self, self._block_id)
-                return
-        super().mouseMoveEvent(e)
-
-    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
-        self._drag_start = None
-        super().mouseReleaseEvent(e)
-
-class _HotbarSlotButton(QPushButton):
+class _HotbarSlotButton(DraggableItemButton):
     slot_selected = pyqtSignal(int)
     block_dropped = pyqtSignal(int, str)
 
@@ -108,7 +54,6 @@ class _HotbarSlotButton(QPushButton):
         super().__init__(parent)
         self._slot_index = int(slot_index)
         self._block_id = ""
-        self._drag_start: QPoint | None = None
 
         self.setObjectName("slot")
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -127,50 +72,30 @@ class _HotbarSlotButton(QPushButton):
     def set_slot_state(self, *, block_id: str | None, selected: bool, tooltip: str, pixmap: QPixmap | None) -> None:
         bid = "" if block_id is None else str(block_id).strip()
         self._block_id = bid
-
-        if pixmap is None:
-            self.setIcon(QIcon())
-        else:
-            self.setIcon(QIcon(pixmap))
-
-        self.setToolTip(str(tooltip))
-        self.setProperty("selected", bool(selected))
-        refresh_widget_style(self)
+        self.set_drag_item_id(bid)
+        apply_item_slot_state(self, item_id=bid, tooltip=tooltip, selected=selected, pixmap=pixmap)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         if e.button() == Qt.MouseButton.LeftButton:
-            self._drag_start = e.position().toPoint()
             self.slot_selected.emit(int(self._slot_index))
         super().mousePressEvent(e)
 
-    def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        if self._drag_start is not None and bool(e.buttons() & Qt.MouseButton.LeftButton):
-            if (e.position().toPoint() - self._drag_start).manhattanLength() >= QApplication.startDragDistance():
-                self._drag_start = None
-                _start_block_drag(self, self._block_id)
-                return
-        super().mouseMoveEvent(e)
-
-    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
-        self._drag_start = None
-        super().mouseReleaseEvent(e)
-
     def dragEnterEvent(self, e) -> None:
-        bid = _block_id_from_mime(e.mimeData())
+        bid = item_id_from_mime(e.mimeData())
         if bid:
             e.acceptProposedAction()
             return
         e.ignore()
 
     def dragMoveEvent(self, e) -> None:
-        bid = _block_id_from_mime(e.mimeData())
+        bid = item_id_from_mime(e.mimeData())
         if bid:
             e.acceptProposedAction()
             return
         e.ignore()
 
     def dropEvent(self, e) -> None:
-        bid = _block_id_from_mime(e.mimeData())
+        bid = item_id_from_mime(e.mimeData())
         if not bid:
             e.ignore()
             return
@@ -283,7 +208,7 @@ class InventoryOverlay(QWidget):
 
         self._hovered_block_id = None
         self._title_label.setText("SURVIVAL INVENTORY")
-        self._subtitle_label.setText("Creative block selection is unavailable in Survival Mode. Use 1-9 to select a hotbar slot, or drag between hotbar slots.")
+        self._subtitle_label.setText("Creative block selection is unavailable in Survival Mode.")
         self._catalog_scroll.setVisible(False)
 
     def _rebuild_grid(self) -> None:

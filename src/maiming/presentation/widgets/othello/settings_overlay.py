@@ -1,4 +1,4 @@
-# FILE: src/maiming/presentation/widgets/overlays/othello_settings_overlay.py
+# FILE: src/maiming/presentation/widgets/othello/settings_overlay.py
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal

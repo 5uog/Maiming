@@ -1,8 +1,8 @@
 # FILE: src/maiming/application/session/fixed_step_runner.py
 from __future__ import annotations
-import time
 from dataclasses import dataclass
 from typing import Callable
+import time
 
 @dataclass
 class FixedStepRunner:

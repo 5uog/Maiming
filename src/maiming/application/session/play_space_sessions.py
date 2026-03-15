@@ -3,17 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3
+from ...application.othello.session_factory import create_othello_session
 from ...domain.blocks.default_registry import create_default_registry
 from ...domain.entities.player_entity import PlayerEntity
 from ...domain.play_space import PLAY_SPACE_IDS, PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, normalize_play_space_id
-from ...domain.world.world_gen import generate_othello_world, generate_test_map
+from ...domain.world.world_gen import generate_test_map
 from .session_manager import SessionManager
 from .session_settings import SessionSettings
 
 MY_WORLD_SPAWN: tuple[float, float, float] = (0.0, 1.0, -10.0)
-OTHELLO_SPAWN: tuple[float, float, float] = (0.0, 1.0, -12.0)
-OTHELLO_YAW_DEG: float = 0.0
-OTHELLO_PITCH_DEG: float = 0.0
 
 def _make_settings(*, seed: int, spawn: tuple[float, float, float]) -> SessionSettings:
     return SessionSettings(seed=int(seed), spawn_x=float(spawn[0]), spawn_y=float(spawn[1]), spawn_z=float(spawn[2]))
@@ -33,7 +31,7 @@ class PlaySpaceSessions:
 
         my_world = SessionManager(settings=_make_settings(seed=int(seed), spawn=MY_WORLD_SPAWN), world=generate_test_map(seed=int(seed)), player=_make_player(spawn=MY_WORLD_SPAWN), block_registry=registry)
 
-        othello = SessionManager(settings=_make_settings(seed=int(seed), spawn=OTHELLO_SPAWN), world=generate_othello_world(), player=_make_player(spawn=OTHELLO_SPAWN, yaw_deg=float(OTHELLO_YAW_DEG), pitch_deg=float(OTHELLO_PITCH_DEG)), block_registry=registry)
+        othello = create_othello_session(seed=int(seed), block_registry=registry)
 
         return PlaySpaceSessions(my_world=my_world, othello=othello, active_space_id=PLAY_SPACE_MY_WORLD)
 

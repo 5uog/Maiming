@@ -3,12 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QFrame, QHBoxLayout, QPushButton
 
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
-from ..common import refresh_widget_style, hotbar_slot_tooltip
+from ..common import apply_item_slot_state, hotbar_slot_tooltip
 from ..overlays.item_photo_provider import ItemPhotoProvider
 
 class _DisplaySlot(QPushButton):
@@ -24,16 +23,8 @@ class _DisplaySlot(QPushButton):
 
     def set_slot_state(self, *, block_id: str | None, tooltip: str, selected: bool, photos: ItemPhotoProvider) -> None:
         bid = "" if block_id is None else str(block_id).strip()
-
-        if bid:
-            pm = photos.pixmap_for_block(bid)
-            self.setIcon(QIcon(pm) if pm is not None else QIcon())
-        else:
-            self.setIcon(QIcon())
-
-        self.setToolTip(str(tooltip))
-        self.setProperty("selected", bool(selected))
-        refresh_widget_style(self)
+        pixmap = photos.pixmap_for_block(bid) if bid else None
+        apply_item_slot_state(self, item_id=bid, tooltip=tooltip, selected=selected, pixmap=pixmap)
 
 class HotbarWidget(QWidget):
     def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:

@@ -4,13 +4,11 @@ import math
 
 import numpy as np
 
-from ......core.math.vec3 import Vec3
+from ......domain.othello.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, raycast_board_square, square_center
 from ......domain.othello.types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
-from ......domain.world.world_gen import OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y
 from ...facade.othello_render_state import OthelloRenderState
 from .transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
 
-OTHELLO_BOARD_SIZE: int = 8
 OTHELLO_SQUARE_SIZE: float = 1.0
 OTHELLO_HALF_SPAN: float = (OTHELLO_BOARD_SIZE * OTHELLO_SQUARE_SIZE) * 0.5
 OTHELLO_GRASS_TOP_Y: float = float(OTHELLO_WORLD_GRASS_TOP_Y)
@@ -101,34 +99,6 @@ def build_othello_piece_vertices(*, segments: int = 48) -> np.ndarray:
         add_triangle(p0_top, p1_bottom, p1_top, (nx0, 0.0, nz0), rim_color)
 
     return np.asarray(vertices, dtype=np.float32)
-
-def square_center(square_index: int) -> tuple[float, float]:
-    idx = max(0, min(BOARD_CELL_COUNT - 1, int(square_index)))
-    row = idx // OTHELLO_BOARD_SIZE
-    col = idx % OTHELLO_BOARD_SIZE
-    x = (float(col) + 0.5) - float(OTHELLO_BOARD_SIZE) * 0.5
-    z = (float(row) + 0.5) - float(OTHELLO_BOARD_SIZE) * 0.5
-    return (float(x), float(z))
-
-def raycast_board_square(origin: Vec3, direction: Vec3) -> int | None:
-    dy = float(direction.y)
-    if abs(dy) <= 1e-8:
-        return None
-
-    t = (float(OTHELLO_BOARD_TOP_Y) - float(origin.y)) / float(dy)
-    if t <= 0.0:
-        return None
-
-    x = float(origin.x) + float(direction.x) * float(t)
-    z = float(origin.z) + float(direction.z) * float(t)
-    local_x = x + float(OTHELLO_BOARD_SIZE) * 0.5
-    local_z = z + float(OTHELLO_BOARD_SIZE) * 0.5
-
-    col = int(math.floor(local_x))
-    row = int(math.floor(local_z))
-    if not (0 <= row < OTHELLO_BOARD_SIZE and 0 <= col < OTHELLO_BOARD_SIZE):
-        return None
-    return int(row * OTHELLO_BOARD_SIZE + col)
 
 def _piece_angle_deg_for_side(side: int) -> float:
     return 0.0 if int(normalize_side(side)) == int(SIDE_BLACK) else 180.0
