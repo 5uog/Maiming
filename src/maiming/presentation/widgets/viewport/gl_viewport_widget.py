@@ -15,7 +15,6 @@ from ....core.math.vec3 import Vec3
 from ....core.math.view_angles import forward_from_yaw_pitch_deg
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from ....infrastructure.rendering.opengl.facade.player_render_state import FirstPersonRenderState, PlayerRenderState
 from ...config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
 from ...config.gl_surface_format import build_gl_surface_format
 from ...hud.hud_controller import HudController
@@ -36,6 +35,7 @@ from ....application.session.runtime_persistence import apply_persisted_state_if
 from ....application.session.runtime_preferences import ViewportRuntimeState
 from .viewport_selection_state import ViewportSelectionState
 from .viewport_world_upload import WorldUploadTracker
+from .player_render_state_composer import compose_player_render_state
 
 class GLViewportWidget(QOpenGLWidget):
     hud_updated = pyqtSignal(object)
@@ -64,7 +64,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._hud_ctl = HudController()
 
         self._state = ViewportRuntimeState()
-        self._sync_state_from_renderer_sun()
+        viewport_settings_controller.sync_state_from_renderer_sun(self)
         self._first_person_motion = FirstPersonMotionController(slim_arm=True)
 
         self._selection_state = ViewportSelectionState()
@@ -123,55 +123,19 @@ class GLViewportWidget(QOpenGLWidget):
         self._othello_match.set_game_state(persisted_othello_state)
         self._overlay.set_current_space(self._state.current_space_id)
 
-        self._apply_runtime_to_renderer()
-        self._sync_hotbar_widgets()
-        self._sync_first_person_target()
-        self._sync_view_model_visibility()
-        self._sync_othello_hud_text()
+        viewport_settings_controller.apply_runtime_to_renderer(self)
+        viewport_settings_controller.sync_hotbar_widgets(self)
+        viewport_settings_controller.sync_first_person_target(self)
+        viewport_settings_controller.sync_view_model_visibility(self)
+        viewport_othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
 
     def _for_each_session(self, fn) -> None:
         for session in self._sessions.all_sessions():
             fn(session)
 
-    def _sync_state_from_renderer_sun(self) -> None:
-        viewport_settings_controller.sync_state_from_renderer_sun(self)
-
-    def _apply_runtime_to_renderer(self) -> None:
-        viewport_settings_controller.apply_runtime_to_renderer(self)
-
-    def _sync_cloud_motion_pause(self) -> None:
-        viewport_settings_controller.sync_cloud_motion_pause(self)
-
-    def _inventory_available(self) -> bool:
-        return viewport_settings_controller.inventory_available(self)
-
-    def _sync_hotbar_widgets(self) -> None:
-        viewport_settings_controller.sync_hotbar_widgets(self)
-
-    def _current_item_id(self) -> str | None:
-        return viewport_settings_controller.current_item_id(self)
-
-    def _current_block_id(self) -> str | None:
-        return viewport_settings_controller.current_block_id(self)
-
-    def _sync_view_model_visibility(self) -> None:
-        viewport_settings_controller.sync_view_model_visibility(self)
-
-    def _sync_first_person_target(self) -> None:
-        viewport_settings_controller.sync_first_person_target(self)
-
-    def _select_hotbar_slot(self, slot_index: int) -> None:
-        viewport_settings_controller.select_hotbar_slot(self, int(slot_index))
-
-    def _assign_hotbar_slot(self, slot_index: int, item_id: str) -> None:
-        viewport_settings_controller.assign_hotbar_slot(self, int(slot_index), str(item_id))
-
-    def _cycle_hotbar(self, step: int) -> None:
-        viewport_settings_controller.cycle_hotbar(self, int(step))
-
     def save_state(self) -> None:
-        self._sync_state_from_renderer_sun()
+        viewport_settings_controller.sync_state_from_renderer_sun(self)
         settled_othello_state = self._othello_match.settle_animations()
         save_state(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer, runtime=self._state, othello_game_state=settled_othello_state)
 
@@ -253,21 +217,6 @@ class GLViewportWidget(QOpenGLWidget):
     def _debug_hud_active(self) -> bool:
         return bool(self._state.hud_visible) and bool(self._gameplay_hud_active())
 
-    def _set_othello_title_flash(self, text: str, *, duration_s: float) -> None:
-        viewport_othello_controller.set_title_flash(self, text, duration_s=float(duration_s))
-
-    def _clear_othello_title_flash(self) -> None:
-        viewport_othello_controller.clear_title_flash(self)
-
-    def _track_othello_message_for_title(self, message: str) -> None:
-        viewport_othello_controller.track_message_for_title(self, message)
-
-    def _othello_title_text(self, *, black_count: int, white_count: int) -> str:
-        return viewport_othello_controller.title_text(self, black_count=int(black_count), white_count=int(white_count))
-
-    def _sync_othello_hud_text(self) -> None:
-        viewport_othello_controller.sync_hud_text(self)
-
     def _sync_gameplay_hud_visibility(self) -> None:
         show_gameplay_hud = bool(self._gameplay_hud_active())
         show_othello_hud = bool(show_gameplay_hud and self._state.is_othello_space())
@@ -306,7 +255,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._sync_gameplay_hud_visibility()
 
     def _set_inventory_overlay(self, on: bool) -> None:
-        if bool(on) and not self._inventory_available():
+        if bool(on) and not viewport_settings_controller.inventory_available(self):
             return
         self._overlays.set_inventory_open(bool(on))
         self._sync_gameplay_hud_visibility()
@@ -337,10 +286,10 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 self._state.vsync_on = False
 
-        self._apply_runtime_to_renderer()
-        self._sync_hotbar_widgets()
-        self._sync_cloud_motion_pause()
-        self._sync_othello_hud_text()
+        viewport_settings_controller.apply_runtime_to_renderer(self)
+        viewport_settings_controller.sync_hotbar_widgets(self)
+        viewport_settings_controller.sync_cloud_motion_pause(self)
+        viewport_othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
         self._runner.start()
         self._sim_timer.start()
@@ -375,12 +324,6 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._sync_gameplay_hud_visibility()
 
-    def _build_othello_render_state(self) -> OthelloRenderState | None:
-        return viewport_othello_controller.build_render_state(self)
-
-    def _refresh_othello_hover_square(self, snapshot) -> None:
-        viewport_othello_controller.refresh_hover_square(self, snapshot)
-
     def paintGL(self) -> None:
         paint_t0 = time.perf_counter()
         self._hud_ctl.on_render_frame()
@@ -395,7 +338,7 @@ class GLViewportWidget(QOpenGLWidget):
             self._last_selection_pick_ms = 0.0
             self._invalidate_selection_target()
             self._renderer.clear_selection()
-            self._refresh_othello_hover_square(snap)
+            viewport_othello_controller.refresh_hover_square(self, snap)
         else:
             self._othello_hover_square = None
             self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
@@ -415,13 +358,9 @@ class GLViewportWidget(QOpenGLWidget):
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
         cam = snap.camera
-        pl = snap.player_model
-        motion = self._first_person_motion.sample()
-        visible_def = None if motion.visible_block_id is None else self._session.block_registry.get(str(motion.visible_block_id))
-        first_person = FirstPersonRenderState(visible_block_id=motion.visible_block_id, visible_block_kind=None if visible_def is None else str(visible_def.kind), target_block_id=motion.target_block_id, equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), show_view_model=bool(motion.show_view_model), slim_arm=bool(motion.slim_arm), view_bob_x=float(pl.first_person_tx), view_bob_y=float(pl.first_person_ty), view_bob_z=float(pl.first_person_tz), view_bob_yaw_deg=float(pl.first_person_yaw_deg), view_bob_pitch_deg=float(pl.first_person_pitch_deg), view_bob_roll_deg=float(pl.first_person_roll_deg))
-        player_state = PlayerRenderState(base_x=float(pl.base_x), base_y=float(pl.base_y), base_z=float(pl.base_z), body_yaw_deg=float(pl.body_yaw_deg), head_yaw_deg=float(pl.head_yaw_deg), head_pitch_deg=float(pl.head_pitch_deg), limb_phase_rad=float(pl.limb_phase_rad), limb_swing_amount=float(pl.limb_swing_amount), crouch_amount=float(pl.crouch_amount), is_first_person=bool(pl.is_first_person), first_person=first_person)
+        player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
 
-        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=self._build_othello_render_state())
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=viewport_othello_controller.build_render_state(self))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -429,161 +368,8 @@ class GLViewportWidget(QOpenGLWidget):
             return
         self._runner.update()
 
-    def _sync_settings_values(self) -> None:
-        viewport_settings_controller.sync_settings_values(self)
-
-    def _sync_othello_settings_values(self) -> None:
-        viewport_othello_controller.sync_settings_values(self)
-
-    def _respawn(self) -> None:
-        viewport_event_handlers.respawn(self)
-
-    def _resume_from_overlay(self) -> None:
-        viewport_event_handlers.resume_from_overlay(self)
-
-    def _switch_play_space(self, space_id: str, *, resume: bool = False) -> None:
-        viewport_event_handlers.switch_play_space(self, space_id, resume=bool(resume))
-
-    def _open_settings_from_pause(self) -> None:
-        viewport_event_handlers.open_settings_from_pause(self)
-
-    def _back_from_settings(self) -> None:
-        viewport_event_handlers.back_from_settings(self)
-
-    def _open_othello_settings_from_item(self) -> None:
-        viewport_event_handlers.open_othello_settings_from_item(self)
-
-    def _back_from_othello_settings(self) -> None:
-        viewport_event_handlers.back_from_othello_settings(self)
-
-    def _apply_othello_settings(self, settings) -> None:
-        viewport_othello_controller.apply_settings(self, settings)
-
-    def _set_fov(self, fov: float) -> None:
-        viewport_settings_controller.set_fov(self, float(fov))
-
-    def _set_sens(self, sens: float) -> None:
-        viewport_settings_controller.set_sens(self, float(sens))
-
-    def _set_invert_x(self, on: bool) -> None:
-        viewport_settings_controller.set_invert_x(self, bool(on))
-
-    def _set_invert_y(self, on: bool) -> None:
-        viewport_settings_controller.set_invert_y(self, bool(on))
-
-    def _set_fullscreen(self, on: bool) -> None:
-        viewport_settings_controller.set_fullscreen(self, bool(on))
-
-    def _set_hide_hud(self, on: bool) -> None:
-        viewport_settings_controller.set_hide_hud(self, bool(on))
-
-    def _set_hide_hand(self, on: bool) -> None:
-        viewport_settings_controller.set_hide_hand(self, bool(on))
-
-    def _set_view_bobbing_enabled(self, on: bool) -> None:
-        viewport_settings_controller.set_view_bobbing_enabled(self, bool(on))
-
-    def _set_camera_shake_enabled(self, on: bool) -> None:
-        viewport_settings_controller.set_camera_shake_enabled(self, bool(on))
-
-    def _set_view_bobbing_strength(self, strength: float) -> None:
-        viewport_settings_controller.set_view_bobbing_strength(self, float(strength))
-
-    def _set_camera_shake_strength(self, strength: float) -> None:
-        viewport_settings_controller.set_camera_shake_strength(self, float(strength))
-
-    def _set_outline_selection(self, on: bool) -> None:
-        viewport_settings_controller.set_outline_selection(self, bool(on))
-
-    def _set_cloud_wire(self, on: bool) -> None:
-        viewport_settings_controller.set_cloud_wire(self, bool(on))
-
-    def _set_cloud_enabled(self, on: bool) -> None:
-        viewport_settings_controller.set_cloud_enabled(self, bool(on))
-
-    def _set_cloud_density(self, v: int) -> None:
-        viewport_settings_controller.set_cloud_density(self, int(v))
-
-    def _set_cloud_seed(self, v: int) -> None:
-        viewport_settings_controller.set_cloud_seed(self, int(v))
-
-    def _set_cloud_flow_direction(self, direction: str) -> None:
-        viewport_settings_controller.set_cloud_flow_direction(self, direction)
-
-    def _set_world_wire(self, on: bool) -> None:
-        viewport_settings_controller.set_world_wire(self, bool(on))
-
-    def _set_shadow_enabled(self, on: bool) -> None:
-        viewport_settings_controller.set_shadow_enabled(self, bool(on))
-
-    def _set_sun_azimuth(self, az_deg: float) -> None:
-        viewport_settings_controller.set_sun_azimuth(self, float(az_deg))
-
-    def _set_sun_elevation(self, el_deg: float) -> None:
-        viewport_settings_controller.set_sun_elevation(self, float(el_deg))
-
-    def _set_creative_mode(self, on: bool) -> None:
-        viewport_settings_controller.set_creative_mode(self, bool(on))
-
-    def _set_auto_jump(self, on: bool) -> None:
-        viewport_settings_controller.set_auto_jump(self, bool(on))
-
-    def _set_auto_sprint(self, on: bool) -> None:
-        viewport_settings_controller.set_auto_sprint(self, bool(on))
-
-    def _set_gravity(self, gravity: float) -> None:
-        viewport_settings_controller.set_gravity(self, float(gravity))
-
-    def _set_walk_speed(self, walk_speed: float) -> None:
-        viewport_settings_controller.set_walk_speed(self, float(walk_speed))
-
-    def _set_sprint_speed(self, sprint_speed: float) -> None:
-        viewport_settings_controller.set_sprint_speed(self, float(sprint_speed))
-
-    def _set_jump_v0(self, jump_v0: float) -> None:
-        viewport_settings_controller.set_jump_v0(self, float(jump_v0))
-
-    def _set_auto_jump_cooldown_s(self, cooldown_s: float) -> None:
-        viewport_settings_controller.set_auto_jump_cooldown_s(self, float(cooldown_s))
-
-    def _set_fly_speed(self, fly_speed: float) -> None:
-        viewport_settings_controller.set_fly_speed(self, float(fly_speed))
-
-    def _set_fly_ascend_speed(self, fly_ascend_speed: float) -> None:
-        viewport_settings_controller.set_fly_ascend_speed(self, float(fly_ascend_speed))
-
-    def _set_fly_descend_speed(self, fly_descend_speed: float) -> None:
-        viewport_settings_controller.set_fly_descend_speed(self, float(fly_descend_speed))
-
-    def _reset_advanced_defaults(self) -> None:
-        viewport_settings_controller.reset_advanced_defaults(self)
-
-    def _set_render_distance(self, v: int) -> None:
-        viewport_settings_controller.set_render_distance(self, int(v))
-
-    def _maybe_request_othello_ai(self) -> None:
-        viewport_othello_controller.maybe_request_ai(self)
-
-    def _dispatch_othello_ai_request(self, generation: int, board: tuple[int, ...], side: int, difficulty: str, seed: int) -> None:
-        viewport_othello_controller.dispatch_ai_request(self, generation=int(generation), board=tuple(board), side=int(side), difficulty=str(difficulty), seed=int(seed))
-
-    def _consume_pending_othello_ai_result(self) -> None:
-        viewport_othello_controller.consume_pending_ai_result(self)
-
-    def _apply_othello_ai_result(self, generation: int, move_index: int | None) -> None:
-        viewport_othello_controller.apply_ai_result(self, int(generation), move_index)
-
-    def _on_othello_ai_move_ready(self, generation: int, move_index: object) -> None:
-        viewport_othello_controller.on_ai_move_ready(self, int(generation), move_index)
-
-    def _on_inventory_selected(self, block_id: str) -> None:
-        viewport_event_handlers.on_inventory_selected(self, block_id)
-
-    def _on_inventory_closed(self) -> None:
-        viewport_event_handlers.on_inventory_closed(self)
-
     def _on_step(self, dt: float) -> None:
-        self._consume_pending_othello_ai_result()
+        viewport_othello_controller.consume_pending_ai_result(self)
 
         self._inp.poll_relative_mouse_delta()
         fr, md = self._inp.consume(invert_x=self._state.invert_x, invert_y=self._state.invert_y)
@@ -597,14 +383,14 @@ class GLViewportWidget(QOpenGLWidget):
             sprint = True
 
         jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
-        self._sync_first_person_target()
+        viewport_settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
 
         if self._state.is_othello_space():
             self._othello_match.tick(float(dt), paused=False)
-            self._sync_othello_hud_text()
-            self._maybe_request_othello_ai()
+            viewport_othello_controller.sync_hud_text(self)
+            viewport_othello_controller.maybe_request_ai(self)
 
         if float(self._session.player.position.y) < -64.0:
             self._set_dead_overlay(True)
@@ -617,7 +403,7 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=self._current_item_id() or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
+        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=viewport_settings_controller.current_item_id(self) or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:

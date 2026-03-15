@@ -4,9 +4,8 @@ from __future__ import annotations
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from ....domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from .cloud_flow_options import CLOUD_FLOW_OPTIONS
 from .advanced_scalar_control import AdvancedScalarControl
-
-CLOUD_FLOW_DIRECTIONS: tuple[tuple[str, str], ...] = (("east_to_west", "East -> West"), ("west_to_east", "West -> East"), ("south_to_north", "South -> North"), ("north_to_south", "North -> South"))
 
 def build_video_tab(overlay) -> None:
     scroll, host, layout = overlay._make_scroll_page()
@@ -71,7 +70,7 @@ def build_video_tab(overlay) -> None:
     overlay._lbl_cloud_flow.setObjectName("valueLabel")
     cloud_flow_row.addWidget(overlay._lbl_cloud_flow)
     overlay._cmb_cloud_flow = QComboBox(host)
-    for value, label in CLOUD_FLOW_DIRECTIONS:
+    for value, label in CLOUD_FLOW_OPTIONS:
         overlay._cmb_cloud_flow.addItem(str(label), userData=str(value))
     overlay._cmb_cloud_flow.currentIndexChanged.connect(overlay._on_cloud_flow_direction)
     cloud_flow_row.addWidget(overlay._cmb_cloud_flow)

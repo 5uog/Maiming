@@ -3,67 +3,58 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ....application.session.runtime_state_mapper import apply_runtime_to_renderer as apply_runtime_to_renderer_state
+from ....application.session.runtime_state_mapper import sync_runtime_sun_from_renderer
 from .view_model_visibility import view_model_visible
 
 if TYPE_CHECKING:
     from .gl_viewport_widget import GLViewportWidget
 
 def bind_settings_overlay(viewport: "GLViewportWidget") -> None:
+    from . import viewport_event_handlers
+
     overlay = viewport._settings
-    overlay.back_requested.connect(viewport._back_from_settings)
-    overlay.fov_changed.connect(viewport._set_fov)
-    overlay.sens_changed.connect(viewport._set_sens)
-    overlay.invert_x_changed.connect(viewport._set_invert_x)
-    overlay.invert_y_changed.connect(viewport._set_invert_y)
-    overlay.fullscreen_changed.connect(viewport._set_fullscreen)
-    overlay.hide_hud_changed.connect(viewport._set_hide_hud)
-    overlay.hide_hand_changed.connect(viewport._set_hide_hand)
-    overlay.view_bobbing_changed.connect(viewport._set_view_bobbing_enabled)
-    overlay.camera_shake_changed.connect(viewport._set_camera_shake_enabled)
-    overlay.view_bobbing_strength_changed.connect(viewport._set_view_bobbing_strength)
-    overlay.camera_shake_strength_changed.connect(viewport._set_camera_shake_strength)
-    overlay.outline_selection_changed.connect(viewport._set_outline_selection)
-    overlay.cloud_wireframe_changed.connect(viewport._set_cloud_wire)
-    overlay.clouds_enabled_changed.connect(viewport._set_cloud_enabled)
-    overlay.cloud_density_changed.connect(viewport._set_cloud_density)
-    overlay.cloud_seed_changed.connect(viewport._set_cloud_seed)
-    overlay.cloud_flow_direction_changed.connect(viewport._set_cloud_flow_direction)
-    overlay.world_wireframe_changed.connect(viewport._set_world_wire)
-    overlay.shadow_enabled_changed.connect(viewport._set_shadow_enabled)
-    overlay.sun_azimuth_changed.connect(viewport._set_sun_azimuth)
-    overlay.sun_elevation_changed.connect(viewport._set_sun_elevation)
-    overlay.creative_mode_changed.connect(viewport._set_creative_mode)
-    overlay.auto_jump_changed.connect(viewport._set_auto_jump)
-    overlay.auto_sprint_changed.connect(viewport._set_auto_sprint)
-    overlay.gravity_changed.connect(viewport._set_gravity)
-    overlay.walk_speed_changed.connect(viewport._set_walk_speed)
-    overlay.sprint_speed_changed.connect(viewport._set_sprint_speed)
-    overlay.jump_v0_changed.connect(viewport._set_jump_v0)
-    overlay.auto_jump_cooldown_changed.connect(viewport._set_auto_jump_cooldown_s)
-    overlay.fly_speed_changed.connect(viewport._set_fly_speed)
-    overlay.fly_ascend_speed_changed.connect(viewport._set_fly_ascend_speed)
-    overlay.fly_descend_speed_changed.connect(viewport._set_fly_descend_speed)
-    overlay.advanced_reset_requested.connect(viewport._reset_advanced_defaults)
-    overlay.render_distance_changed.connect(viewport._set_render_distance)
+    overlay.back_requested.connect(lambda: viewport_event_handlers.back_from_settings(viewport))
+    overlay.fov_changed.connect(lambda value: set_fov(viewport, float(value)))
+    overlay.sens_changed.connect(lambda value: set_sens(viewport, float(value)))
+    overlay.invert_x_changed.connect(lambda on: set_invert_x(viewport, bool(on)))
+    overlay.invert_y_changed.connect(lambda on: set_invert_y(viewport, bool(on)))
+    overlay.fullscreen_changed.connect(lambda on: set_fullscreen(viewport, bool(on)))
+    overlay.hide_hud_changed.connect(lambda on: set_hide_hud(viewport, bool(on)))
+    overlay.hide_hand_changed.connect(lambda on: set_hide_hand(viewport, bool(on)))
+    overlay.view_bobbing_changed.connect(lambda on: set_view_bobbing_enabled(viewport, bool(on)))
+    overlay.camera_shake_changed.connect(lambda on: set_camera_shake_enabled(viewport, bool(on)))
+    overlay.view_bobbing_strength_changed.connect(lambda value: set_view_bobbing_strength(viewport, float(value)))
+    overlay.camera_shake_strength_changed.connect(lambda value: set_camera_shake_strength(viewport, float(value)))
+    overlay.outline_selection_changed.connect(lambda on: set_outline_selection(viewport, bool(on)))
+    overlay.cloud_wireframe_changed.connect(lambda on: set_cloud_wire(viewport, bool(on)))
+    overlay.clouds_enabled_changed.connect(lambda on: set_cloud_enabled(viewport, bool(on)))
+    overlay.cloud_density_changed.connect(lambda value: set_cloud_density(viewport, int(value)))
+    overlay.cloud_seed_changed.connect(lambda value: set_cloud_seed(viewport, int(value)))
+    overlay.cloud_flow_direction_changed.connect(lambda direction: set_cloud_flow_direction(viewport, str(direction)))
+    overlay.world_wireframe_changed.connect(lambda on: set_world_wire(viewport, bool(on)))
+    overlay.shadow_enabled_changed.connect(lambda on: set_shadow_enabled(viewport, bool(on)))
+    overlay.sun_azimuth_changed.connect(lambda value: set_sun_azimuth(viewport, float(value)))
+    overlay.sun_elevation_changed.connect(lambda value: set_sun_elevation(viewport, float(value)))
+    overlay.creative_mode_changed.connect(lambda on: set_creative_mode(viewport, bool(on)))
+    overlay.auto_jump_changed.connect(lambda on: set_auto_jump(viewport, bool(on)))
+    overlay.auto_sprint_changed.connect(lambda on: set_auto_sprint(viewport, bool(on)))
+    overlay.gravity_changed.connect(lambda value: set_gravity(viewport, float(value)))
+    overlay.walk_speed_changed.connect(lambda value: set_walk_speed(viewport, float(value)))
+    overlay.sprint_speed_changed.connect(lambda value: set_sprint_speed(viewport, float(value)))
+    overlay.jump_v0_changed.connect(lambda value: set_jump_v0(viewport, float(value)))
+    overlay.auto_jump_cooldown_changed.connect(lambda value: set_auto_jump_cooldown_s(viewport, float(value)))
+    overlay.fly_speed_changed.connect(lambda value: set_fly_speed(viewport, float(value)))
+    overlay.fly_ascend_speed_changed.connect(lambda value: set_fly_ascend_speed(viewport, float(value)))
+    overlay.fly_descend_speed_changed.connect(lambda value: set_fly_descend_speed(viewport, float(value)))
+    overlay.advanced_reset_requested.connect(lambda: reset_advanced_defaults(viewport))
+    overlay.render_distance_changed.connect(lambda value: set_render_distance(viewport, int(value)))
 
 def sync_state_from_renderer_sun(viewport: "GLViewportWidget") -> None:
-    azimuth_deg, elevation_deg = viewport._renderer.sun_angles()
-    viewport._state.sun_az_deg = float(azimuth_deg)
-    viewport._state.sun_el_deg = float(elevation_deg)
-    viewport._state.normalize()
+    sync_runtime_sun_from_renderer(viewport._state, viewport._renderer)
 
 def apply_runtime_to_renderer(viewport: "GLViewportWidget") -> None:
-    viewport._state.normalize()
-    viewport._renderer.set_debug_shadow(bool(viewport._state.debug_shadow))
-    viewport._renderer.set_outline_selection_enabled(bool(viewport._state.outline_selection))
-    viewport._renderer.set_cloud_wireframe(bool(viewport._state.cloud_wire))
-    viewport._renderer.set_cloud_enabled(bool(viewport._state.cloud_enabled))
-    viewport._renderer.set_cloud_density(int(viewport._state.cloud_density))
-    viewport._renderer.set_cloud_seed(int(viewport._state.cloud_seed))
-    viewport._renderer.set_cloud_flow_direction(str(viewport._state.cloud_flow_direction))
-    viewport._renderer.set_shadow_enabled(bool(viewport._state.shadow_enabled))
-    viewport._renderer.set_world_wireframe(bool(viewport._state.world_wire))
-    viewport._renderer.set_sun_angles(float(viewport._state.sun_az_deg), float(viewport._state.sun_el_deg))
+    apply_runtime_to_renderer_state(viewport._state, viewport._renderer)
 
 def sync_cloud_motion_pause(viewport: "GLViewportWidget") -> None:
     viewport._renderer.set_cloud_motion_paused(bool(viewport._overlays.paused()))

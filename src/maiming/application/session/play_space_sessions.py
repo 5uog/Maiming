@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ...core.math.vec3 import Vec3
-from ...application.othello.session_factory import create_othello_session
+from ..othello.othello_session_factory import create_othello_session
 from ...domain.blocks.default_registry import create_default_registry
 from ...domain.entities.player_entity import PlayerEntity
 from ...domain.play_space import PLAY_SPACE_IDS, PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, normalize_play_space_id

@@ -15,15 +15,15 @@ if TYPE_CHECKING:
     from .gl_viewport_widget import GLViewportWidget
 
 def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
-    viewport._overlay.resume_requested.connect(viewport._resume_from_overlay)
-    viewport._overlay.settings_requested.connect(viewport._open_settings_from_pause)
-    viewport._overlay.play_my_world_requested.connect(lambda: viewport._switch_play_space(PLAY_SPACE_MY_WORLD, resume=True))
-    viewport._overlay.play_othello_requested.connect(lambda: viewport._switch_play_space(PLAY_SPACE_OTHELLO, resume=True))
-    viewport._death.respawn_requested.connect(viewport._respawn)
-    viewport._inventory.block_selected.connect(viewport._on_inventory_selected)
-    viewport._inventory.hotbar_slot_selected.connect(viewport._select_hotbar_slot)
-    viewport._inventory.hotbar_slot_assigned.connect(viewport._assign_hotbar_slot)
-    viewport._inventory.closed.connect(viewport._on_inventory_closed)
+    viewport._overlay.resume_requested.connect(lambda: resume_from_overlay(viewport))
+    viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
+    viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
+    viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
+    viewport._death.respawn_requested.connect(lambda: respawn(viewport))
+    viewport._inventory.block_selected.connect(lambda block_id: on_inventory_selected(viewport, str(block_id)))
+    viewport._inventory.hotbar_slot_selected.connect(lambda slot_index: viewport_settings_controller.select_hotbar_slot(viewport, int(slot_index)))
+    viewport._inventory.hotbar_slot_assigned.connect(lambda slot_index, item_id: viewport_settings_controller.assign_hotbar_slot(viewport, int(slot_index), str(item_id)))
+    viewport._inventory.closed.connect(lambda: on_inventory_closed(viewport))
 
 def respawn(viewport: "GLViewportWidget") -> None:
     viewport._session.respawn()
@@ -94,7 +94,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     hotbar_idx = hotbar_index_from_key(int(e.key()))
     if hotbar_idx is not None and not viewport._overlays.paused() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open():
         if not viewport._overlays.inventory_open():
-            viewport._select_hotbar_slot(int(hotbar_idx))
+            viewport_settings_controller.select_hotbar_slot(viewport, int(hotbar_idx))
             return True
 
     if int(e.key()) == int(Qt.Key.Key_F4):
@@ -114,10 +114,10 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
             viewport._set_inventory_overlay(False)
             return True
         if viewport._overlays.othello_settings_open():
-            viewport._back_from_othello_settings()
+            back_from_othello_settings(viewport)
             return True
         if viewport._overlays.settings_open():
-            viewport._back_from_settings()
+            back_from_settings(viewport)
             return True
         if viewport._overlays.paused():
             viewport._set_paused_overlay(False)
@@ -130,7 +130,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
         return True
 
     if int(e.key()) == int(Qt.Key.Key_B) and not viewport._overlays.paused() and not viewport._overlays.dead():
-        viewport._set_creative_mode(not viewport._state.creative_mode)
+        viewport_settings_controller.set_creative_mode(viewport, not viewport._state.creative_mode)
         viewport_settings_controller.sync_settings_values(viewport)
         return True
 
@@ -149,11 +149,11 @@ def handle_wheel(viewport: "GLViewportWidget", e: "QWheelEvent") -> bool:
 
     delta_y = int(e.angleDelta().y())
     if delta_y > 0:
-        viewport._cycle_hotbar(-1)
+        viewport_settings_controller.cycle_hotbar(viewport, -1)
         e.accept()
         return True
     if delta_y < 0:
-        viewport._cycle_hotbar(1)
+        viewport_settings_controller.cycle_hotbar(viewport, 1)
         e.accept()
         return True
     return False

@@ -1,7 +1,7 @@
 # FILE: src/maiming/presentation/widgets/settings/value_sync.py
 from __future__ import annotations
 
-from .page_builders import CLOUD_FLOW_DIRECTIONS
+from .cloud_flow_options import cloud_flow_index_for_value
 
 def _block_signals_set_value(widget, value) -> None:
     widget.blockSignals(True)
@@ -10,13 +10,6 @@ def _block_signals_set_value(widget, value) -> None:
 
 def _sync_toggle(row, checked: bool) -> None:
     row.sync_checked(bool(checked))
-
-def _cloud_flow_index_for_value(value: str) -> int:
-    raw = str(value).strip().lower()
-    for index, (entry, _label) in enumerate(CLOUD_FLOW_DIRECTIONS):
-        if raw == str(entry):
-            return index
-    return 1
 
 def sync_overlay_values(overlay, **values) -> None:
     fov_int = int(round(float(values["fov_deg"])))
@@ -74,7 +67,7 @@ def sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_cloud_wire, bool(values["cloud_wire"]))
 
     overlay._cmb_cloud_flow.blockSignals(True)
-    overlay._cmb_cloud_flow.setCurrentIndex(int(_cloud_flow_index_for_value(str(values["cloud_flow_direction"]))))
+    overlay._cmb_cloud_flow.setCurrentIndex(int(cloud_flow_index_for_value(str(values["cloud_flow_direction"]))))
     overlay._cmb_cloud_flow.blockSignals(False)
 
     cloud_density = int(max(0, min(4, int(values["cloud_density"]))))

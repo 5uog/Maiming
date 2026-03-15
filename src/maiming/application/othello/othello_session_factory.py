@@ -1,4 +1,4 @@
-# FILE: src/maiming/application/othello/session_factory.py
+# FILE: src/maiming/application/othello/othello_session_factory.py
 from __future__ import annotations
 from dataclasses import dataclass
 

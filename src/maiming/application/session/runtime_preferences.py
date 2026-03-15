@@ -9,9 +9,7 @@ from ...domain.inventory.special_items import is_special_item_id
 from ...domain.othello.types import OthelloSettings
 from ...domain.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
 from ...infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-
-def _view_model_visible(*, hide_hand: bool) -> bool:
-    return not bool(hide_hand)
+from ...presentation.widgets.viewport.view_model_visibility import view_model_visible
 
 def _default_hotbar_slots_list() -> list[str]:
     return list(default_hotbar_slots(size=HOTBAR_SIZE))
@@ -88,7 +86,7 @@ class RuntimePreferences:
 
     def view_model_visible(self) -> bool:
         self.normalize()
-        return _view_model_visible(hide_hand=bool(self.hide_hand))
+        return view_model_visible(hide_hand=bool(self.hide_hand))
 
     def _active_hotbar_slots(self) -> list[str]:
         self.normalize()

@@ -5,8 +5,9 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
 from ...config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
+from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from ..common.settings_controls import BedrockToggleRow, WheelPassthroughSlider
-from .page_builders import CLOUD_FLOW_DIRECTIONS, build_controls_tab, build_game_tab, build_video_tab
+from .page_builders import build_controls_tab, build_game_tab, build_video_tab
 from .value_sync import sync_overlay_values
 
 class SettingsOverlay(QWidget):
@@ -144,17 +145,9 @@ class SettingsOverlay(QWidget):
         label.setObjectName("sectionTitle")
         return label
 
-    @staticmethod
-    def _cloud_flow_index_for_value(value: str) -> int:
-        raw = str(value).strip().lower()
-        for index, (entry, _label) in enumerate(CLOUD_FLOW_DIRECTIONS):
-            if raw == str(entry):
-                return index
-        return 1
-
     def _current_cloud_flow_value(self) -> str:
         data = self._cmb_cloud_flow.currentData()
-        return "west_to_east" if data is None else str(data)
+        return str(DEFAULT_CLOUD_FLOW_DIRECTION) if data is None else str(data)
 
     def _new_slider(self, parent: QWidget, min_value: int, max_value: int) -> WheelPassthroughSlider:
         slider = WheelPassthroughSlider(Qt.Orientation.Horizontal, parent)

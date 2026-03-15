@@ -48,13 +48,13 @@ class GLResources:
         cloud_prog = ShaderProgram.from_files(shader_dir / "cloud_box.vert", shader_dir / "cloud_box.frag")
         selection_prog = ShaderProgram.from_files(shader_dir / "selection_line.vert", shader_dir / "selection_line.frag")
         othello_prog = ShaderProgram.from_files(shader_dir / "othello.vert", shader_dir / "othello.frag")
-        othello_shadow_prog = ShaderProgram.from_files(shader_dir / "othello_shadow.vert", shader_dir / "othello_shadow.frag")
+        othello_shadow_prog = ShaderProgram.from_files(shader_dir / "othello_shadow.vert", shader_dir / "shadow.frag")
         chunk_face_payload_prog = ShaderProgram.from_compute_file(shader_dir / "chunk_face_payload.comp")
         first_person_face_prog = ShaderProgram.from_files(shader_dir / "first_person_face.vert", shader_dir / "first_person_face.frag")
 
         player_model_prog = ShaderProgram.from_files(shader_dir / "player_model.vert", shader_dir / "player_model.frag")
         player_model_no_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model.vert", shader_dir / "player_model_no_shadow.frag")
-        player_model_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model_shadow.vert", shader_dir / "player_model_shadow.frag")
+        player_model_shadow_prog = ShaderProgram.from_files(shader_dir / "player_model_shadow.vert", shader_dir / "shadow.frag")
 
         cloud_mesh = MeshBuffer.create_cube_instanced()
         player_model_mesh = MeshBuffer.create_cube_transform_instanced()

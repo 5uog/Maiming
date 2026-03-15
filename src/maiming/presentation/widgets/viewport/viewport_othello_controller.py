@@ -18,9 +18,11 @@ if TYPE_CHECKING:
     from .gl_viewport_widget import GLViewportWidget
 
 def bind_othello_controls(viewport: "GLViewportWidget") -> None:
-    viewport._othello_ai.move_ready.connect(viewport._on_othello_ai_move_ready)
-    viewport._othello_settings.back_requested.connect(viewport._back_from_othello_settings)
-    viewport._othello_settings.settings_applied.connect(viewport._apply_othello_settings)
+    from . import viewport_event_handlers
+
+    viewport._othello_ai.move_ready.connect(lambda generation, move_index: on_ai_move_ready(viewport, int(generation), move_index))
+    viewport._othello_settings.back_requested.connect(lambda: viewport_event_handlers.back_from_othello_settings(viewport))
+    viewport._othello_settings.settings_applied.connect(lambda settings: apply_settings(viewport, settings))
 
 def _format_clock(seconds_remaining: float | None) -> str:
     if seconds_remaining is None:
@@ -204,6 +206,8 @@ def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_d
         maybe_request_ai(viewport)
 
 def handle_right_click(viewport: "GLViewportWidget") -> None:
+    from . import viewport_event_handlers
+
     item_id = viewport_settings_controller.current_item_id(viewport)
     if item_id == OTHELLO_START_ITEM_ID:
         viewport._othello_match.restart_match()
@@ -215,4 +219,4 @@ def handle_right_click(viewport: "GLViewportWidget") -> None:
         return
     if item_id == OTHELLO_SETTINGS_ITEM_ID:
         viewport._first_person_motion.trigger_right_swing(success=True)
-        viewport._open_othello_settings_from_item()
+        viewport_event_handlers.open_othello_settings_from_item(viewport)
