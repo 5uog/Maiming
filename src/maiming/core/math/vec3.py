@@ -11,17 +11,18 @@ class Vec3:
     """
     V = (x, y, z) in R^3.
 
-    This type denotes an immutable ordered triple of real-valued components. Within the presently 
-    disclosed codebase, the same algebraic carrier is used, without internal tagging, for Euclidean 
-    position vectors, displacement vectors, velocity vectors, unit or non-unit direction vectors, 
-    per-axis sizes, colors, and other three-component quantities. The class itself therefore furnishes 
-    only the elementary vector-space operations explicitly defined below, and imposes no semantic 
-    distinction among such uses.
+    I define `Vec3` as the immutable three-scalar carrier for the lowest mathematical layer of this
+    codebase. At this layer I do not impose a type-level distinction between Euclidean positions,
+    displacements, velocities, directions, extents, colors, or any other quantity that is merely an
+    ordered triple of scalars. The only structure established here is the ordered storage of three
+    components together with the operations explicitly declared below. Any stronger semantic reading
+    is imposed by the caller, not by this class.
 
-    The frozen dataclass form is of structural importance. Every operation defined herein is purely 
-    functional and returns a fresh Vec3 instance; no in-placemutation path is provided by this module. 
-    This is materially consistent with the surrounding usage, wherein values of this type are freely 
-    constructed, copied, and replaced across geometry, movement, rendering, and persistence boundaries.
+    I make the class a frozen dataclass because the surrounding code replaces whole values rather than
+    mutating vector components in place. Movement updates, collision correction, ray construction, 
+    block-shape translation, cloud placement, and camera or light-frame construction all pass `Vec3` 
+    values across subsystem boundaries as value objects. Every vector-valued operation below therefore 
+    returns a fresh `Vec3`, and no in-place mutation path is admitted in this module.
     """
     x: float
     y: float
@@ -31,13 +32,15 @@ class Vec3:
         """
         (x1, y1, z1) + (x2, y2, z2) = (x1 + x2, y1 + y2, z1 + z2).
 
-        This is the canonical component-wise vector addition in R^3. No geometric reinterpretation is 
-        embedded in the implementation; the operation is purely algebraic. In the provided codebase, 
-        this operator is used, inter alia, to advance points by scaled directions, to combine basis-
-        weighted movement contributions, and to reconstruct hit positions from ray parameters.
+        I implement ordinary component-wise addition on R^3 and nothing more. The method does not
+        distinguish point-plus-displacement from vector-plus-vector or any other geometric reading.
+        It simply adds corresponding stored components and returns the resulting triple as a new
+        immutable value.
 
-        The method performs exactly three floating-point additions and returns the resulting triple 
-        as a new immutable Vec3. No normalization, clamping, or tolerance handling is applied.
+        I rely on this primitive wherever a translated position or an accumulated offset must be
+        formed directly from existing vectors, including ray hit-point reconstruction, positional
+        correction in collision resolution, cloud-shift application, sun-center placement, and the
+        accumulation of basis-weighted movement contributions.
         """
         return Vec3(self.x + o.x, self.y + o.y, self.z + o.z)
 
@@ -45,28 +48,34 @@ class Vec3:
         """
         (x1, y1, z1) - (x2, y2, z2) = (x1 - x2, y1 - y2, z1 - z2).
 
-        This is the canonical component-wise vector subtraction in R^3. In the disclosed system, the 
-        operation serves both as displacement formation between points and as ordinary vector difference. 
-        The implementation does not distinguish these interpretations; it merely computes the algebraic
-        difference of corresponding components.
+        I implement ordinary component-wise subtraction on R^3. The result may be read by callers as
+        a displacement, a relative coordinate, or merely the algebraic difference of two stored triples,
+        but this method itself encodes only the subtraction of corresponding components.
 
-        The method performs exactly three floating-point subtractions and returns a new Vec3. 
-        No post-processing is applied.
+        Within the presently shown code I rely on this operation where one location or center must be
+        re-expressed relative to another before subsequent scalar tests are applied, most visibly in the
+        camera-relative cloud culling path of `cloud_field.py`, where `c_world - eye` is formed and then
+        resolved against `forward`, `right`, and `up` by dot products.
         """
         return Vec3(self.x - o.x, self.y - o.y, self.z - o.z)
 
     def __mul__(self, k: float) -> "Vec3":
         """
-        k * (x, y, z) = (k*x, k*y, k*z).
+        (x, y, z) * k = k * (x, y, z) = (x*k, y*k, z*k).
 
-        This method implements scalar multiplication by a real factor k. The code is strictly component-
-        wise and does not admit matrix multiplication, dot products, Hadamard products, or any other 
-        overloaded interpretation. Within the surrounding files, it is used to scale directions by 
-        reach, time-step displacement by dt, camera or cloud offsets by amplitudes, and orthonormal 
-        basis vectors by projected coordinates.
+        I reserve this operator family for multiplication by a single scalar factor `k`. I do not
+        overload it for matrix products, Hadamard products, or inner products. The algebraic content
+        encoded here is therefore nothing other than uniform scaling of each stored component by the
+        same scalar. The relation between this method and the immediately following alias must be stated
+        exactly. The implementation below realizes the `Vec3 * scalar` spelling directly, and
+        `__rmul__ = __mul__` thereafter admits the reflected `scalar * Vec3` spelling through the same
+        computation path. I do not prove or impose any deeper law than that literal implementation fact.
 
-        The implementation performs exactly three floating-point multiplications and returns a new Vec3. 
-        No saturation, finite-value check, or unit-length preservation is attempted.
+        I use this primitive wherever a stored triple must be scaled by an external coefficient,
+        including time-step displacement formation in movement and collision code, ray-origin biasing in
+        interaction code, sun-center placement in `sun_pass.py`, and light-position or stabilization-
+        anchor construction in `light_space.py`. The method preserves neither unit length nor finiteness
+        and applies no clamping.
         """
         return Vec3(self.x * k, self.y * k, self.z * k)
 
@@ -76,29 +85,38 @@ class Vec3:
         """
         dot(a, b) = a.x*b.x + a.y*b.y + a.z*b.z.
 
-        This is the standard Euclidean inner product on R^3. The value returned is a scalar and is 
-        used throughout the provided code as the primitive from which projection, signed alignment, 
-        camera-space coordinate extraction, and orthogonality-related constructions are derived.
+        I implement the standard Euclidean inner product on R^3. 
+        No normalization is performed for either operand. The returned scalar therefore carries both 
+        magnitude information and angular information. Any interpretation as cos(theta) presupposes 
+        that the caller has already supplied unit-length inputs elsewhere.
 
-        No normalization of either operand is performed. Consequently, the result encodes both angular 
-        relation and magnitude. If unit vectors are required for a geometric interpretation such as 
-        cos(theta), that precondition must have been established by the caller or by prior normalization 
-        in upstream code.
+        This scalar primitive is used in the presently shown code wherever a basis coordinate, 
+        directional support value, or projection onto an axis is required. That includes the translation 
+        terms of `mat4.look_dir()`, the non-parallel up-hint test and stabilized anchor construction 
+        in `light_space.py`, and the camera-relative cloud culling tests in `cloud_field.py`.
+
+        I attach no semantic tag beyond the inner product itself. The method computes only the scalar
+        contraction of the two stored triples.
         """
         return self.x * o.x + self.y * o.y + self.z * o.z
 
     def cross(self, o: "Vec3") -> "Vec3":
         """
-        cross(a, b) = (a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x).
+        cross(a, b) = (
+            a.y*b.z - a.z*b.y,
+            a.z*b.x - a.x*b.z,
+            a.x*b.y - a.y*b.x
+        ).
 
-        This is the standard vector product in R^3, oriented according to the right-hand rule encoded 
-        by the above determinant expansion. In the surrounding code, it is used to construct local 
-        orthogonal frames, notably right and up vectors from a forward direction and an up hint.
+        I implement the standard vector product in R^3 with the orientation fixed by the displayed
+        determinant expansion and thus by the right-hand rule. The result is orthogonal to the ideal
+        input operands in exact arithmetic, but this method does not itself normalize the result or
+        repair degeneracy.
 
-        The method does not enforce non-collinearity of the operands. If the input vectors are parallel 
-        or nearly parallel, the returned vector may be the zero vector or numerically very small; 
-        downstream callers therefore sometimes normalize the result and rely on external fallback logic 
-        when degeneracy must be avoided.
+        That omission is deliberate. I use this method as the raw oriented-basis primitive in view-frame
+        and billboard construction, notably in `mat4.look_dir`, `cloud_field.py`, and `sun_pass.py`.
+        When the operands are parallel or nearly parallel, the result may collapse to the zero vector or
+        a numerically tiny vector, and any fallback policy remains outside this method.
         """
         return Vec3(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x)
 
@@ -106,37 +124,44 @@ class Vec3:
         """
         ||v||_2 = sqrt(x^2 + y^2 + z^2).
 
-        This is the Euclidean L2 norm induced by the standard inner product on R^3. The returned scalar 
-        is non-negative by construction. In the supplied code, it is used to determine whether a vector 
-        is effectively non-zero, to compute horizontal or full 3D magnitudes, and to prepare normalized
-        directions for ray casting, view-space construction, and movement logic.
+        I implement the Euclidean L2 norm formula directly as `math.sqrt(self.x * self.x + self.y * 
+        self.y + self.z * self.z)`. No staged `hypot` accumulation, compensated summation, scaling 
+        transform, or exceptional-value repair is interposed.
 
-        The implementation is the direct scalar formula and does not call hypot-style staged accumulation. 
-        Accordingly, it reflects the ordinary floating-point behavior of squaring and summation in 
-        Python's binary64 arithmetic before the final square root.
+        For ordinary finite real inputs the returned scalar agrees with the Euclidean norm induced by
+        the standard inner product and is non-negative. I do not state a stronger implementation-level
+        guarantee than that. If intermediate products overflow or if any component is non-finite,
+        Python's ordinary floating-point semantics govern the realized result.
+
+        I use this norm as the local magnitude test wherever the code must distinguish a usable
+        direction from an effectively zero vector, including wish-direction synthesis in movement,
+        sun-billboard basis fallback, cloud-frame construction, and the degeneracy guard inside
+        `normalized()`.
         """
         return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 
     def normalized(self) -> "Vec3":
         """
         normalize(v) =
-            v / ||v||_2,         if ||v||_2 > 1e-12
-            (0.0, 0.0, 0.0),     otherwise.
+            v / ||v||_2,      if ||v||_2 > 1e-12,
+            (0, 0, 0),        otherwise.
 
-        This method attempts Euclidean normalization of the vector. The threshold 1e-12 is a deliberate 
-        degeneracy guard: when the computed norm is less than or equal to that bound, reciprocal scaling 
-        is suppressed and the zero vector is returned instead. The branch therefore defines total 
-        behavior over all finite inputs and avoids division by a numerically tiny denominator.
+        I implement the exact branch law written above after first evaluating `n = self.length()`. 
+        If the computed norm satisfies `n <= 1e-12`, I return the exact zero vector and perform no
+        reciprocal scaling. Otherwise I compute `inv = 1.0 / n` and return `(x*inv, y*inv, z*inv)` 
+        as a fresh `Vec3`.
 
-        In the disclosed code, this convention is operationally significant. Direction-producing functions, 
-        such as forward-vector construction, normalize their outputs; ray picking normalizes incoming 
-        directions before traversal; camera-frame construction normalizes basis vectors after cross 
-        products; sun and cloud passes likewise normalize view or light directions. The zero-vector 
-        fallback therefore serves as a local singularity-handling rule for degenerate inputs.
+        The guarded branch is the singularity convention of this mathematical layer. 
+        It is operationally material because ray picking normalizes the incoming direction before 
+        DDA traversal, view and light matrix construction normalize basis vectors after cross products, 
+        camera and sun direction helpers normalize their outputs before publication, and billboard 
+        construction normalizes intermediate axes before later dot-product use.
 
-        It must be noted with precision that the returned vector is guaranteed to have unit Euclidean 
-        norm only in the branch where ||v||_2 > 1e-12 and ordinary floating-point roundoff is disregarded. 
-        In the guarded branch, the output is exactly the zero vector and hence not a unit vector.
+        I do not impose any broader totality or finiteness claim than the literal branch structure
+        above. When `self.length()` yields a non-finite value, the guard `n <= 1e-12` follows Python's
+        ordinary float comparison semantics, and the returned components are whatever the explicit
+        multiplications by `1.0 / n` realize. For finite non-degenerate inputs, the positive branch
+        yields the usual unit direction up to ordinary floating-point roundoff.
         """
         n = self.length()
         if n <= 1e-12:
@@ -148,21 +173,21 @@ class Vec3:
 def clampf(x: float, lo: float, hi: float) -> float:
     """
     clamp(x; lo, hi) =
-        lo, if x < lo
-        hi, if x > hi
-        x,  otherwise.
+        lo,  if x < lo,
+        hi,  if x > hi,
+        x,   otherwise.
 
-    This is a scalar saturation map onto the closed interval [lo, hi], assuming that the caller supplies 
-    bounds intended to function as a lower and upper limit. The implementation is branch-based and exact 
-    with respect to the ordering tests written; it does not reorder the bounds, does not validate 
-    lo <= hi, and does not special-case NaN.
+    I implement the exact branch expression `lo if x < lo else hi if x > hi else x`. I do not reorder
+    the bounds, validate `lo <= hi`, or add any exceptional-value policy beyond the semantics of the
+    written comparisons themselves. The function is therefore a scalar saturation map only to the extent
+    that the caller supplies a coherent interval.
 
-    Its role in the disclosed system is concrete and recurrent. It is used to confine movement inputs 
-    to [-1, 1], to restrict pitch into a prescribed angular window, to cap visual effect strengths to 
-    [0, 1], and to constrain other scalar parameters whose legal domain is interval-bounded at the call site.
+    I use this helper where the code must enforce explicit scalar admissibility windows, most visibly for
+    movement-input confinement to `[-1, 1]` and for player pitch confinement to `[-89.5, 89.5]` before
+    view-direction reconstruction.
 
-    Because the expression is implemented as "lo if x < lo else hi if x > hi else x", the behavior 
-    under exceptional floating-point values follows ordinary Python comparison semantics. 
-    In particular, no additional sanitization layer is supplied by this function.
+    Because the implementation is comparison-defined and nothing more, Python's ordinary float comparison
+    semantics govern edge cases. In particular, if `x` is NaN, both ordered comparisons are false and the
+    function returns `x` unchanged.
     """
     return lo if x < lo else hi if x > hi else x
