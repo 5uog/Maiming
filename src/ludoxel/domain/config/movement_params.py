@@ -1,0 +1,38 @@
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
+
+# FILE: src/ludoxel/domain/config/movement_params.py
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class MovementParams:
+    tick_hz: float = 20.0
+
+    walk_speed: float = 4.317
+    sprint_speed: float = 5.612
+
+    crouch_mult: float = 0.3
+
+    gravity: float = 32.0
+    fall_speed_max: float = 78.4
+
+    jump_v0: float = 8.4
+
+    accel_ground: float = 30.0
+    accel_air: float = 6.0
+
+    sprint_jump_boost: float = 5.0
+
+    auto_jump_probe: float = 0.35
+    auto_jump_success_dy: float = 0.90
+    auto_jump_cooldown_s: float = 0.12
+
+    fly_speed: float = 10.92
+    fly_ascend_speed: float = 10.92
+    fly_descend_speed: float = 10.92
+
+
+DEFAULT_MOVEMENT_PARAMS = MovementParams()

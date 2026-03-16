@@ -1,8 +1,11 @@
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
+
 # FILE: MANIFEST.in
 graft assets
 include main.py
 include README.md
 include LICENSE
-recursive-include src/maiming/presentation/theme *.qss
-recursive-include src/maiming/infrastructure/rendering/opengl/_internal/shaders *.vert *.frag *.comp *.glsl
+recursive-include src/ludoxel/presentation/theme *.qss
+recursive-include src/ludoxel/infrastructure/rendering/opengl/_internal/shaders *.vert *.frag *.comp *.glsl
 global-exclude __pycache__ *.py[cod]

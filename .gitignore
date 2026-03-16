@@ -1,9 +1,3 @@
 __pycache__/
 user_data/
 dist/
-
-*.exp
-*.obj
-*.lib
-*.pyd
-*.c

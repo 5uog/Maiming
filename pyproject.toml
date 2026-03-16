@@ -1,41 +1,67 @@
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
+
 # FILE: pyproject.toml
 [build-system]
 requires = ["setuptools>=82", "wheel>=0.45", "Cython>=3.0,<4"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "maiming"
+name = "ludoxel"
 dynamic = ["version"]
-description = "Deterministic Bedrock-movement sandbox and OpenGL 4.3 Core Profile voxel renderer with compute-backed chunk face payload generation for block-accurate Minecraft PvP aiming studies."
-keywords = ["minecraft", "pvp", "aim", "simulation", "opengl", "voxel", "shadow-map", "cython"]
+description = "PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and an OpenGL 4.3 Core Profile renderer."
+keywords = [
+    "minecraft",
+    "pvp",
+    "aim",
+    "simulation",
+    "opengl",
+    "voxel",
+    "shadow-map",
+    "cython",
+]
 
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 
 requires-python = ">=3.13,<3.15"
-classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14", "Operating System :: OS Independent", "Topic :: Games/Entertainment", "Topic :: Scientific/Engineering :: Visualization"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
 dependencies = ["PyQt6>=6.6,<7", "numpy>=1.26,<3", "PyOpenGL>=3.1.7,<4"]
 
 [project.optional-dependencies]
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "setuptools>=82", "wheel>=0.45"]
 
 [project.scripts]
-maiming = "maiming.api.run:run_app"
+ludoxel = "ludoxel.api.run:run_app"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "maiming.meta.version.__version__" }
+version = { attr = "ludoxel.meta.version.__version__" }
 
 [tool.setuptools.package-data]
-maiming = ["presentation/theme/*.qss", "infrastructure/rendering/opengl/_internal/shaders/*.vert", "infrastructure/rendering/opengl/_internal/shaders/*.frag", "infrastructure/rendering/opengl/_internal/shaders/*.comp", "infrastructure/rendering/opengl/_internal/shaders/common/*.glsl"]
+ludoxel = [
+    "presentation/theme/*.qss",
+    "infrastructure/rendering/opengl/_internal/shaders/*.vert",
+    "infrastructure/rendering/opengl/_internal/shaders/*.frag",
+    "infrastructure/rendering/opengl/_internal/shaders/*.comp",
+    "infrastructure/rendering/opengl/_internal/shaders/common/*.glsl",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["maiming*"]
+include = ["ludoxel*"]
 namespaces = false
 
 [tool.ruff]
