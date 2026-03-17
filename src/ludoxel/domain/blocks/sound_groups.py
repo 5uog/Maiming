@@ -1,0 +1,84 @@
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
+
+# FILE: src/ludoxel/domain/blocks/sound_groups.py
+from __future__ import annotations
+
+SOUND_GROUP_WOOD = "wood"
+SOUND_GROUP_CHERRY_WOOD = "cherry_wood"
+SOUND_GROUP_BAMBOO_WOOD = "bamboo_wood"
+SOUND_GROUP_NETHER_WOOD = "nether_wood"
+
+SOUND_GROUP_STONE = "stone"
+SOUND_GROUP_DEEPSLATE = "deepslate"
+SOUND_GROUP_DEEPSLATE_BRICKS = "deepslate_bricks"
+SOUND_GROUP_TUFF = "tuff"
+SOUND_GROUP_CALCITE = "calcite"
+SOUND_GROUP_BASALT = "basalt"
+SOUND_GROUP_GILDED_BLACKSTONE = "gilded_blackstone"
+SOUND_GROUP_LODESTONE = "lodestone"
+SOUND_GROUP_RESIN = "resin"
+
+SOUND_GROUP_METAL = "metal"
+SOUND_GROUP_NETHERITE = "netherite"
+
+SOUND_GROUP_GRASS = "grass"
+SOUND_GROUP_DIRT = "dirt"
+SOUND_GROUP_ROOTED_DIRT = "rooted_dirt"
+SOUND_GROUP_GRAVEL = "gravel"
+SOUND_GROUP_SAND = "sand"
+SOUND_GROUP_MUD = "mud"
+SOUND_GROUP_NYLIUM = "nylium"
+SOUND_GROUP_SOUL_SAND = "soul_sand"
+SOUND_GROUP_SOUL_SOIL = "soul_soil"
+
+SOUND_GROUP_NETHERRACK = "netherrack"
+SOUND_GROUP_NETHER_BRICKS = "nether_bricks"
+SOUND_GROUP_NETHER_ORE = "nether_ore"
+SOUND_GROUP_NETHER_GOLD_ORE = "nether_gold_ore"
+SOUND_GROUP_ANCIENT_DEBRIS = "ancient_debris"
+
+SOUND_GROUP_CORAL_BLOCK = "coral_block"
+
+DEFAULT_BLOCK_SOUND_GROUP = SOUND_GROUP_STONE
+
+SOUND_GROUP_FALLBACKS: dict[str, str] = {
+    SOUND_GROUP_CHERRY_WOOD: SOUND_GROUP_WOOD,
+    SOUND_GROUP_BAMBOO_WOOD: SOUND_GROUP_WOOD,
+    SOUND_GROUP_NETHER_WOOD: SOUND_GROUP_WOOD,
+    SOUND_GROUP_DEEPSLATE_BRICKS: SOUND_GROUP_DEEPSLATE,
+    SOUND_GROUP_TUFF: SOUND_GROUP_STONE,
+    SOUND_GROUP_CALCITE: SOUND_GROUP_STONE,
+    SOUND_GROUP_BASALT: SOUND_GROUP_STONE,
+    SOUND_GROUP_GILDED_BLACKSTONE: SOUND_GROUP_STONE,
+    SOUND_GROUP_LODESTONE: SOUND_GROUP_STONE,
+    SOUND_GROUP_RESIN: SOUND_GROUP_STONE,
+    SOUND_GROUP_NETHERITE: SOUND_GROUP_METAL,
+    SOUND_GROUP_ROOTED_DIRT: SOUND_GROUP_DIRT,
+    SOUND_GROUP_MUD: SOUND_GROUP_DIRT,
+    SOUND_GROUP_NYLIUM: SOUND_GROUP_GRASS,
+    SOUND_GROUP_SOUL_SAND: SOUND_GROUP_SAND,
+    SOUND_GROUP_SOUL_SOIL: SOUND_GROUP_SAND,
+    SOUND_GROUP_NETHERRACK: SOUND_GROUP_STONE,
+    SOUND_GROUP_NETHER_BRICKS: SOUND_GROUP_STONE,
+    SOUND_GROUP_NETHER_ORE: SOUND_GROUP_STONE,
+    SOUND_GROUP_NETHER_GOLD_ORE: SOUND_GROUP_NETHER_ORE,
+    SOUND_GROUP_ANCIENT_DEBRIS: SOUND_GROUP_STONE,
+    SOUND_GROUP_CORAL_BLOCK: SOUND_GROUP_STONE,
+}
+
+
+def iter_sound_group_candidates(sound_group: str) -> tuple[str, ...]:
+    ordered: list[str] = []
+    seen: set[str] = set()
+
+    current = str(sound_group).strip() or DEFAULT_BLOCK_SOUND_GROUP
+    while current and current not in seen:
+        ordered.append(current)
+        seen.add(current)
+        current = str(SOUND_GROUP_FALLBACKS.get(current, "")).strip()
+
+    if DEFAULT_BLOCK_SOUND_GROUP not in seen:
+        ordered.append(DEFAULT_BLOCK_SOUND_GROUP)
+
+    return tuple(ordered)

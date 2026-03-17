@@ -36,6 +36,7 @@ class SessionStepResult:
     footstep_triggered: bool
     support_block_state: str | None
     support_position: tuple[int, int, int] | None
+    fall_distance_blocks: float | None
 
 
 @dataclass
@@ -50,6 +51,7 @@ class SessionManager:
     _last_jump_press_s: float | None = field(default=None, init=False, repr=False)
     _player_walk_phase_rad: float = field(default=0.0, init=False, repr=False)
     _player_walk_phase_total_rad: float = field(default=0.0, init=False, repr=False)
+    _airborne_start_y: float | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.interaction = InteractionService.create(world=self.world, player=self.player, block_registry=self.block_registry)
@@ -79,6 +81,7 @@ class SessionManager:
         self._last_jump_press_s = None
         self._player_walk_phase_rad = 0.0
         self._player_walk_phase_total_rad = 0.0
+        self._airborne_start_y = None
 
     def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
         p = self.player
@@ -166,6 +169,7 @@ class SessionManager:
 
         prev_on_ground = bool(self.player.on_ground)
         prev_vy = float(self.player.velocity.y)
+        prev_pos_y = float(self.player.position.y)
 
         yaw_delta = (-float(mdx)) * float(self.settings.mouse_sens_deg_per_px)
         pitch_delta = (float(mdy)) * float(self.settings.mouse_sens_deg_per_px)
@@ -183,12 +187,20 @@ class SessionManager:
 
             self.player.hold_jump_queued = False
             self.player.auto_jump_pending = False
+            self._airborne_start_y = None
 
             self._update_crouch_eye(float(dt), False)
             self._update_step_eye(float(dt))
             self._update_player_walk_phase(float(dt))
             support_state, support_position = self._support_contact()
-            return SessionStepResult(jump_started=False, landed=False, footstep_triggered=False, support_block_state=support_state, support_position=support_position)
+            return SessionStepResult(
+                jump_started=False,
+                landed=False,
+                footstep_triggered=False,
+                support_block_state=support_state,
+                support_position=support_position,
+                fall_distance_blocks=None,
+            )
 
         jump_pulse = False
 
@@ -222,7 +234,16 @@ class SessionManager:
 
         report = integrate_with_collisions(self.player, self.world, float(dt), block_registry=self.block_registry, params=self.settings.collision, crouch=bool(crouch), jump_pressed=bool(jump_pulse), flying=False)
 
+        if not bool(report.supported_after):
+            if self._airborne_start_y is None:
+                self._airborne_start_y = float(prev_pos_y)
+
         landed_now = (not prev_on_ground) and bool(report.supported_after) and (float(prev_vy) <= 0.0)
+
+        fall_distance_blocks: float | None = None
+        if bool(landed_now):
+            start_y = float(prev_pos_y) if self._airborne_start_y is None else float(self._airborne_start_y)
+            fall_distance_blocks = max(0.0, float(start_y) - float(self.player.position.y))
 
         if bool(landed_now) and bool(jump_held):
             self.player.hold_jump_queued = True
@@ -239,11 +260,21 @@ class SessionManager:
         if (abs(dy_corr) > 1e-6 and abs(dy_corr) <= (step_h + 1e-3) and bool(report.supported_before) and bool(report.supported_after) and (not bool(jump_pulse)) and abs(float(prev_vy)) <= 1e-6 and abs(float(self.player.velocity.y)) <= 1e-6):
             self.player.step_eye_offset = float(self.player.step_eye_offset) - float(dy_corr)
 
+        if bool(report.supported_after):
+            self._airborne_start_y = None
+
         self._update_crouch_eye(float(dt), bool(crouch))
         self._update_step_eye(float(dt))
         footstep_triggered = self._update_player_walk_phase(float(dt))
         support_state, support_position = self._support_contact()
-        return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position)
+        return SessionStepResult(
+            jump_started=bool(jump_pulse),
+            landed=bool(landed_now),
+            footstep_triggered=bool(footstep_triggered),
+            support_block_state=support_state,
+            support_position=support_position,
+            fall_distance_blocks=fall_distance_blocks,
+        )
 
     def make_snapshot(self, *, enable_view_bobbing: bool=True, enable_camera_shake: bool=True, view_bobbing_strength: float=0.35, camera_shake_strength: float=0.20) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()

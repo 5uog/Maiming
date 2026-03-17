@@ -11,6 +11,38 @@ from ...application.session.audio_preferences import (
     AUDIO_CATEGORY_BLOCK,
     AUDIO_CATEGORY_PLAYER,
 )
+from ...domain.blocks.sound_groups import (
+    SOUND_GROUP_ANCIENT_DEBRIS,
+    SOUND_GROUP_BAMBOO_WOOD,
+    SOUND_GROUP_BASALT,
+    SOUND_GROUP_CALCITE,
+    SOUND_GROUP_CHERRY_WOOD,
+    SOUND_GROUP_CORAL_BLOCK,
+    SOUND_GROUP_DEEPSLATE,
+    SOUND_GROUP_DEEPSLATE_BRICKS,
+    SOUND_GROUP_DIRT,
+    SOUND_GROUP_GILDED_BLACKSTONE,
+    SOUND_GROUP_GRASS,
+    SOUND_GROUP_GRAVEL,
+    SOUND_GROUP_LODESTONE,
+    SOUND_GROUP_METAL,
+    SOUND_GROUP_MUD,
+    SOUND_GROUP_NETHERRACK,
+    SOUND_GROUP_NETHER_BRICKS,
+    SOUND_GROUP_NETHER_GOLD_ORE,
+    SOUND_GROUP_NETHER_ORE,
+    SOUND_GROUP_NETHERITE,
+    SOUND_GROUP_NETHER_WOOD,
+    SOUND_GROUP_NYLIUM,
+    SOUND_GROUP_RESIN,
+    SOUND_GROUP_ROOTED_DIRT,
+    SOUND_GROUP_SAND,
+    SOUND_GROUP_SOUL_SAND,
+    SOUND_GROUP_SOUL_SOIL,
+    SOUND_GROUP_STONE,
+    SOUND_GROUP_TUFF,
+    SOUND_GROUP_WOOD,
+)
 
 SELECTION_RANDOM = "random"
 SELECTION_ROUND_ROBIN = "round_robin"
@@ -25,6 +57,8 @@ BLOCK_EVENT_INTERACT_CLOSE = "interact_close"
 
 PLAYER_EVENT_STEP = "step"
 PLAYER_EVENT_LAND = "land"
+PLAYER_EVENT_LAND_SMALL = "land_small"
+PLAYER_EVENT_LAND_BIG = "land_big"
 PLAYER_EVENT_OTHELLO_PLACE = "othello_place"
 PLAYER_EVENT_OTHELLO_FLIP = "othello_flip"
 
@@ -65,437 +99,160 @@ def _pool(
     )
 
 
+def _indexed_paths(prefix: str, stem: str, count: int, *, ext: str = "wav", start: int = 1) -> tuple[str, ...]:
+    root = str(prefix).rstrip("/")
+    base = str(stem).strip()
+    return tuple(f"{root}/{base}{index}.{ext}" for index in range(int(start), int(start) + int(max(0, count))))
+
+
+def _block_material_catalog(
+    material: str,
+    *,
+    place_count: int = 4,
+    break_count: int = 4,
+    open_count: int = 0,
+    close_count: int = 0,
+    place_polyphony: int = 4,
+    break_polyphony: int = 4,
+    interact_polyphony: int = 2,
+) -> dict[str, AudioSamplePool]:
+    base = f"assets/audio/block/{material}"
+    catalog: dict[str, AudioSamplePool] = {
+        BLOCK_EVENT_PLACE: _pool(
+            *_indexed_paths(f"{base}/place", "place", place_count),
+            category=AUDIO_CATEGORY_BLOCK,
+            max_polyphony=place_polyphony,
+        ),
+        BLOCK_EVENT_BREAK: _pool(
+            *_indexed_paths(f"{base}/break", "break", break_count),
+            category=AUDIO_CATEGORY_BLOCK,
+            max_polyphony=break_polyphony,
+        ),
+    }
+    if int(open_count) > 0:
+        catalog[BLOCK_EVENT_INTERACT_OPEN] = _pool(
+            *_indexed_paths(f"{base}/interact_open", "open", open_count),
+            category=AUDIO_CATEGORY_BLOCK,
+            max_polyphony=interact_polyphony,
+        )
+    if int(close_count) > 0:
+        catalog[BLOCK_EVENT_INTERACT_CLOSE] = _pool(
+            *_indexed_paths(f"{base}/interact_close", "close", close_count),
+            category=AUDIO_CATEGORY_BLOCK,
+            max_polyphony=interact_polyphony,
+        )
+    return catalog
+
+
+def _step_pool(material: str, *, count: int = 6, cooldown_s: float = 0.045, max_polyphony: int = 4) -> AudioSamplePool:
+    return _pool(
+        *_indexed_paths(f"assets/audio/player/footstep/{material}", "step", count),
+        category=AUDIO_CATEGORY_PLAYER,
+        selection_mode=SELECTION_ROUND_ROBIN,
+        spatial=False,
+        distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
+        size=0.0,
+        max_polyphony=max_polyphony,
+        cooldown_s=cooldown_s,
+    )
+
+
 BLOCK_SOUND_CATALOG: dict[str, dict[str, AudioSamplePool]] = {
-    "wood": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/wood/place/wood1.wav",
-            "assets/audio/block/wood/place/wood2.wav",
-            "assets/audio/block/wood/place/wood3.wav",
-            "assets/audio/block/wood/place/wood4.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/wood/break/example_01.wav",
-            "assets/audio/block/wood/break/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/wood/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/wood/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "stone": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/stone/place/example_01.wav",
-            "assets/audio/block/stone/place/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/stone/break/example_01.wav",
-            "assets/audio/block/stone/break/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/stone/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/stone/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "prismarine": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/prismarine/place/example_01.wav",
-            "assets/audio/block/prismarine/place/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/prismarine/break/example_01.wav",
-            "assets/audio/block/prismarine/break/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/prismarine/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/prismarine/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "magma": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/magma/place/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/magma/break/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/magma/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/magma/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "metal": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/metal/place/example_01.wav",
-            "assets/audio/block/metal/place/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/metal/break/example_01.wav",
-            "assets/audio/block/metal/break/example_02.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=4,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/metal/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/metal/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "grass": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/grass/place/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/grass/break/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/grass/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/grass/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "dirt": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/dirt/place/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/dirt/break/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/dirt/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/dirt/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "sand": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/sand/place/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/sand/break/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/sand/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/sand/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
-    "gravel": {
-        BLOCK_EVENT_PLACE: _pool(
-            "assets/audio/block/gravel/place/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_BREAK: _pool(
-            "assets/audio/block/gravel/break/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=3,
-        ),
-        BLOCK_EVENT_INTERACT_OPEN: _pool(
-            "assets/audio/block/gravel/interact_open/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-        BLOCK_EVENT_INTERACT_CLOSE: _pool(
-            "assets/audio/block/gravel/interact_close/example_01.wav",
-            category=AUDIO_CATEGORY_BLOCK,
-            max_polyphony=2,
-        ),
-    },
+    SOUND_GROUP_WOOD: _block_material_catalog(SOUND_GROUP_WOOD, open_count=2, close_count=2),
+    SOUND_GROUP_CHERRY_WOOD: _block_material_catalog(SOUND_GROUP_CHERRY_WOOD, open_count=2, close_count=2),
+    SOUND_GROUP_BAMBOO_WOOD: _block_material_catalog(SOUND_GROUP_BAMBOO_WOOD, open_count=2, close_count=2),
+    SOUND_GROUP_NETHER_WOOD: _block_material_catalog(SOUND_GROUP_NETHER_WOOD, open_count=2, close_count=2),
+    SOUND_GROUP_STONE: _block_material_catalog(SOUND_GROUP_STONE),
+    SOUND_GROUP_DEEPSLATE: _block_material_catalog(SOUND_GROUP_DEEPSLATE),
+    SOUND_GROUP_DEEPSLATE_BRICKS: _block_material_catalog(SOUND_GROUP_DEEPSLATE_BRICKS),
+    SOUND_GROUP_TUFF: _block_material_catalog(SOUND_GROUP_TUFF),
+    SOUND_GROUP_CALCITE: _block_material_catalog(SOUND_GROUP_CALCITE),
+    SOUND_GROUP_BASALT: _block_material_catalog(SOUND_GROUP_BASALT),
+    SOUND_GROUP_GILDED_BLACKSTONE: _block_material_catalog(SOUND_GROUP_GILDED_BLACKSTONE),
+    SOUND_GROUP_LODESTONE: _block_material_catalog(SOUND_GROUP_LODESTONE),
+    SOUND_GROUP_RESIN: _block_material_catalog(SOUND_GROUP_RESIN),
+    SOUND_GROUP_METAL: _block_material_catalog(SOUND_GROUP_METAL),
+    SOUND_GROUP_NETHERITE: _block_material_catalog(SOUND_GROUP_NETHERITE),
+    SOUND_GROUP_GRASS: _block_material_catalog(SOUND_GROUP_GRASS, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_DIRT: _block_material_catalog(SOUND_GROUP_DIRT, place_count=3, break_count=6, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_ROOTED_DIRT: _block_material_catalog(SOUND_GROUP_ROOTED_DIRT, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_GRAVEL: _block_material_catalog(SOUND_GROUP_GRAVEL, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_SAND: _block_material_catalog(SOUND_GROUP_SAND, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_MUD: _block_material_catalog(SOUND_GROUP_MUD, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_NYLIUM: _block_material_catalog(SOUND_GROUP_NYLIUM, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_SOUL_SAND: _block_material_catalog(SOUND_GROUP_SOUL_SAND, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_SOUL_SOIL: _block_material_catalog(SOUND_GROUP_SOUL_SOIL, place_count=3, break_count=4, place_polyphony=3, break_polyphony=3),
+    SOUND_GROUP_NETHERRACK: _block_material_catalog(SOUND_GROUP_NETHERRACK),
+    SOUND_GROUP_NETHER_BRICKS: _block_material_catalog(SOUND_GROUP_NETHER_BRICKS),
+    SOUND_GROUP_NETHER_ORE: _block_material_catalog(SOUND_GROUP_NETHER_ORE),
+    SOUND_GROUP_NETHER_GOLD_ORE: _block_material_catalog(SOUND_GROUP_NETHER_GOLD_ORE),
+    SOUND_GROUP_ANCIENT_DEBRIS: _block_material_catalog(SOUND_GROUP_ANCIENT_DEBRIS),
+    SOUND_GROUP_CORAL_BLOCK: _block_material_catalog(SOUND_GROUP_CORAL_BLOCK),
 }
 
 
 PLAYER_SURFACE_SOUND_CATALOG: dict[str, dict[str, AudioSamplePool]] = {
-    "wood": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/wood/example_01.wav",
-            "assets/audio/player/footstep/wood/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/wood/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "stone": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/stone/example_01.wav",
-            "assets/audio/player/footstep/stone/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/stone/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "prismarine": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/prismarine/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/prismarine/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "magma": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/magma/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/magma/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "metal": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/metal/example_01.wav",
-            "assets/audio/player/footstep/metal/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/metal/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "grass": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/grass/example_01.wav",
-            "assets/audio/player/footstep/grass/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/grass/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "dirt": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/dirt/example_01.wav",
-            "assets/audio/player/footstep/dirt/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/dirt/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "sand": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/sand/example_01.wav",
-            "assets/audio/player/footstep/sand/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/sand/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
-    "gravel": {
-        PLAYER_EVENT_STEP: _pool(
-            "assets/audio/player/footstep/gravel/example_01.wav",
-            "assets/audio/player/footstep/gravel/example_02.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_ROUND_ROBIN,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=4,
-            cooldown_s=0.085,
-        ),
-        PLAYER_EVENT_LAND: _pool(
-            "assets/audio/player/landing/gravel/example_01.wav",
-            category=AUDIO_CATEGORY_PLAYER,
-            selection_mode=SELECTION_RANDOM,
-            spatial=False,
-            distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
-            size=0.0,
-            max_polyphony=2,
-            cooldown_s=0.020,
-        ),
-    },
+    SOUND_GROUP_WOOD: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_WOOD)},
+    SOUND_GROUP_CHERRY_WOOD: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_CHERRY_WOOD)},
+    SOUND_GROUP_BAMBOO_WOOD: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_BAMBOO_WOOD)},
+    SOUND_GROUP_NETHER_WOOD: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHER_WOOD)},
+    SOUND_GROUP_STONE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_STONE)},
+    SOUND_GROUP_DEEPSLATE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_DEEPSLATE)},
+    SOUND_GROUP_DEEPSLATE_BRICKS: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_DEEPSLATE_BRICKS)},
+    SOUND_GROUP_TUFF: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_TUFF)},
+    SOUND_GROUP_CALCITE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_CALCITE)},
+    SOUND_GROUP_BASALT: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_BASALT)},
+    SOUND_GROUP_GILDED_BLACKSTONE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_GILDED_BLACKSTONE)},
+    SOUND_GROUP_LODESTONE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_LODESTONE)},
+    SOUND_GROUP_RESIN: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_RESIN)},
+    SOUND_GROUP_METAL: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_METAL)},
+    SOUND_GROUP_NETHERITE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHERITE)},
+    SOUND_GROUP_GRASS: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_GRASS, cooldown_s=0.040)},
+    SOUND_GROUP_DIRT: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_DIRT, cooldown_s=0.040)},
+    SOUND_GROUP_ROOTED_DIRT: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_ROOTED_DIRT, cooldown_s=0.040)},
+    SOUND_GROUP_GRAVEL: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_GRAVEL, cooldown_s=0.040)},
+    SOUND_GROUP_SAND: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_SAND, cooldown_s=0.040)},
+    SOUND_GROUP_MUD: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_MUD, cooldown_s=0.040)},
+    SOUND_GROUP_NYLIUM: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NYLIUM, cooldown_s=0.040)},
+    SOUND_GROUP_SOUL_SAND: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_SOUL_SAND, cooldown_s=0.040)},
+    SOUND_GROUP_SOUL_SOIL: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_SOUL_SOIL, cooldown_s=0.040)},
+    SOUND_GROUP_NETHERRACK: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHERRACK)},
+    SOUND_GROUP_NETHER_BRICKS: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHER_BRICKS)},
+    SOUND_GROUP_NETHER_ORE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHER_ORE)},
+    SOUND_GROUP_NETHER_GOLD_ORE: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_NETHER_GOLD_ORE)},
+    SOUND_GROUP_ANCIENT_DEBRIS: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_ANCIENT_DEBRIS)},
+    SOUND_GROUP_CORAL_BLOCK: {PLAYER_EVENT_STEP: _step_pool(SOUND_GROUP_CORAL_BLOCK)},
 }
 
 
 PLAYER_EVENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
+    PLAYER_EVENT_LAND_SMALL: _pool(
+        "assets/audio/player/landing/fallsmall.wav",
+        category=AUDIO_CATEGORY_PLAYER,
+        selection_mode=SELECTION_RANDOM,
+        spatial=False,
+        distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
+        size=0.0,
+        max_polyphony=2,
+        cooldown_s=0.015,
+    ),
+    PLAYER_EVENT_LAND_BIG: _pool(
+        "assets/audio/player/landing/fallbig.wav",
+        category=AUDIO_CATEGORY_PLAYER,
+        selection_mode=SELECTION_RANDOM,
+        spatial=False,
+        distance_cutoff=DEFAULT_SPATIAL_DISTANCE_CUTOFF,
+        size=0.0,
+        max_polyphony=2,
+        cooldown_s=0.015,
+    ),
     PLAYER_EVENT_OTHELLO_PLACE: _pool(
-        "assets/audio/player/othello/place/example_01.wav",
-        "assets/audio/player/othello/place/example_02.wav",
+        *_indexed_paths("assets/audio/player/othello/place", "place", 2),
         category=AUDIO_CATEGORY_PLAYER,
         max_polyphony=3,
     ),
     PLAYER_EVENT_OTHELLO_FLIP: _pool(
-        "assets/audio/player/othello/flip/example_01.wav",
-        "assets/audio/player/othello/flip/example_02.wav",
+        *_indexed_paths("assets/audio/player/othello/flip", "flip", 2),
         category=AUDIO_CATEGORY_PLAYER,
         selection_mode=SELECTION_ROUND_ROBIN,
         max_polyphony=4,
@@ -505,8 +262,10 @@ PLAYER_EVENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
 
 AMBIENT_SOUND_CATALOG: dict[str, AudioSamplePool] = {
     AMBIENT_KEY_MY_WORLD: _pool(
-        "assets/audio/ambient/my_world/example_loop_01.ogg",
-        "assets/audio/ambient/my_world/example_loop_02.ogg",
+        "assets/audio/ambient/my_world/wind1.ogg",
+        "assets/audio/ambient/my_world/wind2.ogg",
+        "assets/audio/ambient/my_world/wind3.ogg",
+        "assets/audio/ambient/my_world/wind4.ogg",
         category=AUDIO_CATEGORY_AMBIENT,
         selection_mode=SELECTION_ROUND_ROBIN,
         spatial=False,

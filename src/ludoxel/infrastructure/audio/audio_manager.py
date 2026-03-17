@@ -16,6 +16,7 @@ from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer, QSoundEffect
 from ...application.session.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ...core.math.vec3 import Vec3
 from ...domain.blocks.block_registry import BlockRegistry
+from ...domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
 from ...domain.blocks.state_codec import parse_state
 from ...domain.blocks.state_values import prop_as_bool
 from ...domain.play_space import is_my_world_space
@@ -28,7 +29,11 @@ from .audio_catalog import (
     BLOCK_EVENT_INTERACT_OPEN,
     BLOCK_EVENT_PLACE,
     BLOCK_SOUND_CATALOG,
+    PLAYER_EVENT_LAND,
+    PLAYER_EVENT_LAND_BIG,
+    PLAYER_EVENT_LAND_SMALL,
     PLAYER_EVENT_SOUND_CATALOG,
+    PLAYER_EVENT_STEP,
     PLAYER_SURFACE_SOUND_CATALOG,
     SELECTION_ROUND_ROBIN,
     iter_named_pools,
@@ -85,6 +90,9 @@ class AudioManager(QObject):
 
         self._listener_linear_epsilon = 0.05
         self._listener_angular_epsilon_deg = 1.0
+
+        self._small_landing_threshold_blocks = 6.0
+        self._big_landing_threshold_blocks = 20.0
 
         self._build_source_cache()
         self.prime_effects()
@@ -236,16 +244,19 @@ class AudioManager(QObject):
         sound_group: str,
         position: tuple[int, int, int],
     ) -> None:
-        group_catalog = BLOCK_SOUND_CATALOG.get(str(sound_group)) or BLOCK_SOUND_CATALOG.get("stone")
-        pool = None if group_catalog is None else group_catalog.get(str(action))
-        if pool is None:
-            return
+        world_position = self._block_center(tuple(position))
 
-        self._play_pool(
-            pool_key=f"block:{sound_group}:{action}",
-            pool=pool,
-            position=self._block_center(tuple(position)),
-        )
+        for candidate_group in iter_sound_group_candidates(str(sound_group)):
+            group_catalog = BLOCK_SOUND_CATALOG.get(str(candidate_group))
+            pool = None if group_catalog is None else group_catalog.get(str(action))
+            if pool is None:
+                continue
+            if self._play_pool(
+                pool_key=f"block:{candidate_group}:{action}",
+                pool=pool,
+                position=world_position,
+            ):
+                return
 
     def play_surface_event(
         self,
@@ -253,21 +264,26 @@ class AudioManager(QObject):
         event_name: str,
         support_block_state: str | None,
         position: tuple[int, int, int] | None,
+        fall_distance_blocks: float | None = None,
     ) -> None:
         if support_block_state is None or position is None:
             return
 
         sound_group = self.sound_group_for_block_state(str(support_block_state))
-        group_catalog = PLAYER_SURFACE_SOUND_CATALOG.get(str(sound_group)) or PLAYER_SURFACE_SOUND_CATALOG.get("stone")
-        pool = None if group_catalog is None else group_catalog.get(str(event_name))
-        if pool is None:
+        world_position = self._block_center(tuple(position))
+
+        if str(event_name) == PLAYER_EVENT_LAND:
+            self._play_landing_event(
+                sound_group=sound_group,
+                position=world_position,
+                fall_distance_blocks=fall_distance_blocks,
+            )
             return
 
-        self._play_pool(
-            pool_key=f"player:{sound_group}:{event_name}",
-            pool=pool,
-            position=self._block_center(tuple(position)),
-        )
+        if str(event_name) != PLAYER_EVENT_STEP:
+            return
+
+        self._play_surface_step(sound_group=sound_group, position=world_position)
 
     def play_othello_event(
         self,
@@ -293,10 +309,57 @@ class AudioManager(QObject):
             return cached
 
         definition = self._block_registry.get(str(base_id))
-        sound_group = "stone" if definition is None else str(definition.sound_group_name()).strip()
-        normalized = sound_group if sound_group else "stone"
+        sound_group = DEFAULT_BLOCK_SOUND_GROUP if definition is None else str(definition.sound_group_name()).strip()
+        normalized = sound_group if sound_group else DEFAULT_BLOCK_SOUND_GROUP
         self._sound_group_cache[cache_key] = normalized
         return normalized
+
+    def _landing_event_name(self, fall_distance_blocks: float | None) -> str | None:
+        distance = 0.0 if fall_distance_blocks is None else max(0.0, float(fall_distance_blocks))
+
+        if distance >= float(self._big_landing_threshold_blocks):
+            return PLAYER_EVENT_LAND_BIG
+
+        if distance >= float(self._small_landing_threshold_blocks):
+            return PLAYER_EVENT_LAND_SMALL
+
+        return None
+
+    def _play_landing_event(
+        self,
+        *,
+        sound_group: str,
+        position: Vec3,
+        fall_distance_blocks: float | None
+    ) -> None:
+        event_name = self._landing_event_name(fall_distance_blocks)
+
+        if event_name is None:
+            self._play_surface_step(sound_group=str(sound_group), position=position)
+            return
+
+        pool = PLAYER_EVENT_SOUND_CATALOG.get(str(event_name))
+        if pool is None:
+            return
+
+        self._play_pool(
+            pool_key=f"player_event:{event_name}",
+            pool=pool,
+            position=position,
+        )
+
+    def _play_surface_step(self, *, sound_group: str, position: Vec3) -> None:
+        for candidate_group in iter_sound_group_candidates(str(sound_group)):
+            group_catalog = PLAYER_SURFACE_SOUND_CATALOG.get(str(candidate_group))
+            pool = None if group_catalog is None else group_catalog.get(PLAYER_EVENT_STEP)
+            if pool is None:
+                continue
+            if self._play_pool(
+                pool_key=f"player:{candidate_group}:{PLAYER_EVENT_STEP}",
+                pool=pool,
+                position=position,
+            ):
+                return
 
     def _pose_almost_equal(
         self,
@@ -458,25 +521,25 @@ class AudioManager(QObject):
 
         return None
 
-    def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> None:
+    def _play_pool(self, *, pool_key: str, pool: AudioSamplePool, position: Vec3) -> bool:
         base_volume = float(self._preferences.volume_for(pool.category))
         if base_volume <= 1e-6:
-            return
+            return False
 
         if not self._admit_pool_play(pool_key=str(pool_key), pool=pool):
-            return
+            return False
 
         if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
             if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
-                return
+                return False
 
         prepared_sources = self._ensure_prepared_sources(str(pool_key), pool)
         if not prepared_sources:
-            return
+            return False
 
         prepared = self._pick_prepared_source(str(pool_key), pool, prepared_sources)
         if prepared is None:
-            return
+            return False
 
         desired_slots = self._slot_budget_per_source(pool, source_count=len(prepared_sources))
         slot = self._next_effect_slot(
@@ -485,12 +548,13 @@ class AudioManager(QObject):
             base_volume=float(base_volume),
         )
         if slot is None:
-            return
+            return False
 
         if slot.effect.isPlaying():
             slot.effect.stop()
         slot.effect.setVolume(float(base_volume))
         slot.effect.play()
+        return True
 
     def _ensure_ambient_player(self) -> QMediaPlayer:
         if self._ambient_player is not None:

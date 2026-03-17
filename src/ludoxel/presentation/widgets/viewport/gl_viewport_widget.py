@@ -589,10 +589,21 @@ class GLViewportWidget(QOpenGLWidget):
         viewport_settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))
+
         if bool(step_result.footstep_triggered):
-            self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
+            self._audio.play_surface_event(
+                event_name=PLAYER_EVENT_STEP,
+                support_block_state=step_result.support_block_state,
+                position=step_result.support_position,
+            )
+
         if bool(step_result.landed):
-            self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position)
+            self._audio.play_surface_event(
+                event_name=PLAYER_EVENT_LAND,
+                support_block_state=step_result.support_block_state,
+                position=step_result.support_position,
+                fall_distance_blocks=float(step_result.fall_distance_blocks),
+            )
 
         if self._state.is_othello_space():
             self._othello_match.tick(float(dt), paused=False)

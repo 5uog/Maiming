@@ -7,6 +7,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..block_definition import BlockTextures
+from ..sound_groups import (
+    DEFAULT_BLOCK_SOUND_GROUP,
+    SOUND_GROUP_BASALT,
+    SOUND_GROUP_DEEPSLATE,
+    SOUND_GROUP_TUFF,
+)
 
 
 @dataclass(frozen=True)
@@ -22,7 +28,7 @@ class StoneType:
 
     kind: str = "cube"
     is_full_cube: bool = True
-    sound_group: str = "stone"
+    sound_group: str = DEFAULT_BLOCK_SOUND_GROUP
 
 
 def cube_textures(name: str) -> BlockTextures:
@@ -75,15 +81,15 @@ STONE_TYPES: tuple[StoneType, ...] = (
     StoneType(key="diorite", display="Diorite", textures=cube_textures("stone_diorite"), slab_key="diorite_slab", stairs_key="diorite_stairs", wall_key="diorite_wall"),
     StoneType(key="andesite", display="Andesite", textures=cube_textures("stone_andesite"), slab_key="andesite_slab", stairs_key="andesite_stairs", wall_key="andesite_wall"),
     StoneType(key="blackstone", display="Blackstone", textures=cube_textures("blackstone"), slab_key="blackstone_slab", stairs_key="blackstone_stairs", wall_key="blackstone_wall"),
-    StoneType(key="deepslate", display="Deepslate", textures=side_top_bottom_textures("deepslate", "deepslate_top", "deepslate_top")),
-    StoneType(key="tuff", display="Tuff", textures=cube_textures("tuff"), slab_key="tuff_slab", stairs_key="tuff_stairs", wall_key="tuff_wall"),
-    StoneType(key="basalt", display="Basalt", textures=column_textures("basalt_side", "basalt_top")),
+    StoneType(key="deepslate", display="Deepslate", textures=side_top_bottom_textures("deepslate", "deepslate_top", "deepslate_top"), sound_group=SOUND_GROUP_DEEPSLATE),
+    StoneType(key="tuff", display="Tuff", textures=cube_textures("tuff"), slab_key="tuff_slab", stairs_key="tuff_stairs", wall_key="tuff_wall", sound_group=SOUND_GROUP_TUFF),
+    StoneType(key="basalt", display="Basalt", textures=column_textures("basalt_side", "basalt_top"), sound_group=SOUND_GROUP_BASALT),
     StoneType(key="polished_granite", display="Polished Granite", textures=cube_textures("stone_granite_smooth"), slab_key="polished_granite_slab", stairs_key="polished_granite_stairs"),
     StoneType(key="polished_diorite", display="Polished Diorite", textures=cube_textures("stone_diorite_smooth"), slab_key="polished_diorite_slab", stairs_key="polished_diorite_stairs"),
     StoneType(key="polished_andesite", display="Polished Andesite", textures=cube_textures("stone_andesite_smooth"), slab_key="polished_andesite_slab", stairs_key="polished_andesite_stairs"),
     StoneType(key="polished_blackstone", display="Polished Blackstone", textures=cube_textures("polished_blackstone"), slab_key="polished_blackstone_slab", stairs_key="polished_blackstone_stairs", wall_key="polished_blackstone_wall"),
-    StoneType(key="polished_deepslate", display="Polished Deepslate", textures=cube_textures("polished_deepslate"), slab_key="polished_deepslate_slab", stairs_key="polished_deepslate_stairs", wall_key="polished_deepslate_wall"),
-    StoneType(key="polished_tuff", display="Polished Tuff", textures=cube_textures("polished_tuff"), slab_key="polished_tuff_slab", stairs_key="polished_tuff_stairs", wall_key="polished_tuff_wall"),
-    StoneType(key="polished_basalt", display="Polished Basalt", textures=column_textures("polished_basalt_side", "polished_basalt_top")),
-    StoneType(key="smooth_basalt", display="Smooth Basalt", textures=cube_textures("smooth_basalt")),
+    StoneType(key="polished_deepslate", display="Polished Deepslate", textures=cube_textures("polished_deepslate"), slab_key="polished_deepslate_slab", stairs_key="polished_deepslate_stairs", wall_key="polished_deepslate_wall", sound_group=SOUND_GROUP_DEEPSLATE),
+    StoneType(key="polished_tuff", display="Polished Tuff", textures=cube_textures("polished_tuff"), slab_key="polished_tuff_slab", stairs_key="polished_tuff_stairs", wall_key="polished_tuff_wall", sound_group=SOUND_GROUP_TUFF),
+    StoneType(key="polished_basalt", display="Polished Basalt", textures=column_textures("polished_basalt_side", "polished_basalt_top"), sound_group=SOUND_GROUP_BASALT),
+    StoneType(key="smooth_basalt", display="Smooth Basalt", textures=cube_textures("smooth_basalt"), sound_group=SOUND_GROUP_BASALT),
 )
