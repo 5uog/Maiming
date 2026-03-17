@@ -26,9 +26,9 @@ class CatalogVariantRecipe:
     is_solid: bool = True
 
 
-def register_catalog_variants(reg: BlockRegistry, entry: object, *, textures: BlockTextures, tags: tuple[str, ...], recipes: tuple[CatalogVariantRecipe, ...]) -> None:
+def register_catalog_variants(reg: BlockRegistry, entry: object, *, textures: BlockTextures, tags: tuple[str, ...], recipes: tuple[CatalogVariantRecipe, ...], sound_group="block") -> None:
     for recipe in recipes:
         variant_id = recipe.variant_id(entry)
         if variant_id is None:
             continue
-        register_block_variant(reg, block_id=str(variant_id), display_name=str(recipe.display_name(entry)), textures=textures, kind=str(_resolve(recipe.kind, entry)), family=str(recipe.family), is_full_cube=bool(_resolve(recipe.is_full_cube, entry)), is_solid=bool(recipe.is_solid), tags=tuple(str(tag) for tag in tags))
+        register_block_variant(reg, block_id=str(variant_id), display_name=str(recipe.display_name(entry)), textures=textures, kind=str(_resolve(recipe.kind, entry)), family=str(recipe.family), is_full_cube=bool(_resolve(recipe.is_full_cube, entry)), is_solid=bool(recipe.is_solid), tags=tuple(str(tag) for tag in tags), sound_group=str(_resolve(sound_group, entry)))

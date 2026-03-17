@@ -55,6 +55,7 @@ def sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_hide_hand, bool(values["hide_hand"]))
     _sync_toggle(overlay._tg_view_bobbing, bool(values["view_bobbing_enabled"]))
     _sync_toggle(overlay._tg_camera_shake, bool(values["camera_shake_enabled"]))
+    _sync_toggle(overlay._tg_animated_textures, bool(values["animated_textures_enabled"]))
 
     bob_percent = int(round(max(0.0, min(1.0, float(values["view_bobbing_strength"]))) * 100.0))
     _block_signals_set_value(overlay._sld_view_bobbing_strength, bob_percent)
@@ -100,3 +101,21 @@ def sync_overlay_values(overlay, **values) -> None:
     overlay._ctl_fly_speed.set_value(float(values["fly_speed"]))
     overlay._ctl_fly_ascend_speed.set_value(float(values["fly_ascend_speed"]))
     overlay._ctl_fly_descend_speed.set_value(float(values["fly_descend_speed"]))
+
+    master_percent = int(round(max(0.0, min(1.0, float(values["audio_master"]))) * 100.0))
+    ambient_percent = int(round(max(0.0, min(1.0, float(values["audio_ambient"]))) * 100.0))
+    block_percent = int(round(max(0.0, min(1.0, float(values["audio_block"]))) * 100.0))
+    player_percent = int(round(max(0.0, min(1.0, float(values["audio_player"]))) * 100.0))
+
+    _block_signals_set_value(overlay._sld_master_volume, master_percent)
+    _block_signals_set_value(overlay._sld_ambient_volume, ambient_percent)
+    _block_signals_set_value(overlay._sld_block_volume, block_percent)
+    _block_signals_set_value(overlay._sld_player_volume, player_percent)
+    overlay._lbl_master_volume.setText(f"Master volume: {master_percent}%")
+    overlay._lbl_ambient_volume.setText(f"Ambient volume: {ambient_percent}%")
+    overlay._lbl_block_volume.setText(f"Block volume: {block_percent}%")
+    overlay._lbl_player_volume.setText(f"Player volume: {player_percent}%")
+
+    keybinds = values["keybinds"].normalized()
+    for action, row in overlay._keybind_rows.items():
+        row.sync_binding_text(keybinds.binding_for_action(str(action)))

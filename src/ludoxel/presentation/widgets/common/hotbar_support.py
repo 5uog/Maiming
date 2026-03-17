@@ -4,8 +4,9 @@
 # FILE: src/ludoxel/presentation/widgets/common/hotbar_support.py
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
+
+from ....application.session.keybinds import KeybindSettings, action_for_key, display_text_for_binding, hotbar_action_for_index, hotbar_index_for_action
 
 
 def refresh_widget_style(widget: QWidget) -> None:
@@ -14,23 +15,15 @@ def refresh_widget_style(widget: QWidget) -> None:
     widget.update()
 
 
-def hotbar_index_from_key(key: int) -> int | None:
-    if key == int(Qt.Key.Key_1):
-        return 0
-    if key == int(Qt.Key.Key_2):
-        return 1
-    if key == int(Qt.Key.Key_3):
-        return 2
-    if key == int(Qt.Key.Key_4):
-        return 3
-    if key == int(Qt.Key.Key_5):
-        return 4
-    if key == int(Qt.Key.Key_6):
-        return 5
-    if key == int(Qt.Key.Key_7):
-        return 6
-    if key == int(Qt.Key.Key_8):
-        return 7
-    if key == int(Qt.Key.Key_9):
-        return 8
-    return None
+def hotbar_index_from_key(key: int, keybinds: KeybindSettings | None=None) -> int | None:
+    bindings = keybinds.normalized() if isinstance(keybinds, KeybindSettings) else KeybindSettings()
+    action = action_for_key(int(key), bindings)
+    return hotbar_index_for_action(action)
+
+
+def hotbar_binding_text(index: int, keybinds: KeybindSettings | None=None) -> str:
+    bindings = keybinds.normalized() if isinstance(keybinds, KeybindSettings) else KeybindSettings()
+    action = hotbar_action_for_index(int(index))
+    if action is None:
+        return ""
+    return display_text_for_binding(bindings.binding_for_action(str(action)))

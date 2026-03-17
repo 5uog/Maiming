@@ -21,6 +21,18 @@ from ...domain.systems.build_system import BlockPick, pick_block
 
 from .placement_policy import PlacementPolicy
 
+INTERACTION_ACTION_BREAK = "break"
+INTERACTION_ACTION_PLACE = "place"
+INTERACTION_ACTION_INTERACT = "interact"
+
+
+@dataclass(frozen=True)
+class InteractionOutcome:
+    success: bool
+    action: str | None = None
+    target_block_state: str | None = None
+    target_position: tuple[int, int, int] | None = None
+
 
 @dataclass
 class InteractionService:
@@ -41,26 +53,29 @@ class InteractionService:
         direction = self.player.view_forward() if direction is None else direction
         return pick_block(self.world, origin=eye, direction=direction, reach=float(reach), block_registry=self.block_registry)
 
-    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> bool:
+    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> InteractionOutcome:
         hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
-            return False
+            return InteractionOutcome(success=False)
 
         hx, hy, hz = hit.hit
+        previous_state = self.world.blocks.get((int(hx), int(hy), int(hz)))
+        if previous_state is None:
+            return InteractionOutcome(success=False)
         self.world.remove_block(int(hx), int(hy), int(hz))
         refresh_structural_neighbors(self.world, int(hx), int(hy), int(hz), block_registry=self.block_registry)
-        return True
+        return InteractionOutcome(success=True, action=INTERACTION_ACTION_BREAK, target_block_state=str(previous_state), target_position=(int(hx), int(hy), int(hz)))
 
-    def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> bool:
+    def _toggle_fence_gate_if_hit(self, hit_cell: tuple[int, int, int]) -> InteractionOutcome:
         k = (int(hit_cell[0]), int(hit_cell[1]), int(hit_cell[2]))
         st = self.world.blocks.get(k)
         if st is None:
-            return False
+            return InteractionOutcome(success=False)
 
         base, props = parse_state(st)
         d = self.block_registry.get(str(base))
         if d is None or (not is_fence_gate(d)):
-            return False
+            return InteractionOutcome(success=False)
 
         is_open = prop_as_bool(props, "open", False)
         facing = normalize_cardinal(str(props.get("facing", "south")), default="south")
@@ -92,17 +107,17 @@ class InteractionService:
 
         self.world.set_block(int(k[0]), int(k[1]), int(k[2]), str(nxt))
         refresh_structural_neighbors(self.world, int(k[0]), int(k[1]), int(k[2]), block_registry=self.block_registry)
-        return True
+        return InteractionOutcome(success=True, action=INTERACTION_ACTION_INTERACT, target_block_state=str(nxt), target_position=(int(k[0]), int(k[1]), int(k[2])))
 
-    def _apply_place_state(self, *, cell: tuple[int, int, int], place_state: str) -> bool:
+    def _apply_place_state(self, *, cell: tuple[int, int, int], place_state: str) -> InteractionOutcome:
         px, py, pz = (int(cell[0]), int(cell[1]), int(cell[2]))
 
         if self.placement_policy.placement_intersects_player(player=self.player, world=self.world, px=int(px), py=int(py), pz=int(pz), place_state=str(place_state)):
-            return False
+            return InteractionOutcome(success=False)
 
         self.world.set_block(int(px), int(py), int(pz), str(place_state))
         refresh_structural_neighbors(self.world, int(px), int(py), int(pz), block_registry=self.block_registry)
-        return True
+        return InteractionOutcome(success=True, action=INTERACTION_ACTION_PLACE, target_block_state=str(place_state), target_position=(int(px), int(py), int(pz)))
 
     def _has_selected_placeable_block(self, block_id: str) -> bool:
         bid = str(block_id).strip()
@@ -110,10 +125,10 @@ class InteractionService:
             return False
         return self.block_registry.get(str(bid)) is not None
 
-    def _place_from_hit(self, *, hit: BlockPick, block_id: str | None) -> bool:
+    def _place_from_hit(self, *, hit: BlockPick, block_id: str | None) -> InteractionOutcome:
         bid = "" if block_id is None else str(block_id).strip()
         if not self._has_selected_placeable_block(str(bid)):
-            return False
+            return InteractionOutcome(success=False)
 
         hx, hy, hz = hit.hit
         hit_cell = (int(hx), int(hy), int(hz))
@@ -125,7 +140,7 @@ class InteractionService:
                 return self._apply_place_state(cell=hit_cell, place_state=str(merge_hit_state))
 
         if hit.place is None:
-            return False
+            return InteractionOutcome(success=False)
 
         px, py, pz = hit.place
         place_cell = (int(px), int(py), int(pz))
@@ -134,25 +149,26 @@ class InteractionService:
         if existing_place_state is not None:
             merge_place_state = self.placement_policy.resolve_slab_merge_state(existing_state=str(existing_place_state), block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point)
             if merge_place_state is None:
-                return False
+                return InteractionOutcome(success=False)
 
             return self._apply_place_state(cell=place_cell, place_state=str(merge_place_state))
 
         place_state = self.placement_policy.resolve_place_state(player=self.player, block_id=str(bid), hit_face=int(hit.face), hit_point=hit.hit_point)
         if place_state is None:
-            return False
+            return InteractionOutcome(success=False)
 
         return self._apply_place_state(cell=place_cell, place_state=str(place_state))
 
-    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None) -> bool:
+    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None) -> InteractionOutcome:
         hit = self._pick_target(reach=float(reach), origin=origin, direction=direction)
         if hit is None:
-            return False
+            return InteractionOutcome(success=False)
 
         if bool(crouching):
             return self._place_from_hit(hit=hit, block_id=block_id)
 
-        if self._toggle_fence_gate_if_hit(hit.hit):
-            return True
+        interact_outcome = self._toggle_fence_gate_if_hit(hit.hit)
+        if bool(interact_outcome.success):
+            return interact_outcome
 
         return self._place_from_hit(hit=hit, block_id=block_id)

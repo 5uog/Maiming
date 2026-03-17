@@ -5,8 +5,10 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QPoint, QRect, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent, QPen, QWheelEvent
-from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QSizePolicy, QSlider, QWidget
+from PyQt6.QtGui import QColor, QFocusEvent, QMouseEvent, QPainter, QPaintEvent, QPen, QWheelEvent
+from PyQt6.QtWidgets import QAbstractButton, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QSlider, QWidget
+
+from ....application.session.keybinds import display_text_for_binding, normalize_binding_text, normalize_key_code
 
 
 def _draw_bedrock_frame(painter: QPainter, rect: QRect, *, fill: QColor, top_left: QColor, bottom_right: QColor, outline: QColor) -> None:
@@ -169,3 +171,93 @@ class BedrockToggleRow(QWidget):
             event.accept()
             return
         super().keyPressEvent(event)
+
+
+class KeybindCaptureButton(QPushButton):
+    binding_captured = pyqtSignal(str)
+    capture_canceled = pyqtSignal()
+
+    def __init__(self, parent: QWidget | None=None) -> None:
+        super().__init__(parent)
+        self._capturing = False
+        self._binding_text = ""
+        self.setObjectName("menuBtn")
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setText("Unbound")
+        self.clicked.connect(self.begin_capture)
+
+    def binding_text(self) -> str:
+        return str(self._binding_text)
+
+    def begin_capture(self) -> None:
+        self._capturing = True
+        self.setText("Press key...")
+        self.setFocus(Qt.FocusReason.MouseFocusReason)
+
+    def sync_binding_text(self, binding_text: str | None) -> None:
+        self._binding_text = normalize_binding_text(binding_text)
+        if not bool(self._capturing):
+            self.setText(display_text_for_binding(self._binding_text))
+
+    def keyPressEvent(self, event) -> None:
+        if not bool(self._capturing):
+            super().keyPressEvent(event)
+            return
+        if bool(event.isAutoRepeat()):
+            event.accept()
+            return
+        if int(event.key()) == int(Qt.Key.Key_Escape):
+            self._capturing = False
+            self.setText(display_text_for_binding(self._binding_text))
+            self.capture_canceled.emit()
+            event.accept()
+            return
+        binding_text = normalize_key_code(int(event.key()))
+        if binding_text:
+            self._capturing = False
+            self._binding_text = str(binding_text)
+            self.setText(display_text_for_binding(self._binding_text))
+            self.binding_captured.emit(str(binding_text))
+            event.accept()
+            return
+        event.accept()
+
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        if bool(self._capturing):
+            self._capturing = False
+            self.setText(display_text_for_binding(self._binding_text))
+            self.capture_canceled.emit()
+        super().focusOutEvent(event)
+
+
+class KeybindRow(QWidget):
+    binding_changed = pyqtSignal(str)
+    clear_requested = pyqtSignal()
+
+    def __init__(self, text: str, parent: QWidget | None=None) -> None:
+        super().__init__(parent)
+        self.setObjectName("bedrockToggleRow")
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        self._label = QLabel(str(text), self)
+        self._label.setObjectName("bedrockToggleLabel")
+        self._label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        layout.addWidget(self._label, stretch=1)
+
+        self._button = KeybindCaptureButton(self)
+        self._button.setMinimumWidth(132)
+        self._button.binding_captured.connect(self.binding_changed.emit)
+        layout.addWidget(self._button, stretch=0)
+
+        self._clear_button = QPushButton("Clear", self)
+        self._clear_button.setObjectName("menuBtn")
+        self._clear_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._clear_button.clicked.connect(self.clear_requested.emit)
+        layout.addWidget(self._clear_button, stretch=0)
+
+    def sync_binding_text(self, binding_text: str | None) -> None:
+        self._button.sync_binding_text(binding_text)

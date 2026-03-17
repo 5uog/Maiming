@@ -7,10 +7,11 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
+from ....application.session.keybinds import action_display_name
 from ...config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
-from ..common.settings_controls import BedrockToggleRow, WheelPassthroughSlider
-from .page_builders import build_controls_tab, build_game_tab, build_video_tab
+from ..common.settings_controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
+from .page_builders import build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
 from .value_sync import sync_overlay_values
 
 
@@ -27,6 +28,7 @@ class SettingsOverlay(QWidget):
     camera_shake_changed = pyqtSignal(bool)
     view_bobbing_strength_changed = pyqtSignal(float)
     camera_shake_strength_changed = pyqtSignal(float)
+    animated_textures_changed = pyqtSignal(bool)
     outline_selection_changed = pyqtSignal(bool)
     cloud_wireframe_changed = pyqtSignal(bool)
     clouds_enabled_changed = pyqtSignal(bool)
@@ -50,10 +52,17 @@ class SettingsOverlay(QWidget):
     fly_descend_speed_changed = pyqtSignal(float)
     advanced_reset_requested = pyqtSignal()
     render_distance_changed = pyqtSignal(int)
+    keybind_changed = pyqtSignal(str, str)
+    keybind_reset_requested = pyqtSignal()
+    master_volume_changed = pyqtSignal(float)
+    ambient_volume_changed = pyqtSignal(float)
+    block_volume_changed = pyqtSignal(float)
+    player_volume_changed = pyqtSignal(float)
 
     def __init__(self, parent: QWidget | None=None, params: PauseOverlayParams=DEFAULT_PAUSE_OVERLAY_PARAMS) -> None:
         super().__init__(parent)
         self._params = params
+        self._keybind_rows: dict[str, KeybindRow] = {}
         self.setVisible(False)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -85,7 +94,7 @@ class SettingsOverlay(QWidget):
         title_row.addWidget(btn_back)
         panel_layout.addLayout(title_row)
 
-        subtitle = QLabel("Video, Controls, and Game Player settings are available in separate tabs.", panel)
+        subtitle = QLabel("Video, Controls, Audio, and Game Player settings are available in separate tabs.", panel)
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         panel_layout.addWidget(subtitle)
@@ -94,9 +103,11 @@ class SettingsOverlay(QWidget):
         tab_row.setSpacing(8)
         self._tab_video = self._make_tab_button("Video", 0, panel)
         self._tab_controls = self._make_tab_button("Controls", 1, panel)
-        self._tab_game = self._make_tab_button("Game Player", 2, panel)
+        self._tab_audio = self._make_tab_button("Audio", 2, panel)
+        self._tab_game = self._make_tab_button("Game Player", 3, panel)
         tab_row.addWidget(self._tab_video)
         tab_row.addWidget(self._tab_controls)
+        tab_row.addWidget(self._tab_audio)
         tab_row.addWidget(self._tab_game)
         tab_row.addStretch(1)
         panel_layout.addLayout(tab_row)
@@ -106,6 +117,7 @@ class SettingsOverlay(QWidget):
 
         build_video_tab(self)
         build_controls_tab(self)
+        build_audio_tab(self)
         build_game_tab(self)
         self._set_tab(0)
 
@@ -164,6 +176,14 @@ class SettingsOverlay(QWidget):
         layout.addWidget(row)
         return row
 
+    def _add_keybind_row(self, layout: QVBoxLayout, parent: QWidget, action: str) -> KeybindRow:
+        row = KeybindRow(action_display_name(str(action)), parent)
+        row.binding_changed.connect(lambda binding_text, action_id=str(action): self.keybind_changed.emit(str(action_id), str(binding_text)))
+        row.clear_requested.connect(lambda action_id=str(action): self.keybind_changed.emit(str(action_id), ""))
+        layout.addWidget(row)
+        self._keybind_rows[str(action)] = row
+        return row
+
     def _update_mode_toggle_text(self, creative_mode: bool) -> None:
         self._btn_mode_toggle.setText("Game Mode: Creative" if bool(creative_mode) else "Game Mode: Survival")
 
@@ -172,11 +192,12 @@ class SettingsOverlay(QWidget):
         self.creative_mode_changed.emit(bool(checked))
 
     def _set_tab(self, index: int) -> None:
-        selected_index = int(max(0, min(2, int(index))))
+        selected_index = int(max(0, min(3, int(index))))
         self._stack.setCurrentIndex(selected_index)
         self._tab_video.setChecked(selected_index == 0)
         self._tab_controls.setChecked(selected_index == 1)
-        self._tab_game.setChecked(selected_index == 2)
+        self._tab_audio.setChecked(selected_index == 2)
+        self._tab_game.setChecked(selected_index == 3)
 
     def sync_values(self, **kwargs) -> None:
         sync_overlay_values(self, **kwargs)
@@ -235,6 +256,26 @@ class SettingsOverlay(QWidget):
 
     def _on_cloud_flow_direction(self, _index: int) -> None:
         self.cloud_flow_direction_changed.emit(str(self._current_cloud_flow_value()))
+
+    def _on_master_volume(self, value: int) -> None:
+        percent = int(max(0, min(100, int(value))))
+        self._lbl_master_volume.setText(f"Master volume: {percent}%")
+        self.master_volume_changed.emit(float(percent) / 100.0)
+
+    def _on_ambient_volume(self, value: int) -> None:
+        percent = int(max(0, min(100, int(value))))
+        self._lbl_ambient_volume.setText(f"Ambient volume: {percent}%")
+        self.ambient_volume_changed.emit(float(percent) / 100.0)
+
+    def _on_block_volume(self, value: int) -> None:
+        percent = int(max(0, min(100, int(value))))
+        self._lbl_block_volume.setText(f"Block volume: {percent}%")
+        self.block_volume_changed.emit(float(percent) / 100.0)
+
+    def _on_player_volume(self, value: int) -> None:
+        percent = int(max(0, min(100, int(value))))
+        self._lbl_player_volume.setText(f"Player volume: {percent}%")
+        self.player_volume_changed.emit(float(percent) / 100.0)
 
     def keyPressEvent(self, e) -> None:
         if int(e.key()) == int(Qt.Key.Key_Escape):

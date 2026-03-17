@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QTimer
 
 from ....domain.inventory.special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
+from ....domain.othello.board import OTHELLO_BOARD_SURFACE_Y, raycast_board_square, square_center
 from ....domain.othello.rules import counts_for_board
 from ....domain.othello.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_WHITE
-from ....domain.othello.board import raycast_board_square
+from ....infrastructure.audio import PLAYER_EVENT_OTHELLO_FLIP, PLAYER_EVENT_OTHELLO_PLACE
 from ....infrastructure.rendering.opengl.facade.othello_render_state import OthelloRenderState
 from . import viewport_settings_controller
 
@@ -143,6 +144,15 @@ def sync_settings_values(viewport: "GLViewportWidget") -> None:
     viewport._othello_settings.sync_values(viewport._state.othello_settings)
 
 
+def _play_move_audio(viewport: "GLViewportWidget", state) -> None:
+    if state.last_move_index is not None:
+        place_x, place_z = square_center(int(state.last_move_index))
+        viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_PLACE, position=(float(place_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(place_z)))
+    for animation in tuple(state.animations):
+        flip_x, flip_z = square_center(int(animation.square_index))
+        viewport._audio.play_othello_event(event_name=PLAYER_EVENT_OTHELLO_FLIP, position=(float(flip_x), float(OTHELLO_BOARD_SURFACE_Y) + 0.15, float(flip_z)))
+
+
 def apply_settings(viewport: "GLViewportWidget", settings) -> None:
     viewport._state.othello_settings = settings.normalized()
     viewport._state.normalize()
@@ -207,7 +217,8 @@ def apply_ai_result(viewport: "GLViewportWidget", generation: int, move_index: i
     if int(generation) != int(state.match_generation) or state.status != OTHELLO_GAME_STATE_AI_TURN:
         return
     viewport._othello_ai_request_armed = False
-    viewport._othello_match.submit_ai_move(move_index)
+    if viewport._othello_match.submit_ai_move(move_index):
+        _play_move_audio(viewport, viewport._othello_match.game_state())
     sync_hud_text(viewport)
 
 
@@ -223,6 +234,7 @@ def handle_left_click(viewport: "GLViewportWidget", render_eye: "Vec3", render_d
     viewport._first_person_motion.trigger_left_swing()
     square_index = raycast_board_square(render_eye, render_direction)
     if square_index is not None and viewport._othello_match.submit_player_move(int(square_index)):
+        _play_move_audio(viewport, viewport._othello_match.game_state())
         sync_hud_text(viewport)
         maybe_request_ai(viewport)
 

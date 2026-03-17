@@ -49,6 +49,10 @@ class GLRenderer:
         self._state.cloud_enabled = bool(on)
         self._backend.apply_runtime_state()
 
+    def set_animated_textures_enabled(self, on: bool) -> None:
+        self._state.animated_textures_enabled = bool(on)
+        self._backend.apply_runtime_state()
+
     def set_cloud_density(self, density: int) -> None:
         self._state.set_cloud_density(int(density))
         self._backend.apply_runtime_state()

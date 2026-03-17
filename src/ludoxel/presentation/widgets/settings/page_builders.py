@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
+from ....application.session.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
 from ....domain.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from .cloud_flow_options import CLOUD_FLOW_OPTIONS
 from .advanced_scalar_control import AdvancedScalarControl
@@ -59,6 +60,7 @@ def build_video_tab(overlay) -> None:
     rd_row.addWidget(overlay._sld_rd)
     layout.addLayout(rd_row)
 
+    overlay._tg_animated_textures = overlay._add_toggle(layout, host, "Animated Textures", overlay.animated_textures_changed.emit)
     overlay._tg_outline_sel = overlay._add_toggle(layout, host, "Outline selection", overlay.outline_selection_changed.emit)
     overlay._tg_world_wire = overlay._add_toggle(layout, host, "World wireflame", overlay.world_wireframe_changed.emit)
     overlay._tg_shadow_enabled = overlay._add_toggle(layout, host, "Shadow map", overlay.shadow_enabled_changed.emit)
@@ -146,6 +148,65 @@ def build_controls_tab(overlay) -> None:
     invert_row.addWidget(overlay._cb_inv_y)
     invert_row.addStretch(1)
     layout.addLayout(invert_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Movement Keys"))
+    for action in CONTROL_SECTION_MOVEMENT:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Gameplay Keys"))
+    for action in CONTROL_SECTION_GAMEPLAY:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Hotbar Keys"))
+    for action in HOTBAR_ACTIONS:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    row_reset = QHBoxLayout()
+    row_reset.addStretch(1)
+    btn_reset_bindings = QPushButton("Reset Keybinds", host)
+    btn_reset_bindings.setObjectName("menuBtn")
+    btn_reset_bindings.clicked.connect(overlay.keybind_reset_requested.emit)
+    row_reset.addWidget(btn_reset_bindings)
+    layout.addLayout(row_reset)
+
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
+
+
+def build_audio_tab(overlay) -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+    layout.addWidget(overlay._section(host, "Mixer"))
+
+    overlay._lbl_master_volume = QLabel("Master volume: 100%", host)
+    overlay._lbl_master_volume.setObjectName("valueLabel")
+    overlay._sld_master_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)
+    layout.addWidget(overlay._lbl_master_volume)
+    layout.addWidget(overlay._sld_master_volume)
+
+    overlay._lbl_ambient_volume = QLabel("Ambient volume: 100%", host)
+    overlay._lbl_ambient_volume.setObjectName("valueLabel")
+    overlay._sld_ambient_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_ambient_volume.valueChanged.connect(overlay._on_ambient_volume)
+    layout.addWidget(overlay._lbl_ambient_volume)
+    layout.addWidget(overlay._sld_ambient_volume)
+
+    overlay._lbl_block_volume = QLabel("Block volume: 100%", host)
+    overlay._lbl_block_volume.setObjectName("valueLabel")
+    overlay._sld_block_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_block_volume.valueChanged.connect(overlay._on_block_volume)
+    layout.addWidget(overlay._lbl_block_volume)
+    layout.addWidget(overlay._sld_block_volume)
+
+    overlay._lbl_player_volume = QLabel("Player volume: 100%", host)
+    overlay._lbl_player_volume.setObjectName("valueLabel")
+    overlay._sld_player_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_player_volume.valueChanged.connect(overlay._on_player_volume)
+    layout.addWidget(overlay._lbl_player_volume)
+    layout.addWidget(overlay._sld_player_volume)
 
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)

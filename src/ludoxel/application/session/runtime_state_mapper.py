@@ -4,6 +4,8 @@
 # FILE: src/ludoxel/application/session/runtime_state_mapper.py
 from __future__ import annotations
 
+from .audio_preferences import AudioPreferences
+from .keybinds import KeybindSettings
 from ...domain.play_space import normalize_play_space_id
 from ...infrastructure.persistence.app_state_store import AppState, PersistedInventory, PersistedSettings
 from .runtime_preferences import RuntimePreferences, coerce_runtime_preferences
@@ -25,6 +27,7 @@ def apply_runtime_to_renderer(runtime: RuntimePreferences, renderer) -> None:
     renderer.set_cloud_density(int(runtime.cloud_density))
     renderer.set_cloud_seed(int(runtime.cloud_seed))
     renderer.set_cloud_flow_direction(str(runtime.cloud_flow_direction))
+    renderer.set_animated_textures_enabled(bool(runtime.animated_textures_enabled))
     renderer.set_shadow_enabled(bool(runtime.shadow_enabled))
     renderer.set_world_wireframe(bool(runtime.world_wire))
     renderer.set_sun_angles(float(runtime.sun_az_deg), float(runtime.sun_el_deg))
@@ -76,6 +79,7 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
         camera_shake_enabled=bool(settings.camera_shake_enabled),
         view_bobbing_strength=float(settings.view_bobbing_strength),
         camera_shake_strength=float(settings.camera_shake_strength),
+        animated_textures_enabled=bool(settings.animated_textures_enabled),
         hud_visible=bool(settings.hud_visible),
         render_distance_chunks=int(settings.render_distance_chunks),
         creative_hotbar_slots=list(inventory.creative_hotbar_slots),
@@ -85,6 +89,8 @@ def runtime_preferences_from_app_state(state: AppState | None, *, runtime: Runti
         othello_hotbar_slots=list(inventory.othello_hotbar_slots),
         othello_selected_hotbar_index=int(inventory.othello_selected_hotbar_index),
         othello_settings=state.othello_settings,
+        keybinds=settings.keybinds if isinstance(settings.keybinds, KeybindSettings) else KeybindSettings.from_dict({}),
+        audio=settings.audio if isinstance(settings.audio, AudioPreferences) else AudioPreferences.from_dict({}),
     )
     out.normalize()
     return out
@@ -118,6 +124,7 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
         camera_shake_enabled=bool(runtime.camera_shake_enabled),
         view_bobbing_strength=float(runtime.view_bobbing_strength),
         camera_shake_strength=float(runtime.camera_shake_strength),
+        animated_textures_enabled=bool(runtime.animated_textures_enabled),
         gravity=float(movement.gravity),
         walk_speed=float(movement.walk_speed),
         sprint_speed=float(movement.sprint_speed),
@@ -128,6 +135,8 @@ def persisted_settings_from_runtime(runtime: RuntimePreferences, session_setting
         fly_descend_speed=float(movement.fly_descend_speed),
         render_distance_chunks=int(runtime.render_distance_chunks),
         hud_visible=bool(runtime.hud_visible),
+        keybinds=runtime.keybinds.normalized(),
+        audio=runtime.audio.normalized(),
     )
 
 

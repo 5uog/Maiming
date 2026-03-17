@@ -14,7 +14,7 @@ from ...domain.world.world_state import WorldState
 from ...domain.world.world_gen import generate_test_map
 from ...domain.entities.player_entity import PlayerEntity
 from ...domain.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
-from ...domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block
+from ...domain.systems.collision_system import integrate_with_collisions, can_auto_jump_one_block, support_block_beneath
 
 from ...domain.blocks.block_registry import BlockRegistry
 from ...domain.blocks.default_registry import create_default_registry
@@ -26,6 +26,16 @@ from ..services.interaction_service import InteractionService
 _FLIGHT_TOGGLE_WINDOW_S = 0.25
 _PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED = 8.0
 _PLAYER_WALK_MAX_SWING_SCALE = 1.35
+_PLAYER_FOOTSTEP_MIN_SPEED = 0.15
+
+
+@dataclass(frozen=True)
+class SessionStepResult:
+    jump_started: bool
+    landed: bool
+    footstep_triggered: bool
+    support_block_state: str | None
+    support_position: tuple[int, int, int] | None
 
 
 @dataclass
@@ -39,6 +49,7 @@ class SessionManager:
     _sim_time_s: float = field(default=0.0, init=False, repr=False)
     _last_jump_press_s: float | None = field(default=None, init=False, repr=False)
     _player_walk_phase_rad: float = field(default=0.0, init=False, repr=False)
+    _player_walk_phase_total_rad: float = field(default=0.0, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.interaction = InteractionService.create(world=self.world, player=self.player, block_registry=self.block_registry)
@@ -67,6 +78,7 @@ class SessionManager:
         p.auto_jump_cooldown_s = 0.0
         self._last_jump_press_s = None
         self._player_walk_phase_rad = 0.0
+        self._player_walk_phase_total_rad = 0.0
 
     def _update_crouch_eye(self, dt: float, crouch: bool) -> None:
         p = self.player
@@ -127,17 +139,29 @@ class SessionManager:
 
         self.player.velocity = Vec3(float(self.player.velocity.x), min(0.0, float(self.player.velocity.y)), float(self.player.velocity.z))
 
-    def _update_player_walk_phase(self, dt: float) -> None:
+    def _update_player_walk_phase(self, dt: float) -> bool:
         p = self.player
         speed = math.hypot(float(p.velocity.x), float(p.velocity.z))
         if speed <= 1e-6:
-            return
+            return False
 
         base = max(1e-6, float(self.settings.movement.walk_speed))
         rate = float(_PLAYER_WALK_PHASE_RATE_AT_WALK_SPEED) * (float(speed) / float(base))
-        self._player_walk_phase_rad = float((float(self._player_walk_phase_rad) + rate * float(dt)) % (2.0 * math.pi))
+        prev_total = float(self._player_walk_phase_total_rad)
+        self._player_walk_phase_total_rad = float(prev_total + rate * float(dt))
+        self._player_walk_phase_rad = float(self._player_walk_phase_total_rad % (2.0 * math.pi))
 
-    def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> bool:
+        if bool(p.flying) or (not bool(p.on_ground)) or speed < float(_PLAYER_FOOTSTEP_MIN_SPEED):
+            return False
+        return int(math.floor(prev_total / math.pi)) != int(math.floor(float(self._player_walk_phase_total_rad) / math.pi))
+
+    def _support_contact(self) -> tuple[str | None, tuple[int, int, int] | None]:
+        contact = support_block_beneath(self.player, self.world, block_registry=self.block_registry, params=self.settings.collision)
+        if contact is None:
+            return (None, None)
+        return (str(contact.block_state), tuple(int(v) for v in contact.cell))
+
+    def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> SessionStepResult:
         self._sim_time_s += float(dt)
 
         prev_on_ground = bool(self.player.on_ground)
@@ -163,7 +187,8 @@ class SessionManager:
             self._update_crouch_eye(float(dt), False)
             self._update_step_eye(float(dt))
             self._update_player_walk_phase(float(dt))
-            return False
+            support_state, support_position = self._support_contact()
+            return SessionStepResult(jump_started=False, landed=False, footstep_triggered=False, support_block_state=support_state, support_position=support_position)
 
         jump_pulse = False
 
@@ -216,8 +241,9 @@ class SessionManager:
 
         self._update_crouch_eye(float(dt), bool(crouch))
         self._update_step_eye(float(dt))
-        self._update_player_walk_phase(float(dt))
-        return bool(jump_pulse)
+        footstep_triggered = self._update_player_walk_phase(float(dt))
+        support_state, support_position = self._support_contact()
+        return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position)
 
     def make_snapshot(self, *, enable_view_bobbing: bool=True, enable_camera_shake: bool=True, view_bobbing_strength: float=0.35, camera_shake_strength: float=0.20) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()
@@ -300,8 +326,8 @@ class SessionManager:
 
         return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=cam, player_model=player_model)
 
-    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None) -> bool:
+    def break_block(self, reach: float=5.0, *, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.break_block(reach=float(reach), origin=origin, direction=direction)
 
-    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None) -> bool:
+    def place_block(self, block_id: str | None, reach: float=5.0, *, crouching: bool=False, origin: Vec3 | None=None, direction: Vec3 | None=None):
         return self.interaction.place_block(block_id=block_id, reach=float(reach), crouching=bool(crouching), origin=origin, direction=direction)

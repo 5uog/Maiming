@@ -28,6 +28,13 @@ class CollisionReport:
 
 
 @dataclass(frozen=True)
+class SupportBlockContact:
+    cell: tuple[int, int, int]
+    block_state: str
+    support_y: float
+
+
+@dataclass(frozen=True)
 class _HorizontalMoveResult:
     pos: Vec3
     hit_ground: bool
@@ -86,6 +93,40 @@ def _has_support_at(player: PlayerEntity, world: WorldState, pos: Vec3, params: 
 
 def _ground_probe(player: PlayerEntity, world: WorldState, params: CollisionParams, *, block_registry: BlockRegistry) -> bool:
     return _has_support_at(player, world, player.position, params, block_registry=block_registry)
+
+
+def support_block_beneath(player: PlayerEntity, world: WorldState, *, block_registry: BlockRegistry, params: CollisionParams=DEFAULT_COLLISION_PARAMS) -> SupportBlockContact | None:
+    feet_y = float(player.position.y)
+    eps = float(max(float(params.eps), 1e-5))
+    probe_depth = float(max(float(params.ground_probe), eps * 2.0, 0.25))
+    aabb = player.aabb_at(player.position)
+    probe = AABB(mn=Vec3(aabb.mn.x, feet_y - probe_depth, aabb.mn.z), mx=Vec3(aabb.mx.x, feet_y + eps, aabb.mx.z))
+
+    best_contact: SupportBlockContact | None = None
+    best_support_y = float("-inf")
+
+    for bx, by, bz in _iter_nearby_blocks(world, probe, params):
+        block_state = world_state_at(world, int(bx), int(by), int(bz))
+        if block_state is None:
+            continue
+
+        defn = def_from_state(block_state, block_registry)
+        if defn is not None and (not bool(defn.is_solid)):
+            continue
+
+        for block_aabb in collision_aabbs_for_block(block_state, lambda x, y, z: world_state_at(world, x, y, z), block_registry.get, int(bx), int(by), int(bz)):
+            if float(block_aabb.mx.y) < float(feet_y - probe_depth) or float(block_aabb.mx.y) > float(feet_y + eps):
+                continue
+            if float(aabb.mx.x) <= float(block_aabb.mn.x) + eps or float(aabb.mn.x) >= float(block_aabb.mx.x) - eps:
+                continue
+            if float(aabb.mx.z) <= float(block_aabb.mn.z) + eps or float(aabb.mn.z) >= float(block_aabb.mx.z) - eps:
+                continue
+            support_y = float(block_aabb.mx.y)
+            if support_y > float(best_support_y):
+                best_support_y = float(support_y)
+                best_contact = SupportBlockContact(cell=(int(bx), int(by), int(bz)), block_state=str(block_state), support_y=float(support_y))
+
+    return best_contact
 
 
 def _backoff(delta: float, step: float) -> float:

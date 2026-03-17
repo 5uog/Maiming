@@ -31,27 +31,27 @@ _FENCE_GATE_RECIPE = CatalogVariantRecipe(variant_id=lambda wood: fence_gate_id(
 
 def register_planks(reg: BlockRegistry) -> None:
     for w in _all_plank_variants():
-        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_PLANK_TAGS, recipes=(_PLANK_RECIPE,))
+        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_PLANK_TAGS, recipes=(_PLANK_RECIPE,), sound_group=lambda wood: getattr(wood, "sound_group", "wood"))
 
 
 def register_slabs(reg: BlockRegistry) -> None:
     for w in _all_plank_variants():
-        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_SLAB_RECIPE,))
+        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_SLAB_RECIPE,), sound_group=lambda wood: getattr(wood, "sound_group", "wood"))
 
 
 def register_stairs(reg: BlockRegistry) -> None:
     for w in _all_plank_variants():
-        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_STAIR_RECIPE,))
+        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_STAIR_RECIPE,), sound_group=lambda wood: getattr(wood, "sound_group", "wood"))
 
 
 def register_fences(reg: BlockRegistry) -> None:
     for w in WOOD_TYPES:
-        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_FENCE_RECIPE,))
+        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_FENCE_RECIPE,), sound_group=lambda wood: getattr(wood, "sound_group", "wood"))
 
 
 def register_fence_gates(reg: BlockRegistry) -> None:
     for w in WOOD_TYPES:
-        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_FENCE_GATE_RECIPE,))
+        register_catalog_variants(reg, w, textures=_wood_textures(w), tags=_WOOD_TAGS, recipes=(_FENCE_GATE_RECIPE,), sound_group=lambda wood: getattr(wood, "sound_group", "wood"))
 
 
 def register_wood_blocks(reg: BlockRegistry) -> None:

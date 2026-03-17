@@ -17,6 +17,7 @@ from ....application.session.fixed_step_runner import FixedStepRunner
 from ....application.session.play_space_sessions import PlaySpaceSessions
 from ....core.math.vec3 import Vec3
 from ....core.math.view_angles import forward_from_yaw_pitch_deg
+from ....infrastructure.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
@@ -86,6 +87,24 @@ class GLViewportWidget(QOpenGLWidget):
         self._last_selection_pick_ms: float = 0.0
         self._shutdown_done = False
 
+        self._last_upload_eye: Vec3 | None = None
+        self._last_upload_world_revision: int = -1
+        self._last_upload_render_distance_chunks: int = -1
+        self._last_upload_session_token: int = -1
+        self._last_upload_time_s: float = 0.0
+        self._upload_interval_s: float = 1.0 / 20.0
+        self._upload_linear_threshold_sq: float = 1.0 * 1.0
+        self._force_upload_until_s: float = 0.0
+
+        self._last_selection_pose: tuple[float, float, float, float, float] | None = None
+        self._last_selection_space_id: str = ""
+        self._last_selection_world_revision: int = -1
+        self._last_selection_refresh_time_s: float = 0.0
+        self._selection_refresh_interval_s: float = 1.0 / 30.0
+        self._selection_linear_threshold_sq: float = 0.20 * 0.20
+        self._selection_angular_threshold_deg: float = 0.75
+        self._force_selection_until_s: float = 0.0
+
         self._overlay = PauseOverlay(self)
 
         self._settings = SettingsOverlay(self)
@@ -117,7 +136,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._render_timer = QTimer(self)
         self._render_timer.setTimerType(Qt.TimerType.PreciseTimer)
-        self._render_timer.setInterval(int(max(0, int(self._loop.render_timer_interval_ms))))
+        self._render_timer.setInterval(int(self._effective_render_timer_interval_ms()))
         self._render_timer.timeout.connect(self.update)
 
         self.setFormat(build_gl_surface_format())
@@ -127,8 +146,11 @@ class GLViewportWidget(QOpenGLWidget):
         self._othello_match.set_default_settings(self._state.othello_settings)
         self._othello_match.set_game_state(persisted_othello_state)
         self._overlay.set_current_space(self._state.current_space_id)
+        self._audio = AudioManager(project_root=self._project_root, block_registry=self._session.block_registry, parent=self)
 
         viewport_settings_controller.apply_runtime_to_renderer(self)
+        viewport_settings_controller.sync_input_bindings(self)
+        viewport_settings_controller.sync_audio_preferences(self)
         viewport_settings_controller.sync_hotbar_widgets(self)
         viewport_settings_controller.sync_first_person_target(self)
         viewport_settings_controller.sync_view_model_visibility(self)
@@ -169,6 +191,10 @@ class GLViewportWidget(QOpenGLWidget):
         except Exception:
             pass
         try:
+            self._audio.shutdown()
+        except Exception:
+            pass
+        try:
             if self.context() is not None:
                 self.makeCurrent()
                 try:
@@ -191,6 +217,12 @@ class GLViewportWidget(QOpenGLWidget):
             return 1
         return max(1, int(round(1000.0 / hz)))
 
+    def _effective_render_timer_interval_ms(self) -> int:
+        ms = int(self._loop.render_timer_interval_ms)
+        if ms > 0:
+            return ms
+        return 16
+
     def set_hud(self, hud) -> None:
         self._hud = hud
         self._hud.setParent(self)
@@ -199,6 +231,10 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _invalidate_selection_target(self) -> None:
         self._selection_state.invalidate()
+        self._last_selection_pose = None
+        self._last_selection_space_id = ""
+        self._last_selection_world_revision = -1
+        self._force_selection_until_s = time.perf_counter() + 0.12
 
     def fullscreen_enabled(self) -> bool:
         return bool(self._state.fullscreen)
@@ -242,6 +278,7 @@ class GLViewportWidget(QOpenGLWidget):
                 self._othello_hud.raise_()
             if self._hud is not None and bool(self._debug_hud_active()):
                 self._hud.raise_()
+        self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
 
     def _set_dead_overlay(self, on: bool) -> None:
         self._overlays.set_dead(bool(on))
@@ -264,6 +301,95 @@ class GLViewportWidget(QOpenGLWidget):
             return
         self._overlays.set_inventory_open(bool(on))
         self._sync_gameplay_hud_visibility()
+
+    @staticmethod
+    def _angle_delta_deg(left: float, right: float) -> float:
+        delta = (float(left) - float(right) + 180.0) % 360.0 - 180.0
+        return abs(float(delta))
+
+    def _arm_world_change_sync(self) -> None:
+        now = time.perf_counter()
+        self._force_upload_until_s = max(float(self._force_upload_until_s), now + 0.12)
+        self._force_selection_until_s = max(float(self._force_selection_until_s), now + 0.12)
+
+    def _upload_due(self, *, eye: Vec3) -> bool:
+        session_token = int(id(self._session))
+        world_revision = int(self._session.world.revision)
+        render_distance = int(self._state.render_distance_chunks)
+        now = time.perf_counter()
+
+        if world_revision != int(self._last_upload_world_revision):
+            self._arm_world_change_sync()
+            return True
+        if now < float(self._force_upload_until_s):
+            return True
+        if session_token != int(self._last_upload_session_token):
+            return True
+        if render_distance != int(self._last_upload_render_distance_chunks):
+            return True
+        if self._last_upload_eye is None:
+            return True
+
+        dx = float(eye.x) - float(self._last_upload_eye.x)
+        dy = float(eye.y) - float(self._last_upload_eye.y)
+        dz = float(eye.z) - float(self._last_upload_eye.z)
+        moved_sq = (dx * dx) + (dy * dy) + (dz * dz)
+
+        if moved_sq < float(self._upload_linear_threshold_sq):
+            return False
+
+        return (now - float(self._last_upload_time_s)) >= float(self._upload_interval_s)
+
+    def _mark_upload(self, *, eye: Vec3) -> None:
+        self._last_upload_eye = Vec3(float(eye.x), float(eye.y), float(eye.z))
+        self._last_upload_world_revision = int(self._session.world.revision)
+        self._last_upload_render_distance_chunks = int(self._state.render_distance_chunks)
+        self._last_upload_session_token = int(id(self._session))
+        self._last_upload_time_s = time.perf_counter()
+
+    def _selection_due(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> bool:
+        now = time.perf_counter()
+        current_space_id = str(self._state.current_space_id)
+        current_world_revision = int(self._session.world.revision)
+
+        if current_world_revision != int(self._last_selection_world_revision):
+            self._arm_world_change_sync()
+            return True
+        if now < float(self._force_selection_until_s):
+            return True
+        if current_space_id != str(self._last_selection_space_id):
+            return True
+        if self._last_selection_pose is None:
+            return True
+        if not self._state.is_othello_space() and self._selection_state.target() is None:
+            return True
+        if (now - float(self._last_selection_refresh_time_s)) >= float(self._selection_refresh_interval_s):
+            px, py, pz, pyaw, ppitch = self._last_selection_pose
+            dx = float(eye.x) - float(px)
+            dy = float(eye.y) - float(py)
+            dz = float(eye.z) - float(pz)
+            moved_sq = (dx * dx) + (dy * dy) + (dz * dz)
+            yaw_delta = self._angle_delta_deg(float(yaw_deg), float(pyaw))
+            pitch_delta = self._angle_delta_deg(float(pitch_deg), float(ppitch))
+            if moved_sq >= float(self._selection_linear_threshold_sq):
+                return True
+            if yaw_delta >= float(self._selection_angular_threshold_deg):
+                return True
+            if pitch_delta >= float(self._selection_angular_threshold_deg):
+                return True
+        return False
+
+    def _mark_selection(self, *, eye: Vec3, yaw_deg: float, pitch_deg: float) -> None:
+        self._last_selection_pose = (
+            float(eye.x),
+            float(eye.y),
+            float(eye.z),
+            float(yaw_deg),
+            float(pitch_deg),
+        )
+        self._last_selection_space_id = str(self._state.current_space_id)
+        self._last_selection_world_revision = int(self._session.world.revision)
+        self._last_selection_refresh_time_s = time.perf_counter()
 
     def initializeGL(self) -> None:
         try:
@@ -291,7 +417,22 @@ class GLViewportWidget(QOpenGLWidget):
             except Exception:
                 self._state.vsync_on = False
 
+        self._last_upload_eye = None
+        self._last_upload_world_revision = -1
+        self._last_upload_render_distance_chunks = -1
+        self._last_upload_session_token = -1
+        self._last_upload_time_s = 0.0
+        self._force_upload_until_s = time.perf_counter() + 0.12
+
+        self._last_selection_pose = None
+        self._last_selection_space_id = ""
+        self._last_selection_world_revision = -1
+        self._last_selection_refresh_time_s = 0.0
+        self._force_selection_until_s = time.perf_counter() + 0.12
+
         viewport_settings_controller.apply_runtime_to_renderer(self)
+        viewport_settings_controller.sync_input_bindings(self)
+        viewport_settings_controller.sync_audio_preferences(self)
         viewport_settings_controller.sync_hotbar_widgets(self)
         viewport_settings_controller.sync_cloud_motion_pause(self)
         viewport_othello_controller.sync_hud_text(self)
@@ -336,36 +477,81 @@ class GLViewportWidget(QOpenGLWidget):
         snap = self._make_render_snapshot()
         eye = Vec3(snap.camera.eye_x, snap.camera.eye_y, snap.camera.eye_z)
         render_eye, render_yaw_deg, render_pitch_deg, render_roll_deg, _render_direction = self._effective_camera_from_snapshot(snap)
+        self._audio.cache_listener_pose(
+            eye=render_eye,
+            yaw_deg=float(render_yaw_deg),
+            pitch_deg=float(render_pitch_deg),
+            roll_deg=float(render_roll_deg),
+        )
 
-        self._upload.upload_if_needed(world=self._session.world, renderer=self._renderer, eye=eye, render_distance_chunks=int(self._state.render_distance_chunks))
+        if self._upload_due(eye=eye):
+            self._upload.upload_if_needed(
+                world=self._session.world,
+                renderer=self._renderer,
+                eye=eye,
+                render_distance_chunks=int(self._state.render_distance_chunks),
+            )
+            self._mark_upload(eye=eye)
 
         if self._state.is_othello_space():
-            self._last_selection_pick_ms = 0.0
-            self._invalidate_selection_target()
-            self._renderer.clear_selection()
-            viewport_othello_controller.refresh_hover_square(self, snap)
+            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
+                self._last_selection_pick_ms = 0.0
+                self._invalidate_selection_target()
+                self._renderer.clear_selection()
+                viewport_othello_controller.refresh_hover_square(self, snap)
+                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
         else:
             self._othello_hover_square = None
-            self._last_selection_pick_ms = self._selection_state.refresh(session=self._session, reach=float(self._state.reach), eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
-            selection_target = self._selection_state.target()
-            if selection_target is None:
-                self._renderer.clear_selection()
-            else:
-                hx, hy, hz, st = selection_target
+            if self._selection_due(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg)):
+                self._last_selection_pick_ms = self._selection_state.refresh(
+                    session=self._session,
+                    reach=float(self._state.reach),
+                    eye=render_eye,
+                    yaw_deg=float(render_yaw_deg),
+                    pitch_deg=float(render_pitch_deg),
+                )
+                selection_target = self._selection_state.target()
+                if selection_target is None:
+                    self._renderer.clear_selection()
+                else:
+                    hx, hy, hz, st = selection_target
 
-                def get_state(x: int, y: int, z: int) -> str | None:
-                    return self._session.world.blocks.get((int(x), int(y), int(z)))
+                    def get_state(x: int, y: int, z: int) -> str | None:
+                        return self._session.world.blocks.get((int(x), int(y), int(z)))
 
-                self._renderer.set_selection_target(x=int(hx), y=int(hy), z=int(hz), state_str=str(st), get_state=get_state, world_revision=int(self._session.world.revision))
+                    self._renderer.set_selection_target(
+                        x=int(hx),
+                        y=int(hy),
+                        z=int(hz),
+                        state_str=str(st),
+                        get_state=get_state,
+                        world_revision=int(self._session.world.revision),
+                    )
+                self._mark_selection(eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg))
 
         dpr = float(self.devicePixelRatioF())
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
         cam = snap.camera
-        player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
+        player_state = compose_player_render_state(
+            snapshot=snap,
+            motion=self._first_person_motion.sample(),
+            block_registry=self._session.block_registry,
+        )
 
-        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=viewport_othello_controller.build_render_state(self))
+        self._renderer.render(
+            w=fb_w,
+            h=fb_h,
+            eye=render_eye,
+            yaw_deg=float(render_yaw_deg),
+            pitch_deg=float(render_pitch_deg),
+            roll_deg=float(render_roll_deg),
+            fov_deg=float(cam.fov_deg),
+            render_distance_chunks=int(self._state.render_distance_chunks),
+            player_state=player_state,
+            othello_state=viewport_othello_controller.build_render_state(self),
+        )
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -387,10 +573,26 @@ class GLViewportWidget(QOpenGLWidget):
         if bool(self._state.auto_sprint_enabled) and float(fr.move_f) > 1e-6 and (not bool(fr.crouch)):
             sprint = True
 
-        jump_started = self._session.step(dt=float(dt), move_f=fr.move_f, move_s=fr.move_s, jump_held=bool(fr.jump_held), jump_pressed=bool(fr.jump_pressed), sprint=bool(sprint), crouch=bool(fr.crouch), mdx=float(md.dx), mdy=float(md.dy), creative_mode=bool(self._state.creative_mode), auto_jump_enabled=bool(self._state.auto_jump_enabled))
+        step_result = self._session.step(
+            dt=float(dt),
+            move_f=fr.move_f,
+            move_s=fr.move_s,
+            jump_held=bool(fr.jump_held),
+            jump_pressed=bool(fr.jump_pressed),
+            sprint=bool(sprint),
+            crouch=bool(fr.crouch),
+            mdx=float(md.dx),
+            mdy=float(md.dy),
+            creative_mode=bool(self._state.creative_mode),
+            auto_jump_enabled=bool(self._state.auto_jump_enabled),
+        )
         viewport_settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
-        self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(jump_started))
+        self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))
+        if bool(step_result.footstep_triggered):
+            self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
+        if bool(step_result.landed):
+            self._audio.play_surface_event(event_name=PLAYER_EVENT_LAND, support_block_state=step_result.support_block_state, position=step_result.support_position)
 
         if self._state.is_othello_space():
             self._othello_match.tick(float(dt), paused=False)
@@ -408,7 +610,35 @@ class GLViewportWidget(QOpenGLWidget):
         fb_w = max(1, int(round(float(self.width()) * dpr)))
         fb_h = max(1, int(round(float(self.height()) * dpr)))
 
-        payload = self._hud_ctl.build_payload(session=self._session, renderer=self._renderer, auto_jump_enabled=self._state.auto_jump_enabled, auto_sprint_enabled=self._state.auto_sprint_enabled, creative_mode=self._state.creative_mode, flying=bool(self._session.player.flying), inventory_open=self._overlays.inventory_open(), selected_block_id=viewport_settings_controller.current_item_id(self) or "", reach=self._state.reach, sun_az_deg=self._state.sun_az_deg, sun_el_deg=self._state.sun_el_deg, shadow_enabled=self._state.shadow_enabled, world_wire=self._state.world_wire, cloud_wire=self._state.cloud_wire, cloud_enabled=self._state.cloud_enabled, cloud_density=self._state.cloud_density, cloud_seed=self._state.cloud_seed, debug_shadow=self._state.debug_shadow, fb_w=fb_w, fb_h=fb_h, dpr=dpr, vsync_on=self._state.vsync_on, render_timer_interval_ms=int(self._render_timer.interval()), sim_hz=float(self._loop.sim_hz), render_distance_chunks=int(self._state.render_distance_chunks), paint_ms=float(self._last_paint_ms), selection_pick_ms=float(self._last_selection_pick_ms))
+        payload = self._hud_ctl.build_payload(
+            session=self._session,
+            renderer=self._renderer,
+            auto_jump_enabled=self._state.auto_jump_enabled,
+            auto_sprint_enabled=self._state.auto_sprint_enabled,
+            creative_mode=self._state.creative_mode,
+            flying=bool(self._session.player.flying),
+            inventory_open=self._overlays.inventory_open(),
+            selected_block_id=viewport_settings_controller.current_item_id(self) or "",
+            reach=self._state.reach,
+            sun_az_deg=self._state.sun_az_deg,
+            sun_el_deg=self._state.sun_el_deg,
+            shadow_enabled=self._state.shadow_enabled,
+            world_wire=self._state.world_wire,
+            cloud_wire=self._state.cloud_wire,
+            cloud_enabled=self._state.cloud_enabled,
+            cloud_density=self._state.cloud_density,
+            cloud_seed=self._state.cloud_seed,
+            debug_shadow=self._state.debug_shadow,
+            fb_w=fb_w,
+            fb_h=fb_h,
+            dpr=dpr,
+            vsync_on=self._state.vsync_on,
+            render_timer_interval_ms=int(self._render_timer.interval()),
+            sim_hz=float(self._loop.sim_hz),
+            render_distance_chunks=int(self._state.render_distance_chunks),
+            paint_ms=float(self._last_paint_ms),
+            selection_pick_ms=float(self._last_selection_pick_ms),
+        )
         self.hud_updated.emit(payload)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:

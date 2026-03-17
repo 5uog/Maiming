@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QSize
 from PyQt6.QtGui import QPixmap, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QSizePolicy, QGridLayout, QScrollArea
 
+from ....application.session.keybinds import ACTION_TOGGLE_INVENTORY, KeybindSettings, action_for_key
 from ....domain.blocks.block_registry import BlockRegistry
 from ....domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_index, normalize_hotbar_slots
 from ..common import DraggableItemButton, apply_item_slot_state, hotbar_index_from_key, hotbar_slot_tooltip, item_id_from_mime
@@ -21,7 +22,7 @@ class _InventoryBlockButton(DraggableItemButton):
     hovered_block = pyqtSignal(str)
     hover_left = pyqtSignal()
 
-    def __init__(self, block_id: str, display_name: str, parent: QWidget | None=None) -> None:
+    def __init__(self, block_id: str, display_name: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._block_id = str(block_id)
         self._display_name = str(display_name)
@@ -56,7 +57,7 @@ class _HotbarSlotButton(DraggableItemButton):
     slot_selected = pyqtSignal(int)
     block_dropped = pyqtSignal(int, str)
 
-    def __init__(self, slot_index: int, parent: QWidget | None=None) -> None:
+    def __init__(self, slot_index: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._slot_index = int(slot_index)
         self._block_id = ""
@@ -117,17 +118,20 @@ class InventoryOverlay(QWidget):
     hotbar_slot_selected = pyqtSignal(int)
     hotbar_slot_assigned = pyqtSignal(int, str)
 
-    def __init__(self, *, parent: QWidget | None=None, project_root: Path, registry: BlockRegistry) -> None:
+    def __init__(self, *, parent: QWidget | None = None, project_root: Path, registry: BlockRegistry) -> None:
         super().__init__(parent)
 
         self._reg = registry
         self._project_root = Path(project_root)
         self._photos = ItemPhotoProvider(project_root=self._project_root, registry=self._reg, icon_size=36)
+        self._photos.pixmap_changed.connect(self._on_item_pixmap_changed)
+        self._photos.set_active(False)
 
         self._hovered_block_id: str | None = None
         self._hotbar_slots: list[str] = list(normalize_hotbar_slots(None, size=HOTBAR_SIZE))
         self._selected_hotbar_index: int = 0
         self._creative_mode: bool = False
+        self._keybinds: KeybindSettings = KeybindSettings()
 
         self._slot_buttons: list[_InventoryBlockButton] = []
         self._hotbar_buttons: list[_HotbarSlotButton] = []
@@ -204,8 +208,19 @@ class InventoryOverlay(QWidget):
         self.set_creative_mode(False)
         self.sync_hotbar(slots=self._hotbar_slots, selected_index=self._selected_hotbar_index)
 
+    def setVisible(self, visible: bool) -> None:
+        super().setVisible(bool(visible))
+        self._photos.set_active(bool(visible) and bool(self._creative_mode))
+
+    def set_keybinds(self, keybinds: KeybindSettings) -> None:
+        self._keybinds = keybinds.normalized()
+
+    def set_animations_enabled(self, enabled: bool) -> None:
+        self._photos.set_animations_enabled(bool(enabled))
+
     def set_creative_mode(self, on: bool) -> None:
         self._creative_mode = bool(on)
+        self._photos.set_active(bool(self.isVisible()) and bool(self._creative_mode))
 
         if bool(self._creative_mode):
             self._title_label.setText("CREATIVE INVENTORY")
@@ -283,14 +298,24 @@ class InventoryOverlay(QWidget):
         self.setVisible(False)
         self.closed.emit()
 
+    def _on_item_pixmap_changed(self, block_id: str) -> None:
+        normalized = str(block_id).strip()
+        if not normalized:
+            return
+        for button in self._slot_buttons:
+            if button.block_id() == normalized:
+                button.set_icon_pixmap(self._photos.pixmap_for_block(normalized))
+        self._sync_hotbar_buttons()
+
     def keyPressEvent(self, e) -> None:
         k = int(e.key())
+        bound_action = action_for_key(int(k), self._keybinds)
 
-        if k == int(Qt.Key.Key_E) or k == int(Qt.Key.Key_Escape):
+        if bound_action == ACTION_TOGGLE_INVENTORY or k == int(Qt.Key.Key_Escape):
             self._close()
             return
 
-        idx = hotbar_index_from_key(k)
+        idx = hotbar_index_from_key(k, self._keybinds)
         if idx is not None:
             self.hotbar_slot_selected.emit(int(idx))
             if bool(self._creative_mode) and self._hovered_block_id is not None:

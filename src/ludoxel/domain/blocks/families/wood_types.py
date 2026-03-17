@@ -12,6 +12,7 @@ class WoodType:
     key: str
     display: str
     texture: str
+    sound_group: str = "wood"
 
 
 WOOD_TYPES: tuple[WoodType, ...] = (

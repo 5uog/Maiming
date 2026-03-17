@@ -23,6 +23,7 @@ class RendererRuntimeState:
     cloud_density: int = 1
     cloud_seed: int = 1337
     cloud_flow_direction: str = DEFAULT_CLOUD_FLOW_DIRECTION
+    animated_textures_enabled: bool = True
 
     sun_azimuth_deg: float = 45.0
     sun_elevation_deg: float = 60.0

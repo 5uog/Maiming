@@ -20,6 +20,11 @@ def _normalize_family(family: str) -> str:
     return s if s else "block"
 
 
+def _normalize_sound_group(sound_group: str) -> str:
+    s = str(sound_group).strip()
+    return s if s else "block"
+
+
 @dataclass(frozen=True)
 class BlockTextures:
     pos_x: str
@@ -57,6 +62,7 @@ class BlockDefinition:
     is_full_cube: bool = True
     is_solid: bool = True
     tags: Tuple[str, ...] = ()
+    sound_group: str = "block"
 
     def kind_name(self) -> str:
         return _normalize_kind(str(self.kind))
@@ -73,3 +79,6 @@ class BlockDefinition:
     def has_tag(self, tag: str) -> bool:
         t = str(tag)
         return any(str(x) == t for x in self.tags)
+
+    def sound_group_name(self) -> str:
+        return _normalize_sound_group(str(self.sound_group))

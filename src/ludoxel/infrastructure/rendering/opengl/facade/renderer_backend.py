@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 
 import numpy as np
 from OpenGL.GL import glEnable, glDepthFunc, GL_DEPTH_TEST, GL_LESS
@@ -35,6 +36,7 @@ from .player_render_state import PlayerRenderState
 from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState
 from .selection_controller import SelectionController
+from .texture_animation_controller import TextureAnimationController
 
 
 def _format_context_details(info: GLInfoSnapshot) -> str:
@@ -76,6 +78,7 @@ class RendererBackend:
 
         self._selection: SelectionController | None = None
         self._pipeline: FramePipeline | None = None
+        self._texture_animations: TextureAnimationController | None = None
         self._last_payload_validation: object | None = None
         self._last_frame_metrics = RendererFrameMetrics()
 
@@ -106,6 +109,7 @@ class RendererBackend:
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
         self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._texture_animations = TextureAnimationController(block_dir=Path(assets_dir) / "minecraft" / "textures" / "block", atlas=self._res.atlas)
 
         self.apply_runtime_state()
 
@@ -126,6 +130,7 @@ class RendererBackend:
         self._visuals = None
         self._selection = None
         self._pipeline = None
+        self._texture_animations = None
         self._last_payload_validation = None
         self._last_frame_metrics = RendererFrameMetrics()
         self._gl_info = GLInfoSnapshot(vendor="", renderer="", version="", glsl_version="", major_version=0, minor_version=0, glsl_major_version=0, glsl_minor_version=0, context_profile_mask=0)
@@ -136,6 +141,8 @@ class RendererBackend:
         self._cloud.set_density(int(self._state.cloud_density))
         self._cloud.set_seed(int(self._state.cloud_seed))
         self._cloud.set_flow_direction(str(self._state.cloud_flow_direction))
+        if self._texture_animations is not None:
+            self._texture_animations.set_enabled(bool(self._state.animated_textures_enabled))
 
         if self._selection is not None:
             self._selection.set_outline_enabled(bool(self._state.outline_selection_enabled))
@@ -214,5 +221,7 @@ class RendererBackend:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
+        if self._texture_animations is not None:
+            self._texture_animations.update(time.perf_counter())
 
         self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state)

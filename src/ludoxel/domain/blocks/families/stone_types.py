@@ -22,6 +22,7 @@ class StoneType:
 
     kind: str = "cube"
     is_full_cube: bool = True
+    sound_group: str = "stone"
 
 
 def cube_textures(name: str) -> BlockTextures:
