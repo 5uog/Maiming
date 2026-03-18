@@ -8,11 +8,11 @@ _CARDINALS: tuple[str, str, str, str] = ("north", "east", "south", "west")
 
 
 def normalize_cardinal(facing: str, default: str="south") -> str:
-    s = str(facing)
+    s = str(facing).strip().lower()
     if s in _CARDINALS:
         return s
 
-    d = str(default)
+    d = str(default).strip().lower()
     if d in _CARDINALS:
         return d
 

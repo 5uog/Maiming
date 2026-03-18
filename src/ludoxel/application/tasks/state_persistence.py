@@ -14,7 +14,7 @@ from ...features.othello.domain.game.board import (
 )
 from ...features.othello.domain.game.types import OthelloGameState
 from ...shared.domain.play_space import normalize_play_space_id
-from ...infrastructure.persistence.app_state_store import (
+from ..persistence import (
     AppState,
     AppStateStore,
     PersistedOthelloSpace,

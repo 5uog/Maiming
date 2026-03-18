@@ -19,7 +19,7 @@ from ....application.tasks.fixed_step_runner import FixedStepRunner
 from ....application.tasks.state_persistence import apply_persisted_state_if_present, save_state
 from ....shared.core.math.vec3 import Vec3
 from ....shared.core.math.view_angles import forward_from_yaw_pitch_deg
-from ....infrastructure.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
+from ....application.services.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 from ....infrastructure.platform.qt_input_adapter import QtInputAdapter
 from ....infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
 from ...config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ...shared.domain.play_space import normalize_play_space_id
-from ...infrastructure.persistence.app_state_store import AppState, PersistedInventory, PersistedSettings
+from ..persistence import AppState, PersistedInventory, PersistedSettings
 from ..context.runtime.runtime_preferences import RuntimePreferences, coerce_runtime_preferences
 
 

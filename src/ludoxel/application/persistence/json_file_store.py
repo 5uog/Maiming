@@ -1,13 +1,12 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/infrastructure/persistence/json_file_store.py
+# FILE: src/ludoxel/application/persistence/json_file_store.py
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import os
-
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -27,12 +26,12 @@ class JsonFileStore:
             return None
 
         try:
-            v = json.loads(raw)
+            value = json.loads(raw)
         except json.JSONDecodeError:
             return None
 
-        if isinstance(v, dict):
-            return v
+        if isinstance(value, dict):
+            return value
         return None
 
     def write(self, obj: dict[str, Any]) -> None:

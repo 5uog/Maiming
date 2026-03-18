@@ -35,11 +35,11 @@ def prop_as_str(props: Mapping[str, str], key: str, default: str="") -> str:
 
 
 def slab_type_value(props: Mapping[str, str], default: str="bottom") -> str:
-    t = prop_as_str(props, "type", default).strip()
+    t = prop_as_str(props, "type", default).strip().lower()
     if t in ("bottom", "top", "double"):
         return t
 
-    d = str(default).strip()
+    d = str(default).strip().lower()
     if d in ("bottom", "top", "double"):
         return d
 

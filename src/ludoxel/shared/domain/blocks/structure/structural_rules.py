@@ -9,6 +9,7 @@ from typing import Callable
 from ..block_definition import BlockDefinition
 from ..state.state_codec import parse_state
 from ..state.state_values import slab_type_value
+from .cardinal import normalize_cardinal
 
 DefLookup = Callable[[str], BlockDefinition | None]
 
@@ -68,8 +69,8 @@ def block_state_is_full_solid(state_str: str | None, *, get_def: DefLookup) -> b
 
 
 def fence_gate_connects_to_side(*, facing: str, side_from_gate: str) -> bool:
-    f = str(facing)
-    s = str(side_from_gate)
+    f = normalize_cardinal(str(facing), default="south")
+    s = normalize_cardinal(str(side_from_gate), default="south")
 
     if f in ("north", "south"):
         return s in ("east", "west")

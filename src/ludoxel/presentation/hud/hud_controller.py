@@ -14,7 +14,7 @@ from ...shared.core.math.vec3 import Vec3
 from ...application.managers.session_manager import SessionManager
 from ...shared.domain.config.render_distance import clamp_render_distance_chunks
 from ...infrastructure.rendering.opengl.facade.gl_renderer import GLRenderer
-from ...infrastructure.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
+from ...application.services.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
 from ...application.meta import __version__

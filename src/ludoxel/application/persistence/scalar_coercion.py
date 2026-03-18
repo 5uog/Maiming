@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/infrastructure/persistence/scalar_coercion.py
+# FILE: src/ludoxel/application/persistence/scalar_coercion.py
 from __future__ import annotations
 
 from collections.abc import Mapping

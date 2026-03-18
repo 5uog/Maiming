@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/infrastructure/audio/audio_manager.py
+# FILE: src/ludoxel/application/services/audio/audio_manager.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -13,30 +13,32 @@ import time
 from PyQt6.QtCore import QObject, QUrl
 from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer, QSoundEffect
 
-from ...application.context.runtime.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
-from ...shared.core.math.vec3 import Vec3
-from ...shared.domain.blocks.registry.block_registry import BlockRegistry
-from ...shared.domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
-from ...shared.domain.blocks.state.state_codec import parse_state
-from ...shared.domain.blocks.state.state_values import prop_as_bool
-from ...shared.domain.play_space import is_my_world_space
-from .audio_catalog import (
-    AMBIENT_KEY_MY_WORLD,
-    AMBIENT_SOUND_CATALOG,
-    AudioSamplePool,
+from ...context.runtime.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
+from ....shared.core.math.vec3 import Vec3
+from ....shared.domain.blocks.registry.block_registry import BlockRegistry
+from ....shared.domain.blocks.sound_groups import (
+    DEFAULT_BLOCK_SOUND_GROUP,
+    iter_sound_group_candidates,
+)
+from ....shared.domain.blocks.state.state_codec import parse_state
+from ....shared.domain.blocks.state.state_values import prop_as_bool
+from ....shared.domain.play_space import is_my_world_space
+from .catalog.ambient_audio_catalog import AMBIENT_KEY_MY_WORLD, AMBIENT_SOUND_CATALOG
+from .audio_types import AudioSamplePool, SELECTION_ROUND_ROBIN
+from .catalog.material_audio_catalog import (
     BLOCK_EVENT_BREAK,
     BLOCK_EVENT_INTERACT_CLOSE,
     BLOCK_EVENT_INTERACT_OPEN,
     BLOCK_EVENT_PLACE,
     BLOCK_SOUND_CATALOG,
+    PLAYER_EVENT_STEP,
+    PLAYER_SURFACE_SOUND_CATALOG,
+)
+from .catalog.player_audio_catalog import (
     PLAYER_EVENT_LAND,
     PLAYER_EVENT_LAND_BIG,
     PLAYER_EVENT_LAND_SMALL,
     PLAYER_EVENT_SOUND_CATALOG,
-    PLAYER_EVENT_STEP,
-    PLAYER_SURFACE_SOUND_CATALOG,
-    SELECTION_ROUND_ROBIN,
-    iter_named_pools,
 )
 
 
@@ -75,9 +77,7 @@ class AudioManager(QObject):
         self._ambient_enabled: bool = False
         self._ambient_space_id: str = ""
 
-        self._pool_specs: dict[str, AudioSamplePool] = {
-            str(pool_key): pool for pool_key, pool in iter_named_pools()
-        }
+        self._pool_specs: dict[str, AudioSamplePool] = self._collect_named_pools()
         self._resolved_urls: dict[str, tuple[QUrl, ...]] = {}
         self._prepared_sources: dict[str, list[_PreparedSource]] = {}
         self._round_robin_index: dict[str, int] = {}
@@ -132,6 +132,7 @@ class AudioManager(QObject):
             pool = self._pool_specs.get(str(pool_key))
             if pool is None:
                 continue
+
             base_volume = float(self._preferences.volume_for(pool.category))
             for prepared in tuple(prepared_group):
                 for slot in tuple(prepared.slots):
@@ -222,7 +223,7 @@ class AudioManager(QObject):
                 else BLOCK_EVENT_INTERACT_CLOSE
             )
 
-        if action == BLOCK_EVENT_INTERACT_OPEN or action == BLOCK_EVENT_INTERACT_CLOSE:
+        if action in {BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_INTERACT_CLOSE}:
             self.play_block_action(
                 action=str(action),
                 sound_group=sound_group,
@@ -230,7 +231,7 @@ class AudioManager(QObject):
             )
             return
 
-        if action == BLOCK_EVENT_PLACE or action == BLOCK_EVENT_BREAK:
+        if action in {BLOCK_EVENT_PLACE, BLOCK_EVENT_BREAK}:
             self.play_block_action(
                 action=str(action),
                 sound_group=sound_group,
@@ -298,7 +299,11 @@ class AudioManager(QObject):
         self._play_pool(
             pool_key=f"player_event:{event_name}",
             pool=pool,
-            position=Vec3(float(position[0]), float(position[1]), float(position[2])),
+            position=Vec3(
+                float(position[0]),
+                float(position[1]),
+                float(position[2]),
+            ),
         )
 
     def sound_group_for_block_state(self, block_state_or_id: str) -> str:
@@ -309,10 +314,33 @@ class AudioManager(QObject):
             return cached
 
         definition = self._block_registry.get(str(base_id))
-        sound_group = DEFAULT_BLOCK_SOUND_GROUP if definition is None else str(definition.sound_group_name()).strip()
+        sound_group = (
+            DEFAULT_BLOCK_SOUND_GROUP
+            if definition is None
+            else str(definition.sound_group_name()).strip()
+        )
         normalized = sound_group if sound_group else DEFAULT_BLOCK_SOUND_GROUP
         self._sound_group_cache[cache_key] = normalized
         return normalized
+
+    def _collect_named_pools(self) -> dict[str, AudioSamplePool]:
+        entries: dict[str, AudioSamplePool] = {}
+
+        for sound_group, group_catalog in BLOCK_SOUND_CATALOG.items():
+            for event_name, pool in group_catalog.items():
+                entries[f"block:{sound_group}:{event_name}"] = pool
+
+        for sound_group, group_catalog in PLAYER_SURFACE_SOUND_CATALOG.items():
+            for event_name, pool in group_catalog.items():
+                entries[f"player:{sound_group}:{event_name}"] = pool
+
+        for event_name, pool in PLAYER_EVENT_SOUND_CATALOG.items():
+            entries[f"player_event:{event_name}"] = pool
+
+        for ambient_key, pool in AMBIENT_SOUND_CATALOG.items():
+            entries[f"ambient:{ambient_key}"] = pool
+
+        return entries
 
     def _landing_event_name(self, fall_distance_blocks: float | None) -> str | None:
         distance = 0.0 if fall_distance_blocks is None else max(0.0, float(fall_distance_blocks))
@@ -330,7 +358,7 @@ class AudioManager(QObject):
         *,
         sound_group: str,
         position: Vec3,
-        fall_distance_blocks: float | None
+        fall_distance_blocks: float | None,
     ) -> None:
         event_name = self._landing_event_name(fall_distance_blocks)
 
@@ -530,7 +558,10 @@ class AudioManager(QObject):
             return False
 
         if bool(pool.spatial) and float(pool.distance_cutoff) > 1e-6:
-            if not self._listener_within_cutoff(position=position, cutoff=float(pool.distance_cutoff)):
+            if not self._listener_within_cutoff(
+                position=position,
+                cutoff=float(pool.distance_cutoff),
+            ):
                 return False
 
         prepared_sources = self._ensure_prepared_sources(str(pool_key), pool)
