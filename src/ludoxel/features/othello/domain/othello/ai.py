@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 
 from .rules import BOARD_SIZE, apply_move, counts_for_board, find_legal_moves, other_side
-from .types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_WEAK, SIDE_BLACK, SIDE_WHITE, normalize_difficulty, normalize_side
+from .types import OTHELLO_DIFFICULTY_MEDIUM, OTHELLO_DIFFICULTY_WEAK, SIDE_BLACK, SIDE_WHITE, coerce_board, normalize_difficulty, normalize_side
 
 _POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40, -5, -5, -5, -5, -40, -20, 20, -5, 15, 3, 3, 15, -5, 20, 5, -5, 3, 3, 3, 3, -5, 5, 5, -5, 3, 3, 3, 3, -5, 5, 20, -5, 15, 3, 3, 15, -5, 20, -20, -40, -5, -5, -5, -5, -40, -20, 120, -20, 20, 5, 5, 20, -20, 120)
 
@@ -19,13 +19,6 @@ _POSITION_WEIGHTS: tuple[int, ...] = (120, -20, 20, 5, 5, 20, -20, 120, -20, -40
 class _SearchResult:
     score: float
     move_index: int | None
-
-
-def _normalized_board(board: tuple[int, ...] | list[int]) -> tuple[int, ...]:
-    materialized = [normalize_side(value) for value in tuple(board)]
-    if len(materialized) < BOARD_SIZE * BOARD_SIZE:
-        materialized.extend([0] * (BOARD_SIZE * BOARD_SIZE - len(materialized)))
-    return tuple(materialized[: BOARD_SIZE * BOARD_SIZE])
 
 
 def _frontier_count(board: tuple[int, ...], side: int) -> int:
@@ -148,7 +141,7 @@ def _alpha_beta(board: tuple[int, ...], side_to_move: int, root_side: int, depth
     return float(best)
 
 
-def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, rng: random.Random | None=None) -> _SearchResult:
+def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: float | None, rng: random.Random | None = None) -> _SearchResult:
     moves = find_legal_moves(board, side)
     if not moves:
         return _SearchResult(score=0.0, move_index=None)
@@ -177,8 +170,8 @@ def _best_move(board: tuple[int, ...], side: int, *, depth: int, deadline_s: flo
     return _SearchResult(score=float(best_score), move_index=int(chooser.choice(best_moves)))
 
 
-def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: str, *, random_seed: int=0, strong_time_budget_s: float=1.5) -> int | None:
-    materialized = _normalized_board(board)
+def choose_ai_move(board: tuple[int, ...] | list[int], side: int, difficulty: str, *, random_seed: int = 0, strong_time_budget_s: float = 1.5) -> int | None:
+    materialized = coerce_board(board)
     ai_side = normalize_side(side)
     if ai_side not in (SIDE_BLACK, SIDE_WHITE):
         return None

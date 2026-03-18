@@ -11,7 +11,7 @@ from ....features.othello.domain.othello.board import ensure_othello_board_layou
 from ....shared.domain.world.world_gen import generate_flat_world
 from ....shared.domain.world.world_state import WorldState
 from ...managers.session_manager import SessionManager
-from ..session_builders import make_player_entity, make_session_settings
+from ..session_builders import make_session_manager
 
 OTHELLO_SPAWN: tuple[float, float, float] = (0.0, 1.0, -12.0)
 OTHELLO_YAW_DEG: float = 0.0
@@ -38,13 +38,11 @@ def _make_world() -> WorldState:
 
 def create_othello_session(*, seed: int = 0, block_registry: BlockRegistry) -> SessionManager:
     spec = OthelloSessionSeed(seed=int(seed))
-    return SessionManager(
-        settings=make_session_settings(seed=int(spec.seed), spawn=tuple(spec.spawn)),
+    return make_session_manager(
+        seed=int(spec.seed),
+        spawn=tuple(spec.spawn),
+        yaw_deg=float(spec.yaw_deg),
+        pitch_deg=float(spec.pitch_deg),
         world=_make_world(),
-        player=make_player_entity(
-            spawn=tuple(spec.spawn),
-            yaw_deg=float(spec.yaw_deg),
-            pitch_deg=float(spec.pitch_deg),
-        ),
         block_registry=block_registry,
     )

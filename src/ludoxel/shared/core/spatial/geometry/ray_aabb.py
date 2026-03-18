@@ -1,7 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/shared/core/sparial/geometry/ray_aabb.py
+# FILE: src/ludoxel/shared/core/spatial/geometry/ray_aabb.py
 from __future__ import annotations
 
 from dataclasses import dataclass

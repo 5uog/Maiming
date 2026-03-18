@@ -6,21 +6,7 @@ from __future__ import annotations
 
 from ...shared.domain.play_space import normalize_play_space_id
 from ...infrastructure.persistence.app_state_store import AppState, PersistedInventory, PersistedSettings
-from ..context.runtime.audio_preferences import AudioPreferences
 from ..context.runtime.runtime_preferences import RuntimePreferences, coerce_runtime_preferences
-from ..handlers.keybinds import KeybindSettings
-
-
-def _coerce_keybind_settings(value: object) -> KeybindSettings:
-    if isinstance(value, KeybindSettings):
-        return value.normalized()
-    return KeybindSettings.from_dict(value)
-
-
-def _coerce_audio_preferences(value: object) -> AudioPreferences:
-    if isinstance(value, AudioPreferences):
-        return value.normalized()
-    return AudioPreferences.from_dict(value)
 
 
 def sync_runtime_sun_from_renderer(runtime: RuntimePreferences, renderer) -> None:
@@ -105,8 +91,8 @@ def runtime_preferences_from_app_state(
         othello_hotbar_slots=list(inventory.othello_hotbar_slots),
         othello_selected_hotbar_index=int(inventory.othello_selected_hotbar_index),
         othello_settings=state.othello_settings,
-        keybinds=_coerce_keybind_settings(settings.keybinds),
-        audio=_coerce_audio_preferences(settings.audio),
+        keybinds=settings.keybinds,
+        audio=settings.audio,
     )
     out.normalize()
     return out

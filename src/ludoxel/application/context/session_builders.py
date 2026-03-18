@@ -5,7 +5,10 @@
 from __future__ import annotations
 
 from ...shared.core.math.vec3 import Vec3
+from ...shared.domain.blocks.registry.block_registry import BlockRegistry
 from ...shared.domain.entities.player_entity import PlayerEntity
+from ...shared.domain.world.world_state import WorldState
+from ..managers.session_manager import SessionManager
 from .runtime.session_settings import SessionSettings
 
 
@@ -29,4 +32,28 @@ def make_player_entity(
         velocity=Vec3(0.0, 0.0, 0.0),
         yaw_deg=float(yaw_deg),
         pitch_deg=float(pitch_deg),
+    )
+
+
+def make_session_manager(
+    *,
+    seed: int,
+    spawn: tuple[float, float, float],
+    world: WorldState,
+    block_registry: BlockRegistry,
+    yaw_deg: float = 0.0,
+    pitch_deg: float = 0.0,
+) -> SessionManager:
+    return SessionManager(
+        settings=make_session_settings(
+            seed=int(seed),
+            spawn=tuple(spawn),
+        ),
+        world=world,
+        player=make_player_entity(
+            spawn=tuple(spawn),
+            yaw_deg=float(yaw_deg),
+            pitch_deg=float(pitch_deg),
+        ),
+        block_registry=block_registry,
     )

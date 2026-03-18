@@ -4,17 +4,10 @@
 # FILE: src/ludoxel/features/othello/domain/othello/rules.py
 from __future__ import annotations
 
-from .board import BOARD_SIZE, row_col_to_square_index, square_index_to_row_col
-from .types import BOARD_CELL_COUNT, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_EMPTY, SIDE_WHITE, normalize_side, other_side
+from .board import BOARD_SIZE, row_col_to_square_index as row_col_to_index, square_index_to_row_col as index_to_row_col
+from .types import BOARD_CELL_COUNT, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_EMPTY, SIDE_WHITE, coerce_board, normalize_side, other_side
+
 _DIRECTIONS: tuple[tuple[int, int], ...] = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
-
-
-def row_col_to_index(row: int, col: int) -> int:
-    return row_col_to_square_index(row, col)
-
-
-def index_to_row_col(index: int) -> tuple[int, int]:
-    return square_index_to_row_col(index)
 
 
 def create_initial_board() -> tuple[int, ...]:
@@ -29,7 +22,7 @@ def create_initial_board() -> tuple[int, ...]:
 def counts_for_board(board: tuple[int, ...] | list[int]) -> tuple[int, int]:
     black = 0
     white = 0
-    for value in tuple(board)[:BOARD_CELL_COUNT]:
+    for value in coerce_board(board):
         side = normalize_side(value)
         if side == SIDE_BLACK:
             black += 1
@@ -71,10 +64,7 @@ def captures_for_move(board: tuple[int, ...] | list[int], *, side: int, index: i
     if idx < 0 or idx >= BOARD_CELL_COUNT:
         return ()
 
-    materialized = tuple(normalize_side(value) for value in tuple(board)[:BOARD_CELL_COUNT])
-    if len(materialized) < BOARD_CELL_COUNT:
-        materialized = tuple(materialized) + tuple([SIDE_EMPTY] * (BOARD_CELL_COUNT - len(materialized)))
-
+    materialized = coerce_board(board)
     if materialized[idx] != SIDE_EMPTY:
         return ()
 
@@ -86,9 +76,7 @@ def captures_for_move(board: tuple[int, ...] | list[int], *, side: int, index: i
 
 
 def find_legal_moves(board: tuple[int, ...] | list[int], side: int) -> tuple[int, ...]:
-    materialized = tuple(normalize_side(value) for value in tuple(board)[:BOARD_CELL_COUNT])
-    if len(materialized) < BOARD_CELL_COUNT:
-        materialized = tuple(materialized) + tuple([SIDE_EMPTY] * (BOARD_CELL_COUNT - len(materialized)))
+    materialized = coerce_board(board)
 
     legal: list[int] = []
     for index in range(BOARD_CELL_COUNT):
@@ -108,10 +96,7 @@ def apply_move(board: tuple[int, ...] | list[int], *, side: int, index: int) -> 
     if not captured:
         raise ValueError("The requested Othello move is illegal because it flips no opposing discs.")
 
-    materialized = list(tuple(normalize_side(value) for value in tuple(board)[:BOARD_CELL_COUNT]))
-    while len(materialized) < BOARD_CELL_COUNT:
-        materialized.append(SIDE_EMPTY)
-
+    materialized = list(coerce_board(board))
     move_index = int(index)
     materialized[move_index] = normalize_side(side)
     for captured_index in captured:
