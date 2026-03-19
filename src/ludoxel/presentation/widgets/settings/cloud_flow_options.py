@@ -6,12 +6,7 @@ from __future__ import annotations
 
 from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import CLOUD_FLOW_DIRECTIONS, DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
-_LABELS: dict[str, str] = {
-    "east_to_west": "East -> West",
-    "west_to_east": "West -> East",
-    "south_to_north": "South -> North",
-    "north_to_south": "North -> South",
-}
+_LABELS: dict[str, str] = {"east_to_west": "East -> West", "west_to_east": "West -> East", "south_to_north": "South -> North", "north_to_south": "North -> South"}
 
 CLOUD_FLOW_OPTIONS: tuple[tuple[str, str], ...] = tuple((value, _LABELS.get(str(value), str(value).replace("_", " ").title())) for value in CLOUD_FLOW_DIRECTIONS)
 

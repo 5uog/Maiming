@@ -49,12 +49,7 @@ class AudioPreferences:
         return float(self.master)
 
     def to_dict(self) -> dict[str, float]:
-        return {
-            AUDIO_CATEGORY_MASTER: float(self.master),
-            AUDIO_CATEGORY_AMBIENT: float(self.ambient),
-            AUDIO_CATEGORY_BLOCK: float(self.block),
-            AUDIO_CATEGORY_PLAYER: float(self.player),
-        }
+        return {AUDIO_CATEGORY_MASTER: float(self.master), AUDIO_CATEGORY_AMBIENT: float(self.ambient), AUDIO_CATEGORY_BLOCK: float(self.block), AUDIO_CATEGORY_PLAYER: float(self.player)}
 
     @staticmethod
     def from_dict(data: object) -> "AudioPreferences":

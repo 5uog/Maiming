@@ -43,15 +43,7 @@ class QtInputAdapter(QObject):
 
     def _refresh_action_keys(self) -> None:
         bindings = self._keybinds.normalized()
-        self._action_keys = {
-            ACTION_MOVE_FORWARD: bindings.key_for_action(ACTION_MOVE_FORWARD),
-            ACTION_MOVE_BACKWARD: bindings.key_for_action(ACTION_MOVE_BACKWARD),
-            ACTION_MOVE_LEFT: bindings.key_for_action(ACTION_MOVE_LEFT),
-            ACTION_MOVE_RIGHT: bindings.key_for_action(ACTION_MOVE_RIGHT),
-            ACTION_JUMP: bindings.key_for_action(ACTION_JUMP),
-            ACTION_CROUCH: bindings.key_for_action(ACTION_CROUCH),
-            ACTION_SPRINT: bindings.key_for_action(ACTION_SPRINT),
-        }
+        self._action_keys = {ACTION_MOVE_FORWARD: bindings.key_for_action(ACTION_MOVE_FORWARD), ACTION_MOVE_BACKWARD: bindings.key_for_action(ACTION_MOVE_BACKWARD), ACTION_MOVE_LEFT: bindings.key_for_action(ACTION_MOVE_LEFT), ACTION_MOVE_RIGHT: bindings.key_for_action(ACTION_MOVE_RIGHT), ACTION_JUMP: bindings.key_for_action(ACTION_JUMP), ACTION_CROUCH: bindings.key_for_action(ACTION_CROUCH), ACTION_SPRINT: bindings.key_for_action(ACTION_SPRINT)}
 
     def set_keybinds(self, keybinds: KeybindSettings) -> None:
         self._keybinds = keybinds.normalized()

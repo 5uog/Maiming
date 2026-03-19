@@ -21,9 +21,10 @@ from pathlib import Path
 SKIP_TOKEN_TYPES = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT, tokenize.ENDMARKER}
 TRANSFORM_COMPRESS = "compress"
 TRANSFORM_EXPAND = "expand"
-OPEN_TO_CLOSE = {"(": ")", "[": "]"}
-ALL_OPEN = {"(", "[", "{"}
-ALL_CLOSE = {")", "]", "}"}
+OPEN_TO_CLOSE = {"(": ")", "[": "]", "{": "}"}
+CLOSE_TO_OPEN = {close: open_ for open_, close in OPEN_TO_CLOSE.items()}
+ALL_OPEN = set(OPEN_TO_CLOSE)
+ALL_CLOSE = set(CLOSE_TO_OPEN)
 DEFAULT_INDENT = "    "
 
 
@@ -132,6 +133,7 @@ def build_group_tree(tokens: list[tokenize.TokenInfo]) -> list[GroupNode]:
     for index, tok in enumerate(tokens):
         if tok.type != tokenize.OP:
             continue
+
         if tok.string in OPEN_TO_CLOSE:
             node = GroupNode(kind=tok.string, open_index=index)
             if stack:
@@ -140,14 +142,16 @@ def build_group_tree(tokens: list[tokenize.TokenInfo]) -> list[GroupNode]:
                 roots.append(node)
             stack.append(node)
             continue
-        if tok.string in OPEN_TO_CLOSE.values():
+
+        if tok.string in CLOSE_TO_OPEN:
             if not stack:
                 continue
-            expected_open = "(" if tok.string == ")" else "["
+            expected_open = CLOSE_TO_OPEN[tok.string]
             if stack[-1].kind != expected_open:
                 continue
             stack[-1].close_index = index
             stack.pop()
+
     return roots
 
 
@@ -186,9 +190,9 @@ def node_spans_multiple_lines(node: GroupNode, tokens: list[tokenize.TokenInfo])
 
 
 def joiner(prev: tokenize.TokenInfo, curr: tokenize.TokenInfo) -> str:
-    if prev.string in {"(", "[", "."}:
+    if prev.string in {"(", "[", "{", "."}:
         return ""
-    if curr.string in {".", ",", ")", "]", "(", "["}:
+    if curr.string in {".", ",", ")", "]", "}", "(", "[", "{"}:
         return ""
     return " "
 

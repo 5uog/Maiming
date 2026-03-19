@@ -70,45 +70,7 @@ class PersistedSettings:
     audio: AudioPreferences = field(default_factory=AudioPreferences)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "fov_deg": float(self.fov_deg),
-            "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px),
-            "invert_x": bool(self.invert_x),
-            "invert_y": bool(self.invert_y),
-            "outline_selection": bool(self.outline_selection),
-            "cloud_wireframe": bool(self.cloud_wireframe),
-            "world_wireframe": bool(self.world_wireframe),
-            "shadow_enabled": bool(self.shadow_enabled),
-            "sun_az_deg": float(self.sun_az_deg),
-            "sun_el_deg": float(self.sun_el_deg),
-            "cloud_enabled": bool(self.cloud_enabled),
-            "cloud_density": int(self.cloud_density),
-            "cloud_seed": int(self.cloud_seed),
-            "cloud_flow_direction": str(self.cloud_flow_direction),
-            "creative_mode": bool(self.creative_mode),
-            "auto_jump_enabled": bool(self.auto_jump_enabled),
-            "auto_sprint_enabled": bool(self.auto_sprint_enabled),
-            "hide_hud": bool(self.hide_hud),
-            "hide_hand": bool(self.hide_hand),
-            "fullscreen": bool(self.fullscreen),
-            "view_bobbing_enabled": bool(self.view_bobbing_enabled),
-            "camera_shake_enabled": bool(self.camera_shake_enabled),
-            "view_bobbing_strength": float(self.view_bobbing_strength),
-            "camera_shake_strength": float(self.camera_shake_strength),
-            "animated_textures_enabled": bool(self.animated_textures_enabled),
-            "gravity": float(self.gravity),
-            "walk_speed": float(self.walk_speed),
-            "sprint_speed": float(self.sprint_speed),
-            "jump_v0": float(self.jump_v0),
-            "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
-            "fly_speed": float(self.fly_speed),
-            "fly_ascend_speed": float(self.fly_ascend_speed),
-            "fly_descend_speed": float(self.fly_descend_speed),
-            "render_distance_chunks": int(self.render_distance_chunks),
-            "hud_visible": bool(self.hud_visible),
-            "keybinds": self.keybinds.normalized().to_dict(),
-            "audio": self.audio.normalized().to_dict(),
-        }
+        return {"fov_deg": float(self.fov_deg), "mouse_sens_deg_per_px": float(self.mouse_sens_deg_per_px), "invert_x": bool(self.invert_x), "invert_y": bool(self.invert_y), "outline_selection": bool(self.outline_selection), "cloud_wireframe": bool(self.cloud_wireframe), "world_wireframe": bool(self.world_wireframe), "shadow_enabled": bool(self.shadow_enabled), "sun_az_deg": float(self.sun_az_deg), "sun_el_deg": float(self.sun_el_deg), "cloud_enabled": bool(self.cloud_enabled), "cloud_density": int(self.cloud_density), "cloud_seed": int(self.cloud_seed), "cloud_flow_direction": str(self.cloud_flow_direction), "creative_mode": bool(self.creative_mode), "auto_jump_enabled": bool(self.auto_jump_enabled), "auto_sprint_enabled": bool(self.auto_sprint_enabled), "hide_hud": bool(self.hide_hud), "hide_hand": bool(self.hide_hand), "fullscreen": bool(self.fullscreen), "view_bobbing_enabled": bool(self.view_bobbing_enabled), "camera_shake_enabled": bool(self.camera_shake_enabled), "view_bobbing_strength": float(self.view_bobbing_strength), "camera_shake_strength": float(self.camera_shake_strength), "animated_textures_enabled": bool(self.animated_textures_enabled), "gravity": float(self.gravity), "walk_speed": float(self.walk_speed), "sprint_speed": float(self.sprint_speed), "jump_v0": float(self.jump_v0), "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s), "fly_speed": float(self.fly_speed), "fly_ascend_speed": float(self.fly_ascend_speed), "fly_descend_speed": float(self.fly_descend_speed), "render_distance_chunks": int(self.render_distance_chunks), "hud_visible": bool(self.hud_visible), "keybinds": self.keybinds.normalized().to_dict(), "audio": self.audio.normalized().to_dict()}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedSettings":
@@ -138,14 +100,7 @@ class PersistedInventory:
         othello_slots = normalize_hotbar_slots(self.othello_hotbar_slots, size=self.HOTBAR_SIZE)
         othello_idx = normalize_hotbar_index(self.othello_selected_hotbar_index, size=self.HOTBAR_SIZE)
 
-        return {
-            "creative_hotbar_slots": [str(v) for v in creative_slots],
-            "creative_selected_hotbar_index": int(creative_idx),
-            "survival_hotbar_slots": [str(v) for v in survival_slots],
-            "survival_selected_hotbar_index": int(survival_idx),
-            "othello_hotbar_slots": [str(v) for v in othello_slots],
-            "othello_selected_hotbar_index": int(othello_idx),
-        }
+        return {"creative_hotbar_slots": [str(v) for v in creative_slots], "creative_selected_hotbar_index": int(creative_idx), "survival_hotbar_slots": [str(v) for v in survival_slots], "survival_selected_hotbar_index": int(survival_idx), "othello_hotbar_slots": [str(v) for v in othello_slots], "othello_selected_hotbar_index": int(othello_idx)}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedInventory":
@@ -183,16 +138,7 @@ class PersistedPlayer:
     crouch_eye_offset: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "pos": [float(self.pos_x), float(self.pos_y), float(self.pos_z)],
-            "vel": [float(self.vel_x), float(self.vel_y), float(self.vel_z)],
-            "yaw_deg": float(self.yaw_deg),
-            "pitch_deg": float(self.pitch_deg),
-            "on_ground": bool(self.on_ground),
-            "flying": bool(self.flying),
-            "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s),
-            "crouch_eye_offset": float(self.crouch_eye_offset),
-        }
+        return {"pos": [float(self.pos_x), float(self.pos_y), float(self.pos_z)], "vel": [float(self.vel_x), float(self.vel_y), float(self.vel_z)], "yaw_deg": float(self.yaw_deg), "pitch_deg": float(self.pitch_deg), "on_ground": bool(self.on_ground), "flying": bool(self.flying), "auto_jump_cooldown_s": float(self.auto_jump_cooldown_s), "crouch_eye_offset": float(self.crouch_eye_offset)}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PersistedPlayer":
@@ -230,10 +176,7 @@ class PersistedPlaySpace:
     world: PersistedWorld = field(default_factory=PersistedWorld)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "player": self.player.to_dict(),
-            "world": self.world.to_dict(),
-        }
+        return {"player": self.player.to_dict(), "world": self.world.to_dict()}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "PersistedPlaySpace":
@@ -252,11 +195,7 @@ class PersistedOthelloSpace:
     othello_game_state: OthelloGameState = field(default_factory=OthelloGameState)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "player": self.player.to_dict(),
-            "world": self.world.to_dict(),
-            "othello_game_state": self.othello_game_state.to_dict(),
-        }
+        return {"player": self.player.to_dict(), "world": self.world.to_dict(), "othello_game_state": self.othello_game_state.to_dict()}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "PersistedOthelloSpace":
@@ -278,13 +217,7 @@ class PlayerStateFile:
     othello_settings: OthelloSettings = field(default_factory=OthelloSettings)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "version": int(self.version),
-            "current_space_id": str(normalize_play_space_id(self.current_space_id)),
-            "settings": self.settings.to_dict(),
-            "inventory": self.inventory.to_dict(),
-            "othello_settings": self.othello_settings.normalized().to_dict(),
-        }
+        return {"version": int(self.version), "current_space_id": str(normalize_play_space_id(self.current_space_id)), "settings": self.settings.to_dict(), "inventory": self.inventory.to_dict(), "othello_settings": self.othello_settings.normalized().to_dict()}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "PlayerStateFile":
@@ -310,13 +243,7 @@ class WorldStateFile:
     othello_space: PersistedOthelloSpace = field(default_factory=PersistedOthelloSpace)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "version": int(self.version),
-            "spaces": {
-                "my_world": self.my_world.to_dict(),
-                "othello": self.othello_space.to_dict(),
-            },
-        }
+        return {"version": int(self.version), "spaces": {"my_world": self.my_world.to_dict(), "othello": self.othello_space.to_dict()}}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> "WorldStateFile":

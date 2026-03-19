@@ -168,11 +168,7 @@ class OthelloSettings:
 
     def to_dict(self) -> dict[str, Any]:
         normalized = self.normalized()
-        return {
-            "difficulty": str(normalized.difficulty),
-            "time_control": str(normalized.time_control),
-            "player_side": str(side_name(normalized.player_side))
-        }
+        return {"difficulty": str(normalized.difficulty), "time_control": str(normalized.time_control), "player_side": str(side_name(normalized.player_side))}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "OthelloSettings":
@@ -205,14 +201,7 @@ class OthelloAnimationState:
 
     def to_dict(self) -> dict[str, Any]:
         normalized = self.normalized()
-        return {
-            "square_index": int(normalized.square_index),
-            "from_side": str(side_name(normalized.from_side)),
-            "to_side": str(side_name(normalized.to_side)),
-            "elapsed_s": float(normalized.elapsed_s),
-            "duration_s": float(normalized.duration_s),
-            "lift_height": float(normalized.lift_height)
-        }
+        return {"square_index": int(normalized.square_index), "from_side": str(side_name(normalized.from_side)), "to_side": str(side_name(normalized.to_side)), "elapsed_s": float(normalized.elapsed_s), "duration_s": float(normalized.duration_s), "lift_height": float(normalized.lift_height)}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "OthelloAnimationState":
@@ -300,24 +289,7 @@ class OthelloGameState:
 
     def to_dict(self) -> dict[str, Any]:
         normalized = self.normalized()
-        return {
-            "status": str(normalized.status),
-            "board": encode_board(normalized.board),
-            "settings": normalized.settings.to_dict(),
-            "player_side": str(side_name(normalized.player_side)),
-            "ai_side": str(side_name(normalized.ai_side)),
-            "current_turn": str(side_name(normalized.current_turn)),
-            "black_time_remaining_s": None if normalized.black_time_remaining_s is None else float(normalized.black_time_remaining_s),
-            "white_time_remaining_s": None if normalized.white_time_remaining_s is None else float(normalized.white_time_remaining_s),
-            "move_count": int(normalized.move_count),
-            "consecutive_passes": int(normalized.consecutive_passes),
-            "winner": normalized.winner,
-            "message": str(normalized.message),
-            "last_move_index": normalized.last_move_index,
-            "animations": [animation.to_dict() for animation in normalized.animations],
-            "match_generation": int(normalized.match_generation),
-            "legal_moves": [int(index) for index in normalized.legal_moves]
-        }
+        return {"status": str(normalized.status), "board": encode_board(normalized.board), "settings": normalized.settings.to_dict(), "player_side": str(side_name(normalized.player_side)), "ai_side": str(side_name(normalized.ai_side)), "current_turn": str(side_name(normalized.current_turn)), "black_time_remaining_s": None if normalized.black_time_remaining_s is None else float(normalized.black_time_remaining_s), "white_time_remaining_s": None if normalized.white_time_remaining_s is None else float(normalized.white_time_remaining_s), "move_count": int(normalized.move_count), "consecutive_passes": int(normalized.consecutive_passes), "winner": normalized.winner, "message": str(normalized.message), "last_move_index": normalized.last_move_index, "animations": [animation.to_dict() for animation in normalized.animations], "match_generation": int(normalized.match_generation), "legal_moves": [int(index) for index in normalized.legal_moves]}
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "OthelloGameState":
