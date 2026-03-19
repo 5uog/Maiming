@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..sound_groups import (SOUND_GROUP_BAMBOO_WOOD, SOUND_GROUP_CHERRY_WOOD, SOUND_GROUP_NETHER_WOOD, SOUND_GROUP_WOOD)
+from ..sound_groups import SOUND_GROUP_BAMBOO_WOOD, SOUND_GROUP_CHERRY_WOOD, SOUND_GROUP_NETHER_WOOD, SOUND_GROUP_WOOD
 
 
 @dataclass(frozen=True)

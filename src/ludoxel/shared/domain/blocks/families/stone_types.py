@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..block_definition import BlockTextures
-from ..sound_groups import (DEFAULT_BLOCK_SOUND_GROUP, SOUND_GROUP_BASALT, SOUND_GROUP_DEEPSLATE, SOUND_GROUP_TUFF)
+from ..sound_groups import DEFAULT_BLOCK_SOUND_GROUP, SOUND_GROUP_BASALT, SOUND_GROUP_DEEPSLATE, SOUND_GROUP_TUFF
 
 
 @dataclass(frozen=True)

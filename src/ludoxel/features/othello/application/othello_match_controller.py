@@ -1,13 +1,13 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/application/managers/othello_match_controller.py
+# FILE: src/ludoxel/features/othello/application/othello_match_controller.py
 from __future__ import annotations
 
 from dataclasses import replace
 
-from ...features.othello.domain.game.rules import (apply_move, counts_for_board, create_initial_board, find_legal_moves, winner_for_board)
-from ...features.othello.domain.game.types import (OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_ANIMATING, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_IDLE, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_TIME_CONTROL_NONE, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, OthelloGameState, OthelloSettings, other_side, side_name)
+from ..domain.game.rules import apply_move, counts_for_board, create_initial_board, find_legal_moves, winner_for_board
+from ..domain.game.types import OTHELLO_GAME_STATE_AI_TURN, OTHELLO_GAME_STATE_ANIMATING, OTHELLO_GAME_STATE_FINISHED, OTHELLO_GAME_STATE_IDLE, OTHELLO_GAME_STATE_PLAYER_TURN, OTHELLO_TIME_CONTROL_NONE, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, OthelloGameState, OthelloSettings, other_side, side_name
 
 
 def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
@@ -17,7 +17,6 @@ def _turn_status_for_player_side(player_side: int, current_turn: int) -> str:
 
 
 class OthelloMatchController:
-
     def __init__(self, *, default_settings: OthelloSettings | None = None, game_state: OthelloGameState | None = None) -> None:
         self._default_settings = (default_settings or OthelloSettings()).normalized()
         self._state = (game_state or OthelloGameState()).normalized()
@@ -64,6 +63,7 @@ class OthelloMatchController:
         if state.status != OTHELLO_GAME_STATE_ANIMATING or not state.animations:
             self._state = replace(state, animations=(), thinking=False).normalized()
             return self.game_state()
+
         self._state = replace(state, animations=(), thinking=False).normalized()
         self._state = self._resolve_turn_transition(message_prefix="Animation settled.")
         return self.game_state()
@@ -79,9 +79,11 @@ class OthelloMatchController:
                 elapsed = min(float(advanced.duration_s), float(advanced.elapsed_s) + step)
                 if elapsed + 1e-9 < float(advanced.duration_s):
                     next_animations.append(replace(advanced, elapsed_s=float(elapsed)).normalized())
+
             if next_animations:
                 self._state = replace(state, animations=tuple(next_animations)).normalized()
                 return self.game_state()
+
             self._state = replace(state, animations=()).normalized()
             self._state = self._resolve_turn_transition(message_prefix="Move resolved.")
             return self.game_state()

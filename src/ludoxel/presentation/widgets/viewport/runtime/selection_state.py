@@ -41,7 +41,7 @@ class ViewportSelectionState:
         t0 = time.perf_counter()
         self._cache_key = key
 
-        from ludoxel.features.my_world.domain.systems.build_system import pick_block
+        from ludoxel.shared.domain.world.block_pick import pick_block
 
         origin = session.player.eye_pos() if eye is None else eye
         yaw = float(session.player.yaw_deg) if yaw_deg is None else float(yaw_deg)

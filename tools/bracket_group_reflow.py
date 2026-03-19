@@ -6,8 +6,8 @@ from __future__ import annotations
 
 """
 Usage:
-    python tools/bracket_group_reflow.py --compress [--check] [--verbose] [--root <project_root>] [--src <source_root>]
-    python tools/bracket_group_reflow.py --expand [--check] [--verbose] [--root <project_root>] [--src <source_root>] [--indent <text>]
+    python tools/bracket_group_reflow.py --compress [--check] [--quiet] [--verbose] [--root <project_root>] [--src <source_root>]
+    python tools/bracket_group_reflow.py --expand [--check] [--quiet] [--verbose] [--root <project_root>] [--src <source_root>] [--indent <text>]
 """
 
 import argparse
@@ -87,7 +87,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root", type=Path, default=None, help="Project root. If omitted, I use the parent directory of this script.")
     parser.add_argument("--src", type=Path, default=None, help="Source root. If omitted, I use <root>/src/ludoxel.")
     parser.add_argument("--check", action="store_true", help="Do not write files. I exit with status 1 if any file would change.")
-    parser.add_argument("--verbose", action="store_true", help="Print every changed file path.")
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Do not print changed file paths. By default, I print every changed file path."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Retained for compatibility. Changed file paths are printed by default."
+    )
     parser.add_argument("--indent", type=str, default=DEFAULT_INDENT, help="Indentation unit used by --expand. Default is four spaces.")
     return parser.parse_args()
 
@@ -197,8 +206,11 @@ def joiner(prev: tokenize.TokenInfo, curr: tokenize.TokenInfo) -> str:
     return " "
 
 
-def compact_token_slice(token_slice: list[tokenize.TokenInfo], original: str, offsets: list[int]) -> str:
-    significant = [tok for tok in token_slice if tok.type not in SKIP_TOKEN_TYPES]
+def compact_significant_tokens(
+    significant: list[tokenize.TokenInfo],
+    original: str,
+    offsets: list[int],
+) -> str:
     if not significant:
         return ""
     parts = [significant[0].string]
@@ -212,6 +224,11 @@ def compact_token_slice(token_slice: list[tokenize.TokenInfo], original: str, of
             parts.append(raw_gap)
         parts.append(curr.string)
     return "".join(parts)
+
+
+def compact_token_slice(token_slice: list[tokenize.TokenInfo], original: str, offsets: list[int]) -> str:
+    significant = [tok for tok in token_slice if tok.type not in SKIP_TOKEN_TYPES]
+    return compact_significant_tokens(significant, original, offsets)
 
 
 def analyze_top_level_sequence(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> TopLevelSequenceAnalysis:
@@ -279,6 +296,42 @@ def leading_whitespace(text: str) -> str:
     return text[:index]
 
 
+def previous_significant_token(index: int, tokens: list[tokenize.TokenInfo]) -> tokenize.TokenInfo | None:
+    for i in range(index - 1, -1, -1):
+        tok = tokens[i]
+        if tok.type in SKIP_TOKEN_TYPES:
+            continue
+        return tok
+    return None
+
+
+def is_optional_from_import_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bool:
+    if node.kind != "(" or node.close_index is None:
+        return False
+    prev = previous_significant_token(node.open_index, tokens)
+    if prev is None:
+        return False
+    return prev.type == tokenize.NAME and prev.string == "import"
+
+
+def compact_optional_from_import_group(
+    node: GroupNode,
+    original: str,
+    tokens: list[tokenize.TokenInfo],
+    offsets: list[int],
+) -> str:
+    if node.close_index is None:
+        return original[node.start_offset : node.end_offset]
+    significant = [
+        tok
+        for tok in tokens[node.open_index + 1 : node.close_index]
+        if tok.type not in SKIP_TOKEN_TYPES
+    ]
+    if significant and significant[-1].type == tokenize.OP and significant[-1].string == ",":
+        significant = significant[:-1]
+    return compact_significant_tokens(significant, original, offsets)
+
+
 def render_region_compress(
     original: str,
     start_offset: int,
@@ -292,8 +345,18 @@ def render_region_compress(
     for node in sorted(nodes, key=lambda n: n.start_offset):
         parts.append(original[cursor : node.start_offset])
         if is_compressible_group(node, tokens):
-            token_slice = token_slice_for_node(node, tokens)
-            parts.append(compact_token_slice(token_slice, original, offsets))
+            if is_optional_from_import_group(node, tokens):
+                parts.append(
+                    compact_optional_from_import_group(
+                        node=node,
+                        original=original,
+                        tokens=tokens,
+                        offsets=offsets,
+                    )
+                )
+            else:
+                token_slice = token_slice_for_node(node, tokens)
+                parts.append(compact_token_slice(token_slice, original, offsets))
         else:
             parts.append(
                 render_region_compress(
@@ -570,6 +633,13 @@ def resolved_mode(args: argparse.Namespace) -> str:
     raise ValueError("either --compress or --expand is required")
 
 
+def display_path(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def main() -> int:
     args = parse_args()
     mode = resolved_mode(args)
@@ -584,6 +654,7 @@ def main() -> int:
         return 2
     changed_count = 0
     error_count = 0
+    show_changed_paths = not args.quiet
     for path in files:
         changed, error = process_file(path=path, mode=mode, indent_unit=args.indent, check_only=bool(args.check))
         if error is not None:
@@ -592,8 +663,8 @@ def main() -> int:
             continue
         if changed:
             changed_count += 1
-            if args.verbose:
-                print(path)
+            if show_changed_paths:
+                print(display_path(path, root))
     action = "would update" if args.check else "updated"
     print(f"{action}: {changed_count} file(s)")
     if error_count:

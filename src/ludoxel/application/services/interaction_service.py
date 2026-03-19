@@ -17,7 +17,7 @@ from ...shared.domain.blocks.structure.connectivity import make_fence_gate_state
 from ...shared.domain.blocks.structure.structural_rules import is_fence_gate
 from ...shared.domain.blocks.state.state_values import prop_as_bool
 
-from ...features.my_world.domain.systems.build_system import BlockPick, pick_block
+from ...shared.domain.world.block_pick import BlockPick, pick_block
 
 from .placement_policy import PlacementPolicy
 

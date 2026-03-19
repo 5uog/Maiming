@@ -4,6 +4,6 @@
 # FILE: src/ludoxel/application/services/metrics/__init__.py
 from __future__ import annotations
 
-from .system_metrics import (GpuUtilizationSampler, ProcessMemorySnapshot, SystemInfo, read_process_memory, read_system_info)
+from .system_metrics import GpuUtilizationSampler, ProcessMemorySnapshot, SystemInfo, read_process_memory, read_system_info
 
 __all__ = ["GpuUtilizationSampler", "ProcessMemorySnapshot", "SystemInfo", "read_process_memory", "read_system_info"]

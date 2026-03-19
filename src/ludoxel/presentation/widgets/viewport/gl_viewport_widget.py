@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 from ....application.context.play_space_context import PlaySpaceContext
 from ....application.context.runtime.runtime_preferences import RuntimePreferences
-from ....application.managers.othello_match_controller import OthelloMatchController
+from ....features.othello.application.othello_match_controller import OthelloMatchController
 from ....application.tasks.fixed_step_runner import FixedStepRunner
 from ....application.tasks.state_persistence import apply_persisted_state_if_present, save_state
 from ....shared.core.math.vec3 import Vec3

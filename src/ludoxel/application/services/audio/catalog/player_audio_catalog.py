@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from ....context.runtime.audio_preferences import AUDIO_CATEGORY_PLAYER
-from ..audio_types import (AudioSamplePool, DEFAULT_SPATIAL_DISTANCE_CUTOFF, SELECTION_RANDOM, SELECTION_ROUND_ROBIN, indexed_paths, make_audio_pool)
+from ..audio_types import AudioSamplePool, DEFAULT_SPATIAL_DISTANCE_CUTOFF, SELECTION_RANDOM, SELECTION_ROUND_ROBIN, indexed_paths, make_audio_pool
 
 PLAYER_EVENT_LAND = "land"
 PLAYER_EVENT_LAND_SMALL = "land_small"

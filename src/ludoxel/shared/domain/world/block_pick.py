@@ -1,23 +1,23 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: src/ludoxel/features/my_world/domain/systems/build_system.py
+# FILE: src/ludoxel/shared/domain/world/block_pick.py
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .....shared.core.math.vec3 import Vec3
-from .....shared.core.spatial.voxel.voxel_dda import dda_grid_traverse
-from .....shared.core.spatial.voxel.voxel_faces import face_neighbor_offset, FACE_POS_Y
-from .....shared.core.spatial.geometry.ray import Ray
-from .....shared.core.spatial.geometry.ray_aabb import ray_aabb_face
+from ...core.math.vec3 import Vec3
+from ...core.spatial.voxel.voxel_dda import dda_grid_traverse
+from ...core.spatial.voxel.voxel_faces import face_neighbor_offset, FACE_POS_Y
+from ...core.spatial.geometry.ray import Ray
+from ...core.spatial.geometry.ray_aabb import ray_aabb_face
 
-from .....shared.domain.world.world_state import WorldState
-from .....shared.domain.blocks.registry.block_registry import BlockRegistry
-from .....shared.domain.blocks.state.state_codec import parse_state
-from .....shared.domain.blocks.state.state_view import registry_def_lookup, world_state_getter
-from .....shared.domain.blocks.models.api import pick_aabbs_for_block
-from .....shared.domain.blocks.structure.structural_rules import is_fence, is_wall
+from .world_state import WorldState
+from ..blocks.registry.block_registry import BlockRegistry
+from ..blocks.state.state_codec import parse_state
+from ..blocks.state.state_view import registry_def_lookup, world_state_getter
+from ..blocks.models.api import pick_aabbs_for_block
+from ..blocks.structure.structural_rules import is_fence, is_wall
 
 
 @dataclass(frozen=True)

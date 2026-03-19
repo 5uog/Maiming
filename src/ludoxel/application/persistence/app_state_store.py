@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .app_state_schema import (AppState, PersistedOthelloSpace, PersistedPlaySpace, PlayerStateFile, WorldStateFile)
+from .app_state_schema import AppState, PersistedOthelloSpace, PersistedPlaySpace, PlayerStateFile, WorldStateFile
 from .json_file_store import JsonFileStore
 
 

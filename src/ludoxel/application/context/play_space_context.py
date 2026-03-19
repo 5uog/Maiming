@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ...shared.domain.blocks.registry.default_registry import create_default_registry
-from ...shared.domain.play_space import (PLAY_SPACE_IDS, PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, normalize_play_space_id)
+from ...shared.domain.play_space import PLAY_SPACE_IDS, PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, normalize_play_space_id
 from ..managers.session_manager import SessionManager
 from .my_world.session_factory import create_my_world_session
 from .othello.session_factory import create_othello_session

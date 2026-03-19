@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from ..block_definition import BlockTextures
 from ..registry.block_registry import BlockRegistry
-from ..families.wood_types import (MOSAIC_TYPES, WOOD_TYPES, WoodType, fence_gate_id, fence_id, planks_id, slab_id, stairs_id)
+from ..families.wood_types import MOSAIC_TYPES, WOOD_TYPES, WoodType, fence_gate_id, fence_id, planks_id, slab_id, stairs_id
 from .variant_recipes import CatalogVariantRecipe, register_catalog_variants
 
 _WOOD_TAGS = ("wood",)

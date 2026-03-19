@@ -7,14 +7,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...shared.core.math.vec3 import Vec3
-from ...features.othello.domain.game.board import (OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint)
+from ...features.othello.domain.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
 from ...features.othello.domain.game.types import OthelloGameState
 from ...shared.domain.play_space import normalize_play_space_id
-from ..persistence import (AppState, AppStateStore, PersistedOthelloSpace, PersistedPlaySpace, PersistedPlayer, PersistedWorld)
+from ..persistence import AppState, AppStateStore, PersistedOthelloSpace, PersistedPlaySpace, PersistedPlayer, PersistedWorld
 from ..context.play_space_context import PlaySpaceContext
 from ..context.runtime.runtime_preferences import RuntimePreferences, coerce_runtime_preferences
 from ..managers.session_manager import SessionManager
-from ..pipelines.runtime_state_pipeline import (apply_persisted_settings_to_session, apply_runtime_to_renderer, persisted_inventory_from_runtime, persisted_settings_from_runtime, runtime_preferences_from_app_state)
+from ..pipelines.runtime_state_pipeline import apply_persisted_settings_to_session, apply_runtime_to_renderer, persisted_inventory_from_runtime, persisted_settings_from_runtime, runtime_preferences_from_app_state
 
 
 def _load_player_into_session(*, session: SessionManager, player: PersistedPlayer, allow_flying: bool) -> None:

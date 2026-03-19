@@ -6,13 +6,10 @@ from __future__ import annotations
 
 from importlib import import_module
 
-__all__ = ["OthelloMatchController", "SessionManager", "SessionStepResult"]
+__all__ = ["SessionManager", "SessionStepResult"]
 
 
 def __getattr__(name: str):
-    if name == "OthelloMatchController":
-        module = import_module(".othello_match_controller", __name__)
-        return getattr(module, name)
     if name in {"SessionManager", "SessionStepResult"}:
         module = import_module(".session_manager", __name__)
         return getattr(module, name)

@@ -16,14 +16,14 @@ from PyQt6.QtMultimedia import QAudioOutput, QMediaPlayer, QSoundEffect
 from ...context.runtime.audio_preferences import AUDIO_CATEGORY_AMBIENT, AudioPreferences
 from ....shared.core.math.vec3 import Vec3
 from ....shared.domain.blocks.registry.block_registry import BlockRegistry
-from ....shared.domain.blocks.sound_groups import (DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates)
+from ....shared.domain.blocks.sound_groups import DEFAULT_BLOCK_SOUND_GROUP, iter_sound_group_candidates
 from ....shared.domain.blocks.state.state_codec import parse_state
 from ....shared.domain.blocks.state.state_values import prop_as_bool
 from ....shared.domain.play_space import is_my_world_space
 from .catalog.ambient_audio_catalog import AMBIENT_KEY_MY_WORLD, AMBIENT_SOUND_CATALOG
 from .audio_types import AudioSamplePool, SELECTION_ROUND_ROBIN
-from .catalog.material_audio_catalog import (BLOCK_EVENT_BREAK, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_PLACE, BLOCK_SOUND_CATALOG, PLAYER_EVENT_STEP, PLAYER_SURFACE_SOUND_CATALOG)
-from .catalog.player_audio_catalog import (PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG)
+from .catalog.material_audio_catalog import BLOCK_EVENT_BREAK, BLOCK_EVENT_INTERACT_CLOSE, BLOCK_EVENT_INTERACT_OPEN, BLOCK_EVENT_PLACE, BLOCK_SOUND_CATALOG, PLAYER_EVENT_STEP, PLAYER_SURFACE_SOUND_CATALOG
+from .catalog.player_audio_catalog import PLAYER_EVENT_LAND, PLAYER_EVENT_LAND_BIG, PLAYER_EVENT_LAND_SMALL, PLAYER_EVENT_SOUND_CATALOG
 
 
 @dataclass
