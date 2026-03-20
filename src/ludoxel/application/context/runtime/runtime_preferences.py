@@ -13,7 +13,7 @@ from ....features.othello.domain.inventory.hotbar_defaults import default_othell
 from ....features.othello.domain.inventory.special_items import is_special_item_id
 from ....features.othello.domain.game.types import OthelloSettings
 from ....shared.domain.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
-from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ....shared.application.rendering.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 from ...handlers.keybinds import KeybindSettings
 from .audio_preferences import AudioPreferences
 

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollAre
 
 from ....application.handlers.keybinds import action_display_name
 from ...config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
-from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
+from ....shared.application.rendering.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
 from ..common.settings_controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
 from .page_builders import build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
 from .value_sync import sync_overlay_values

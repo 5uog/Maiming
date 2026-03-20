@@ -10,7 +10,7 @@ from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QCursor, QKeyEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 
-from .....infrastructure.platform.qt_input_adapter import InputFrame, QtInputAdapter
+from .....shared.presentation.qt.qt_input_adapter import InputFrame, QtInputAdapter
 
 
 @dataclass

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from ....application.context.runtime.render_snapshot import PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ....shared.domain.blocks.registry.block_registry import BlockRegistry
-from ....infrastructure.rendering.opengl.facade.player_render_state import FirstPersonRenderState, PlayerRenderState
+from ....shared.application.rendering.player_render_state import FirstPersonRenderState, PlayerRenderState
 from .first_person_motion import FirstPersonMotionSample
 
 

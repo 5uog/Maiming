@@ -4,7 +4,7 @@
 # FILE: src/ludoxel/presentation/widgets/settings/cloud_flow_options.py
 from __future__ import annotations
 
-from ....infrastructure.rendering.opengl.facade.cloud_flow_direction import CLOUD_FLOW_DIRECTIONS, DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ....shared.application.rendering.cloud_flow_direction import CLOUD_FLOW_DIRECTIONS, DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 _LABELS: dict[str, str] = {"east_to_west": "East -> West", "west_to_east": "West -> East", "south_to_north": "South -> North", "north_to_south": "North -> South"}
 
