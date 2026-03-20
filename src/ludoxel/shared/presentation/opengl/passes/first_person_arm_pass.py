@@ -8,12 +8,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.presentation.opengl.resources.image_texture import ImageTexture
-from ludoxel.shared.application.rendering.first_person_geometry import build_first_person_arm_face_rows
-from ludoxel.shared.application.rendering.player_render_state import FirstPersonRenderState
-from ludoxel.shared.presentation.opengl.passes.textured_face_pass import TexturedFacePass
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
+from ....core.math.vec3 import Vec3
+from ..resources.image_texture import ImageTexture
+from ....application.rendering.first_person_geometry import build_first_person_arm_face_rows
+from ....application.rendering.player_render_state import FirstPersonRenderState
+from .textured_face_pass import TexturedFacePass
+from ..gl.shader_program import ShaderProgram
 
 
 @dataclass

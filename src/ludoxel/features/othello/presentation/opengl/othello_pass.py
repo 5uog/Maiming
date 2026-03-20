@@ -10,15 +10,15 @@ import numpy as np
 
 from OpenGL.GL import GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LEQUAL, GL_LESS, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_TRIANGLES, glActiveTexture, glBindTexture, glBindVertexArray, glBlendFunc, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.presentation.opengl.gl.colored_mesh_buffer import ColoredMeshBuffer
-from ludoxel.shared.presentation.opengl.gl.gl_state_guard import GLStateGuard
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
-from ludoxel.features.othello.application.rendering.othello_scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import ShadowParams
-from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
-from ludoxel.shared.presentation.opengl.runtime.render_metrics import PassFrameMetrics
-from ludoxel.shared.presentation.opengl.passes.shadow_map_pass import ShadowMapInfo
+from .....shared.core.math.vec3 import Vec3
+from .....shared.presentation.opengl.gl.colored_mesh_buffer import ColoredMeshBuffer
+from .....shared.presentation.opengl.gl.gl_state_guard import GLStateGuard
+from .....shared.presentation.opengl.gl.shader_program import ShaderProgram
+from ...application.rendering.othello_scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
+from .....shared.presentation.opengl.runtime.gl_renderer_params import ShadowParams
+from ...application.rendering.othello_render_state import OthelloRenderState
+from .....shared.presentation.opengl.runtime.render_metrics import PassFrameMetrics
+from .....shared.presentation.opengl.passes.shadow_map_pass import ShadowMapInfo
 
 
 @dataclass

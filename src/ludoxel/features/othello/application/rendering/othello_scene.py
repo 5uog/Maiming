@@ -8,10 +8,10 @@ import math
 
 import numpy as np
 
-from ludoxel.features.othello.domain.game.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
-from ludoxel.features.othello.domain.game.types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
-from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
-from ludoxel.shared.core.math.transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
+from ...domain.game.board import BOARD_SIZE as OTHELLO_BOARD_SIZE, OTHELLO_BOARD_SURFACE_Y as OTHELLO_WORLD_BOARD_TOP_Y, OTHELLO_GRASS_TOP_Y as OTHELLO_WORLD_GRASS_TOP_Y, square_center
+from ...domain.game.types import BOARD_CELL_COUNT, SIDE_BLACK, SIDE_WHITE, OthelloAnimationState, normalize_side
+from .othello_render_state import OthelloRenderState
+from .....shared.core.math.transform_matrices import compose_matrices, rotate_x_deg_matrix, scale_matrix, translate_matrix
 
 OTHELLO_SQUARE_SIZE: float = 1.0
 OTHELLO_HALF_SPAN: float = (OTHELLO_BOARD_SIZE * OTHELLO_SQUARE_SIZE) * 0.5

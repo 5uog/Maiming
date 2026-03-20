@@ -12,11 +12,11 @@ import numpy as np
 
 from OpenGL.GL import glGenBuffers, glDeleteBuffers, glMultiDrawArraysIndirect, glBindBuffer, glBindVertexArray, GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW, GL_TRIANGLES
 
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey, normalize_chunk_key
-from ludoxel.shared.rendering.face_bucket_layout import FACE_COUNT
-from ludoxel.shared.presentation.opengl.gl.array_view import as_uint32_rows, copy_float32_rows
-from ludoxel.shared.presentation.opengl.gl.buffer_upload import upload_array_buffer
-from ludoxel.shared.presentation.opengl.gl.mesh_buffer import MeshBuffer
+from ....core.spatial.chunking.chunk_grid import ChunkKey, normalize_chunk_key
+from ....rendering.face_bucket_layout import FACE_COUNT
+from ..gl.array_view import as_uint32_rows, copy_float32_rows
+from ..gl.buffer_upload import upload_array_buffer
+from ..gl.mesh_buffer import MeshBuffer
 
 
 @dataclass(frozen=True)

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey, chunk_bounds
+from ..chunking.chunk_grid import ChunkKey, chunk_bounds
 
 
 def chunk_corners_homogeneous(chunk_key: ChunkKey) -> np.ndarray:

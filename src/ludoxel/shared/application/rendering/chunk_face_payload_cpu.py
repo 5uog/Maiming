@@ -8,8 +8,8 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from ludoxel.shared.domain.blocks.block_definition import BlockDefinition
-from ludoxel.shared.application.rendering.chunk_face_payload_sources import BucketCounts, build_chunk_face_sources, split_face_sources_to_buckets
+from ...domain.blocks.block_definition import BlockDefinition
+from .chunk_face_payload_sources import BucketCounts, build_chunk_face_sources, split_face_sources_to_buckets
 
 UVRect = tuple[float, float, float, float]
 UVLookup = Callable[[str, int], UVRect]

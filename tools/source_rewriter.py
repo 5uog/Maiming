@@ -1,14 +1,8 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 
-# FILE: tools/bracket_group_reflow.py
+# FILE: tools/source_rewriter.py
 from __future__ import annotations
-
-"""
-Usage:
-    python tools/bracket_group_reflow.py --compress [--check] [--quiet] [--verbose] [--root <project_root>] [--src <source_root>]
-    python tools/bracket_group_reflow.py --expand [--check] [--quiet] [--verbose] [--root <project_root>] [--src <source_root>] [--indent <text>]
-"""
 
 import argparse
 import ast
@@ -21,11 +15,16 @@ from pathlib import Path
 SKIP_TOKEN_TYPES = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT, tokenize.ENDMARKER}
 TRANSFORM_COMPRESS = "compress"
 TRANSFORM_EXPAND = "expand"
+BRACKETS_KEEP = "keep"
+IMPORTS_KEEP = "keep"
+IMPORTS_RELATIVE = "relative"
+IMPORTS_ABSOLUTE = "absolute"
 OPEN_TO_CLOSE = {"(": ")", "[": "]", "{": "}"}
 CLOSE_TO_OPEN = {close: open_ for open_, close in OPEN_TO_CLOSE.items()}
 ALL_OPEN = set(OPEN_TO_CLOSE)
 ALL_CLOSE = set(CLOSE_TO_OPEN)
 DEFAULT_INDENT = "    "
+DEFAULT_PACKAGE_ROOT = "ludoxel"
 
 
 @dataclass
@@ -65,27 +64,65 @@ class OutputBuffer:
         return leading_whitespace(self.current_line)
 
 
+@dataclass(frozen=True)
+class Replacement:
+    start: int
+    end: int
+    text: str
+
+
+@dataclass(frozen=True)
+class ImportRewriteContext:
+    root: Path
+    src_root: Path
+    package_root: str = DEFAULT_PACKAGE_ROOT
+
+
+@dataclass(frozen=True)
+class ModuleLocation:
+    package_parts: tuple[str, ...]
+    module_parts: tuple[str, ...]
+    is_package_init: bool
+
+
+@dataclass(frozen=True)
+class RelativeModuleSpec:
+    level: int
+    module: str | None
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Reflow bracket groups in src/ludoxel/**/*.py. "
-            "Use --compress to contract multiline () / [] groups into one line, "
-            "or --expand to reintroduce a canonical multiline layout."
+            "Rewrite Python source under src/ludoxel/**/*.py. "
+            "You may independently rewrite bracket-group layout and package import style."
         )
     )
-    mode_group = parser.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument(
+    parser.add_argument(
+        "--brackets",
+        choices=[BRACKETS_KEEP, TRANSFORM_COMPRESS, TRANSFORM_EXPAND],
+        default=BRACKETS_KEEP,
+        help="Bracket-group rewrite mode. Default is keep."
+    )
+    parser.add_argument(
+        "--imports",
+        choices=[IMPORTS_KEEP, IMPORTS_RELATIVE, IMPORTS_ABSOLUTE],
+        default=IMPORTS_KEEP,
+        help="Import rewrite mode for package-local imports. Relative mode first canonicalizes through absolute imports. Default is keep."
+    )
+    parser.add_argument(
         "--compress",
         action="store_true",
-        help="Collapse eligible multiline () / [] groups into one line and remove safe trailing commas."
+        help="Compatibility alias for --brackets compress."
     )
-    mode_group.add_argument(
+    parser.add_argument(
         "--expand",
         action="store_true",
-        help="Expand eligible comma-separated () / [] groups into a canonical multiline form."
+        help="Compatibility alias for --brackets expand."
     )
     parser.add_argument("--root", type=Path, default=None, help="Project root. If omitted, I use the parent directory of this script.")
     parser.add_argument("--src", type=Path, default=None, help="Source root. If omitted, I use <root>/src/ludoxel.")
+    parser.add_argument("--package-root", type=str, default=DEFAULT_PACKAGE_ROOT, help="Top-level package name for import rewriting. Default is ludoxel.")
     parser.add_argument("--check", action="store_true", help="Do not write files. I exit with status 1 if any file would change.")
     parser.add_argument(
         "--quiet",
@@ -97,8 +134,15 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Retained for compatibility. Changed file paths are printed by default."
     )
-    parser.add_argument("--indent", type=str, default=DEFAULT_INDENT, help="Indentation unit used by --expand. Default is four spaces.")
-    return parser.parse_args()
+    parser.add_argument("--indent", type=str, default=DEFAULT_INDENT, help="Indentation unit used by --brackets expand. Default is four spaces.")
+    args = parser.parse_args()
+    if args.compress and args.expand:
+        parser.error("--compress and --expand cannot be used together")
+    if args.compress:
+        args.brackets = TRANSFORM_COMPRESS
+    if args.expand:
+        args.brackets = TRANSFORM_EXPAND
+    return args
 
 
 def detect_encoding(path: Path) -> str:
@@ -573,48 +617,325 @@ def drop_safe_trailing_commas(text: str) -> str:
     return current
 
 
-def transform_source(text: str, mode: str, indent_unit: str) -> str:
+def resolve_module_location(path: Path, context: ImportRewriteContext) -> ModuleLocation | None:
     try:
-        tokens = tokenize_text(text)
-    except tokenize.TokenError:
-        return text
+        rel = path.resolve().relative_to(context.src_root.resolve())
+    except ValueError:
+        return None
+    parts = rel.with_suffix("").parts
+    if not parts:
+        return None
+    if parts[0] != context.package_root:
+        package_parts = (context.package_root,) + tuple(parts[:-1])
+        module_parts = tuple(parts)
+        is_init = parts[-1] == "__init__"
+        if is_init:
+            package_parts = (context.package_root,) + tuple(parts[:-1])
+            module_parts = (context.package_root,) + tuple(parts[:-1])
+        return ModuleLocation(package_parts=package_parts, module_parts=module_parts, is_package_init=is_init)
+    is_init = parts[-1] == "__init__"
+    if is_init:
+        package_parts = tuple(parts[:-1])
+        module_parts = tuple(parts[:-1])
+    else:
+        package_parts = tuple(parts[:-1])
+        module_parts = tuple(parts)
+    return ModuleLocation(package_parts=package_parts, module_parts=module_parts, is_package_init=is_init)
+
+
+def split_dotted_name(name: str | None) -> tuple[str, ...]:
+    if not name:
+        return ()
+    return tuple(part for part in name.split(".") if part)
+
+
+def common_prefix_len(a: tuple[str, ...], b: tuple[str, ...]) -> int:
+    size = min(len(a), len(b))
+    index = 0
+    while index < size and a[index] == b[index]:
+        index += 1
+    return index
+
+
+def resolve_absolute_module_from_importfrom(node: ast.ImportFrom, module_location: ModuleLocation) -> tuple[str, ...] | None:
+    if node.level == 0:
+        parts = split_dotted_name(node.module)
+        return parts or None
+    anchor = module_location.package_parts
+    ascend = max(node.level - 1, 0)
+    if ascend > len(anchor):
+        return None
+    base = anchor[: len(anchor) - ascend]
+    target = base + split_dotted_name(node.module)
+    return target or None
+
+
+def compute_relative_module_spec(current_package: tuple[str, ...], target_module: tuple[str, ...]) -> RelativeModuleSpec | None:
+    if not current_package or not target_module:
+        return None
+    prefix_len = common_prefix_len(current_package, target_module)
+    level = len(current_package) - prefix_len + 1
+    if level < 1:
+        return None
+    tail = target_module[prefix_len:]
+    return RelativeModuleSpec(level=level, module=".".join(tail) or None)
+
+
+def format_relative_module(spec: RelativeModuleSpec) -> str:
+    dots = "." * spec.level
+    return dots if spec.module is None else f"{dots}{spec.module}"
+
+
+def render_aliases(names: list[ast.alias]) -> str:
+    parts: list[str] = []
+    for alias in names:
+        if alias.asname:
+            parts.append(f"{alias.name} as {alias.asname}")
+        else:
+            parts.append(alias.name)
+    return ", ".join(parts)
+
+
+def importfrom_to_relative_text(node: ast.ImportFrom, module_location: ModuleLocation) -> str | None:
+    absolute_module = resolve_absolute_module_from_importfrom(node, module_location)
+    if not absolute_module:
+        return None
+    if absolute_module[0] != module_location.package_parts[0]:
+        return None
+    spec = compute_relative_module_spec(module_location.package_parts, absolute_module)
+    if spec is None:
+        return None
+    return f"from {format_relative_module(spec)} import {render_aliases(node.names)}"
+
+
+def importfrom_to_absolute_text(node: ast.ImportFrom, module_location: ModuleLocation) -> str | None:
+    absolute_module = resolve_absolute_module_from_importfrom(node, module_location)
+    if not absolute_module:
+        return None
+    if absolute_module[0] != module_location.package_parts[0]:
+        return None
+    module_name = ".".join(absolute_module)
+    return f"from {module_name} import {render_aliases(node.names)}"
+
+
+def import_to_relative_lines(node: ast.Import, module_location: ModuleLocation) -> list[str] | None:
+    lines: list[str] = []
+    package_root = module_location.package_parts[0] if module_location.package_parts else None
+    if package_root is None:
+        return None
+    for alias in node.names:
+        if alias.asname is None:
+            return None
+        module_parts = split_dotted_name(alias.name)
+        if not module_parts or module_parts[0] != package_root:
+            return None
+        if len(module_parts) < 2:
+            return None
+        spec = compute_relative_module_spec(module_location.package_parts, module_parts[:-1])
+        if spec is None:
+            return None
+        imported_name = module_parts[-1]
+        lines.append(f"from {format_relative_module(spec)} import {imported_name} as {alias.asname}")
+    return lines
+
+
+def import_to_absolute_lines(node: ast.Import) -> list[str] | None:
+    if not node.names:
+        return None
+    return [f"import {render_aliases(node.names)}"]
+
+
+def node_offsets(node: ast.AST, offsets: list[int]) -> tuple[int, int] | None:
+    lineno = getattr(node, "lineno", None)
+    col_offset = getattr(node, "col_offset", None)
+    end_lineno = getattr(node, "end_lineno", None)
+    end_col_offset = getattr(node, "end_col_offset", None)
+    if None in {lineno, col_offset, end_lineno, end_col_offset}:
+        return None
+    return to_offset(offsets, lineno, col_offset), to_offset(offsets, end_lineno, end_col_offset)
+
+
+def line_start_offset(text: str, offset: int) -> int:
+    index = text.rfind("\n", 0, offset)
+    return 0 if index < 0 else index + 1
+
+
+def line_end_offset(text: str, offset: int) -> int:
+    index = text.find("\n", offset)
+    return len(text) if index < 0 else index + 1
+
+
+def statement_indentation(text: str, start: int) -> str:
+    line_start = line_start_offset(text, start)
+    return leading_whitespace(text[line_start:start])
+
+
+def segment_has_comment(text: str, start: int, end: int) -> bool:
+    segment = text[start:end]
+    for line in segment.splitlines():
+        comment_index = line.find("#")
+        if comment_index < 0:
+            continue
+        prefix = line[:comment_index]
+        if prefix.count('"') % 2 == 0 and prefix.count("'") % 2 == 0:
+            return True
+    return False
+
+
+def build_import_replacements(text: str, path: Path, context: ImportRewriteContext, mode: str) -> list[Replacement]:
+    if mode == IMPORTS_KEEP:
+        return []
+    try:
+        tree = ast.parse(text, type_comments=True)
+    except SyntaxError:
+        return []
     offsets = offset_table(text)
+    module_location = resolve_module_location(path, context)
+    if module_location is None or not module_location.package_parts:
+        return []
+    replacements: list[Replacement] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Import, ast.ImportFrom)):
+            continue
+        span = node_offsets(node, offsets)
+        if span is None:
+            continue
+        start, end = span
+        if segment_has_comment(text, start, end):
+            continue
+        indent = statement_indentation(text, start)
+        replacement_lines: list[str] | None = None
+        if mode == IMPORTS_RELATIVE:
+            if isinstance(node, ast.ImportFrom):
+                rendered = importfrom_to_relative_text(node, module_location)
+                if rendered is None:
+                    continue
+                replacement_lines = [rendered]
+            else:
+                replacement_lines = import_to_relative_lines(node, module_location)
+                if replacement_lines is None:
+                    continue
+        elif mode == IMPORTS_ABSOLUTE:
+            if isinstance(node, ast.ImportFrom):
+                rendered = importfrom_to_absolute_text(node, module_location)
+                if rendered is None:
+                    continue
+                replacement_lines = [rendered]
+            else:
+                replacement_lines = import_to_absolute_lines(node)
+                if replacement_lines is None:
+                    continue
+        else:
+            continue
+        replacement_text = "\n".join(f"{indent}{line}" for line in replacement_lines)
+        replacements.append(Replacement(start=start, end=end, text=replacement_text))
+    replacements.sort(key=lambda item: item.start)
+    filtered: list[Replacement] = []
+    last_end = -1
+    for repl in replacements:
+        if repl.start < last_end:
+            continue
+        filtered.append(repl)
+        last_end = repl.end
+    return filtered
+
+
+def apply_replacements(text: str, replacements: list[Replacement]) -> str:
+    if not replacements:
+        return text
+    parts: list[str] = []
+    cursor = 0
+    for repl in replacements:
+        parts.append(text[cursor:repl.start])
+        parts.append(repl.text)
+        cursor = repl.end
+    parts.append(text[cursor:])
+    return "".join(parts)
+
+
+def rewrite_imports(text: str, path: Path, context: ImportRewriteContext, mode: str) -> str:
+    replacements = build_import_replacements(text, path, context, mode)
+    if not replacements:
+        return text
+    candidate = apply_replacements(text, replacements)
+    if ast_signature(candidate) is None:
+        return text
+    return candidate
+
+
+def rewrite_imports_pipeline(text: str, path: Path, context: ImportRewriteContext, mode: str) -> str:
+    if mode == IMPORTS_KEEP:
+        return text
+    if mode == IMPORTS_ABSOLUTE:
+        return rewrite_imports(text, path, context, IMPORTS_ABSOLUTE)
+    if mode == IMPORTS_RELATIVE:
+        canonical = rewrite_imports(text, path, context, IMPORTS_ABSOLUTE)
+        return rewrite_imports(canonical, path, context, IMPORTS_RELATIVE)
+    raise ValueError(f"unsupported import mode: {mode}")
+
+
+def transform_source(text: str, path: Path, *, bracket_mode: str, indent_unit: str, import_mode: str, import_context: ImportRewriteContext) -> str:
+    current = text
+    if import_mode != IMPORTS_KEEP:
+        current = rewrite_imports_pipeline(current, path, import_context, import_mode)
+    try:
+        tokens = tokenize_text(current)
+    except tokenize.TokenError:
+        return current
+    offsets = offset_table(current)
     roots = build_group_tree(tokens)
     annotate_group_offsets(roots, tokens, offsets)
-    if mode == TRANSFORM_COMPRESS:
+    if bracket_mode == TRANSFORM_COMPRESS:
         compressed = render_region_compress(
-            original=text,
+            original=current,
             start_offset=0,
-            end_offset=len(text),
+            end_offset=len(current),
             nodes=roots,
             tokens=tokens,
             offsets=offsets,
         )
         return drop_safe_trailing_commas(compressed)
-    if mode == TRANSFORM_EXPAND:
+    if bracket_mode == TRANSFORM_EXPAND:
         return render_region_expand_to_string(
-            original=text,
+            original=current,
             start_offset=0,
-            end_offset=len(text),
+            end_offset=len(current),
             nodes=roots,
             tokens=tokens,
             offsets=offsets,
             indent_unit=indent_unit,
             initial_line_prefix="",
         )
-    raise ValueError(f"unsupported mode: {mode}")
+    if bracket_mode == BRACKETS_KEEP:
+        return current
+    raise ValueError(f"unsupported bracket mode: {bracket_mode}")
 
 
 def iter_python_files(src_root: Path) -> list[Path]:
     return sorted(path for path in src_root.rglob("*.py") if path.is_file())
 
 
-def process_file(path: Path, mode: str, indent_unit: str, *, check_only: bool = False) -> tuple[bool, str | None]:
+def process_file(
+    path: Path,
+    *,
+    bracket_mode: str,
+    indent_unit: str,
+    import_mode: str,
+    import_context: ImportRewriteContext,
+    check_only: bool = False,
+) -> tuple[bool, str | None]:
     try:
         original, encoding = read_python_text(path)
     except Exception as exc:
         return False, f"read failed: {exc}"
-    rewritten = transform_source(original, mode, indent_unit)
+    rewritten = transform_source(
+        original,
+        path,
+        bracket_mode=bracket_mode,
+        indent_unit=indent_unit,
+        import_mode=import_mode,
+        import_context=import_context,
+    )
     if rewritten == original:
         return False, None
     if not check_only:
@@ -623,14 +944,6 @@ def process_file(path: Path, mode: str, indent_unit: str, *, check_only: bool = 
         except Exception as exc:
             return False, f"write failed: {exc}"
     return True, None
-
-
-def resolved_mode(args: argparse.Namespace) -> str:
-    if args.compress:
-        return TRANSFORM_COMPRESS
-    if args.expand:
-        return TRANSFORM_EXPAND
-    raise ValueError("either --compress or --expand is required")
 
 
 def display_path(path: Path, root: Path) -> str:
@@ -642,9 +955,8 @@ def display_path(path: Path, root: Path) -> str:
 
 def main() -> int:
     args = parse_args()
-    mode = resolved_mode(args)
     root = Path(args.root).resolve() if args.root is not None else Path(__file__).resolve().parent.parent
-    src_root = Path(args.src).resolve() if args.src is not None else root / "src" / "ludoxel"
+    src_root = Path(args.src).resolve() if args.src is not None else root / "src" / args.package_root
     if not src_root.is_dir():
         print(f"error: source root was not found: {src_root}", file=sys.stderr)
         return 2
@@ -652,11 +964,19 @@ def main() -> int:
     if not files:
         print(f"error: no .py files were found under {src_root}", file=sys.stderr)
         return 2
+    import_context = ImportRewriteContext(root=root, src_root=src_root, package_root=args.package_root)
     changed_count = 0
     error_count = 0
     show_changed_paths = not args.quiet
     for path in files:
-        changed, error = process_file(path=path, mode=mode, indent_unit=args.indent, check_only=bool(args.check))
+        changed, error = process_file(
+            path=path,
+            bracket_mode=args.brackets,
+            indent_unit=args.indent,
+            import_mode=args.imports,
+            import_context=import_context,
+            check_only=bool(args.check),
+        )
         if error is not None:
             error_count += 1
             print(f"[error] {path}: {error}", file=sys.stderr)

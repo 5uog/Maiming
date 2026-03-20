@@ -10,33 +10,33 @@ import time
 import numpy as np
 from OpenGL.GL import glEnable, glDepthFunc, GL_DEPTH_TEST, GL_LESS
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.domain.blocks.registry.block_registry import BlockRegistry
-from ludoxel.shared.domain.blocks.state.state_codec import parse_state
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey
-from ludoxel.shared.presentation.opengl.compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
-from ludoxel.shared.presentation.opengl.passes.cloud_pass import CloudPass
-from ludoxel.shared.presentation.opengl.passes.first_person_arm_pass import FirstPersonArmPass
-from ludoxel.shared.presentation.opengl.passes.held_block_pass import HeldBlockPass
-from ludoxel.features.othello.presentation.opengl.othello_pass import OthelloPass
-from ludoxel.shared.presentation.opengl.passes.player_model_pass import PlayerModelPass
-from ludoxel.shared.presentation.opengl.passes.selection_pass import SelectionPass
-from ludoxel.shared.presentation.opengl.passes.shadow_map_pass import ShadowMapPass
-from ludoxel.shared.presentation.opengl.passes.sun_pass import SunPass
-from ludoxel.shared.presentation.opengl.passes.world_pass import WorldPass
-from ludoxel.shared.presentation.opengl.pipeline.frame_pipeline import FramePipeline
-from ludoxel.shared.application.rendering.selection_outline_builder import SelectionOutlineBuilder
-from ludoxel.shared.rendering.face_bucket_layout import BucketCounts
-from ludoxel.shared.presentation.opengl.runtime.gl_info_probe import GLInfoSnapshot, probe_gl_info
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import GLRendererParams
-from ludoxel.shared.presentation.opengl.runtime.gl_resources import GLResources
-from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
-from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
-from ludoxel.shared.presentation.opengl.runtime.render_metrics import RendererFrameMetrics
-from ludoxel.shared.presentation.opengl.runtime.render_state import RendererRuntimeState
-from ludoxel.shared.presentation.opengl.runtime.block_visual_resolver import BlockVisualResolver
-from ludoxel.shared.presentation.opengl.runtime.selection_controller import SelectionController
-from ludoxel.shared.presentation.opengl.runtime.texture_animation_controller import TextureAnimationController
+from ....core.math.vec3 import Vec3
+from ....domain.blocks.registry.block_registry import BlockRegistry
+from ....domain.blocks.state.state_codec import parse_state
+from ....core.spatial.chunking.chunk_grid import ChunkKey
+from ..compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
+from ..passes.cloud_pass import CloudPass
+from ..passes.first_person_arm_pass import FirstPersonArmPass
+from ..passes.held_block_pass import HeldBlockPass
+from .....features.othello.presentation.opengl.othello_pass import OthelloPass
+from ..passes.player_model_pass import PlayerModelPass
+from ..passes.selection_pass import SelectionPass
+from ..passes.shadow_map_pass import ShadowMapPass
+from ..passes.sun_pass import SunPass
+from ..passes.world_pass import WorldPass
+from ..pipeline.frame_pipeline import FramePipeline
+from ....application.rendering.selection_outline_builder import SelectionOutlineBuilder
+from ....rendering.face_bucket_layout import BucketCounts
+from .gl_info_probe import GLInfoSnapshot, probe_gl_info
+from .gl_renderer_params import GLRendererParams
+from .gl_resources import GLResources
+from .....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....application.rendering.player_render_state import PlayerRenderState
+from .render_metrics import RendererFrameMetrics
+from .render_state import RendererRuntimeState
+from .block_visual_resolver import BlockVisualResolver
+from .selection_controller import SelectionController
+from .texture_animation_controller import TextureAnimationController
 
 
 

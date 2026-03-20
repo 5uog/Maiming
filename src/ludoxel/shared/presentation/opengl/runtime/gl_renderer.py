@@ -8,16 +8,16 @@ from pathlib import Path
 
 import numpy as np
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.domain.blocks.registry.block_registry import BlockRegistry
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import GLRendererParams, default_gl_renderer_params
-from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
-from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
-from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
-from ludoxel.shared.presentation.opengl.runtime.render_metrics import RendererFrameMetrics
-from ludoxel.shared.presentation.opengl.runtime.render_state import RendererRuntimeState
-from ludoxel.shared.presentation.opengl.runtime.renderer_backend import RendererBackend
+from ....core.math.vec3 import Vec3
+from ....domain.blocks.registry.block_registry import BlockRegistry
+from ....core.spatial.chunking.chunk_grid import ChunkKey
+from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
+from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
+from .....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....application.rendering.player_render_state import PlayerRenderState
+from .render_metrics import RendererFrameMetrics
+from .render_state import RendererRuntimeState
+from .renderer_backend import RendererBackend
 
 
 class GLRenderer:

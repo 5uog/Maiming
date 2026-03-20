@@ -9,11 +9,11 @@ from pathlib import Path
 
 from OpenGL.GL import glGenVertexArrays, glDeleteVertexArrays
 
-from ludoxel.shared.domain.blocks.registry.block_registry import BlockRegistry
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
-from ludoxel.shared.presentation.opengl.gl.mesh_buffer import MeshBuffer
-from ludoxel.shared.presentation.opengl.resources.image_texture import ImageTexture
-from ludoxel.shared.presentation.opengl.resources.texture_atlas import TextureAtlas
+from ....domain.blocks.registry.block_registry import BlockRegistry
+from ..gl.shader_program import ShaderProgram
+from ..gl.mesh_buffer import MeshBuffer
+from ..resources.image_texture import ImageTexture
+from ..resources.texture_atlas import TextureAtlas
 
 
 @dataclass

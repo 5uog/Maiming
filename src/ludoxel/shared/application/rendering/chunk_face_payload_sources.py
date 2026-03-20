@@ -8,11 +8,11 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from ludoxel.shared.domain.blocks.block_definition import BlockDefinition
-from ludoxel.shared.domain.blocks.state.state_codec import parse_state
-from ludoxel.shared.rendering.face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
-from ludoxel.shared.application.rendering.uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
-from ludoxel.shared.application.rendering.visible_faces import iter_visible_faces
+from ...domain.blocks.block_definition import BlockDefinition
+from ...domain.blocks.state.state_codec import parse_state
+from ...rendering.face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
+from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
+from .visible_faces import iter_visible_faces
 
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]

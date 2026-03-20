@@ -10,8 +10,8 @@ from pathlib import Path
 
 from PyQt6.QtGui import QImage
 
-from ludoxel.shared.presentation.opengl.resources.texture_atlas import TextureAtlas
-from ludoxel.shared.presentation.opengl.runtime.texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
+from ..resources.texture_atlas import TextureAtlas
+from .texture_animation_catalog import AnimatedTextureTrack, default_texture_animation_tracks
 
 
 @dataclass

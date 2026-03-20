@@ -7,10 +7,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from ludoxel.shared.domain.blocks.block_definition import BlockDefinition
-from ludoxel.shared.domain.blocks.registry.block_registry import BlockRegistry
-from ludoxel.shared.domain.blocks.state.state_codec import parse_state
-from ludoxel.shared.presentation.opengl.resources.texture_atlas import TextureAtlas
+from ....domain.blocks.block_definition import BlockDefinition
+from ....domain.blocks.registry.block_registry import BlockRegistry
+from ....domain.blocks.state.state_codec import parse_state
+from ..resources.texture_atlas import TextureAtlas
 
 UVRect = tuple[float, float, float, float]
 DefLookup = Callable[[str], BlockDefinition | None]

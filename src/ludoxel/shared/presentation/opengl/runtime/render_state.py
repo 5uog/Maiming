@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.core.math.view_angles import sun_dir_from_az_el_deg
-from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ....core.math.vec3 import Vec3
+from ....core.math.view_angles import sun_dir_from_az_el_deg
+from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 
 @dataclass

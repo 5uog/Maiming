@@ -9,10 +9,10 @@ import math
 
 import numpy as np
 
-from ludoxel.shared.core.math.scalars import clampf
-from ludoxel.shared.application.rendering.first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind
-from ludoxel.shared.core.math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
-from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
+from ...core.math.scalars import clampf
+from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind
+from ...core.math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
+from .player_render_state import PlayerRenderState
 
 _PX = 1.0 / 16.0
 _HEAD_SIZE = (8.0 * _PX, 8.0 * _PX, 8.0 * _PX)

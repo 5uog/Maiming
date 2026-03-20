@@ -9,13 +9,13 @@ from typing import Callable
 
 import numpy as np
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.domain.blocks.block_definition import BlockDefinition
-from ludoxel.shared.presentation.opengl.resources.texture_atlas import TextureAtlas
-from ludoxel.shared.application.rendering.first_person_geometry import build_first_person_held_block_face_rows
-from ludoxel.shared.application.rendering.player_render_state import FirstPersonRenderState
-from ludoxel.shared.presentation.opengl.passes.textured_face_pass import TexturedFacePass
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
+from ....core.math.vec3 import Vec3
+from ....domain.blocks.block_definition import BlockDefinition
+from ..resources.texture_atlas import TextureAtlas
+from ....application.rendering.first_person_geometry import build_first_person_held_block_face_rows
+from ....application.rendering.player_render_state import FirstPersonRenderState
+from .textured_face_pass import TexturedFacePass
+from ..gl.shader_program import ShaderProgram
 
 UVRect = tuple[float, float, float, float]
 

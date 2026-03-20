@@ -9,28 +9,28 @@ from dataclasses import dataclass
 
 from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
-from ludoxel.shared.core.math import mat4
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.core.math.view_angles import forward_from_yaw_pitch_deg
-from ludoxel.shared.core.math.transform_matrices import rotate_z_deg_matrix
-from ludoxel.shared.core.spatial.chunking.chunk_grid import chunk_key
-from ludoxel.shared.presentation.opengl.passes.cloud_pass import CloudPass
-from ludoxel.shared.presentation.opengl.passes.first_person_arm_pass import FirstPersonArmPass
-from ludoxel.shared.presentation.opengl.passes.held_block_pass import HeldBlockPass
-from ludoxel.features.othello.presentation.opengl.othello_pass import OthelloPass
-from ludoxel.shared.presentation.opengl.passes.player_model_pass import PlayerModelPass
-from ludoxel.shared.presentation.opengl.passes.shadow_map_pass import ShadowMapPass
-from ludoxel.shared.presentation.opengl.passes.sun_pass import SunPass
-from ludoxel.shared.presentation.opengl.passes.world_pass import WorldDrawInputs, WorldPass
-from ludoxel.shared.presentation.opengl.runtime.light_space import compute_light_view_proj
-from ludoxel.shared.application.rendering.first_person_geometry import FIRST_PERSON_HAND_NEAR
-from ludoxel.shared.application.rendering.player_model_pose import build_player_model_pose
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import GLRendererParams
-from ludoxel.features.othello.application.rendering.othello_render_state import OthelloRenderState
-from ludoxel.shared.application.rendering.player_render_state import PlayerRenderState
-from ludoxel.shared.presentation.opengl.runtime.render_metrics import PassFrameMetrics, RendererFrameMetrics
-from ludoxel.shared.presentation.opengl.runtime.render_state import RendererRuntimeState
-from ludoxel.shared.presentation.opengl.runtime.selection_controller import SelectionController
+from ....core.math import mat4
+from ....core.math.vec3 import Vec3
+from ....core.math.view_angles import forward_from_yaw_pitch_deg
+from ....core.math.transform_matrices import rotate_z_deg_matrix
+from ....core.spatial.chunking.chunk_grid import chunk_key
+from ..passes.cloud_pass import CloudPass
+from ..passes.first_person_arm_pass import FirstPersonArmPass
+from ..passes.held_block_pass import HeldBlockPass
+from .....features.othello.presentation.opengl.othello_pass import OthelloPass
+from ..passes.player_model_pass import PlayerModelPass
+from ..passes.shadow_map_pass import ShadowMapPass
+from ..passes.sun_pass import SunPass
+from ..passes.world_pass import WorldDrawInputs, WorldPass
+from ..runtime.light_space import compute_light_view_proj
+from ....application.rendering.first_person_geometry import FIRST_PERSON_HAND_NEAR
+from ....application.rendering.player_model_pose import build_player_model_pose
+from ..runtime.gl_renderer_params import GLRendererParams
+from .....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....application.rendering.player_render_state import PlayerRenderState
+from ..runtime.render_metrics import PassFrameMetrics, RendererFrameMetrics
+from ..runtime.render_state import RendererRuntimeState
+from ..runtime.selection_controller import SelectionController
 
 _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20

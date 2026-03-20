@@ -8,7 +8,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Dict, Tuple, Iterable, Any
 
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
+from ...core.spatial.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
 
 BlockKey = Tuple[int, int, int]
 

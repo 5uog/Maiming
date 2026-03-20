@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ludoxel.shared.core.math import mat4
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import ShadowParams, SunParams
+from ....core.math import mat4
+from ....core.math.vec3 import Vec3
+from .gl_renderer_params import ShadowParams, SunParams
 
 
 def _snap(value: float, quantum: float) -> float:

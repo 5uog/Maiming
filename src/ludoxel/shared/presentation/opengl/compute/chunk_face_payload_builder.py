@@ -9,11 +9,11 @@ import numpy as np
 
 from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARRIER_BIT, GL_BUFFER_UPDATE_BARRIER_BIT
 
-from ludoxel.shared.core.spatial.chunking.chunk_grid import ChunkKey
-from ludoxel.shared.rendering.face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
-from ludoxel.shared.presentation.opengl.gl.array_view import as_float32_rows
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
-from ludoxel.shared.presentation.opengl.gl.storage_buffer import StorageBuffer
+from ....core.spatial.chunking.chunk_grid import ChunkKey
+from ....rendering.face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
+from ..gl.array_view import as_float32_rows
+from ..gl.shader_program import ShaderProgram
+from ..gl.storage_buffer import StorageBuffer
 
 
 @dataclass(frozen=True)

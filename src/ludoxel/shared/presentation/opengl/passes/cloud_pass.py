@@ -9,12 +9,12 @@ import numpy as np
 
 from OpenGL.GL import glEnable, glDisable, glDepthMask, glDepthFunc, glBlendFunc, glBlendEquation, glCullFace, glPolygonMode, glBindVertexArray, glDrawArraysInstanced, GL_DEPTH_TEST, GL_LESS, GL_BLEND, GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE, GL_FILL, GL_TRIANGLES
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.presentation.opengl.gl.shader_program import ShaderProgram
-from ludoxel.shared.presentation.opengl.gl.mesh_buffer import MeshBuffer
-from ludoxel.shared.presentation.opengl.runtime.cloud_field import CloudField
-from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import CloudParams, CameraParams
+from ....core.math.vec3 import Vec3
+from ..gl.shader_program import ShaderProgram
+from ..gl.mesh_buffer import MeshBuffer
+from ..runtime.cloud_field import CloudField
+from ..runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ..runtime.gl_renderer_params import CloudParams, CameraParams
 
 
 class CloudPass:

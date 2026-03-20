@@ -7,9 +7,9 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from ludoxel.shared.core.math.vec3 import Vec3
-from ludoxel.shared.presentation.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-from ludoxel.shared.presentation.opengl.runtime.gl_renderer_params import CloudParams
+from ....core.math.vec3 import Vec3
+from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from .gl_renderer_params import CloudParams
 
 
 @dataclass(frozen=True)
