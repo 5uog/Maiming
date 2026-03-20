@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/core/spatial/chunking/chunk_grid.py
 from __future__ import annotations
-
 from typing import Set, Tuple
 
 CHUNK_SIZE: int = 16

@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/core/spatial/geometry/ray_aabb.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ..voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z

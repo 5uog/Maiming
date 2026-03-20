@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/inventory/hotbar.py
 from __future__ import annotations
-
 from collections.abc import Sequence
 
 HOTBAR_SIZE: int = 9

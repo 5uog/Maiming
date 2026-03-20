@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/viewport/player_render_state_composer.py
 from __future__ import annotations
-
 from ....application.context.runtime.render_snapshot import PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ....shared.domain.blocks.registry.block_registry import BlockRegistry
 from ....shared.application.rendering.player_render_state import FirstPersonRenderState, PlayerRenderState

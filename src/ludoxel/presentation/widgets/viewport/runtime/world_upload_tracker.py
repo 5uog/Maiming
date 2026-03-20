@@ -1,15 +1,11 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/viewport/runtime/world_upload_tracker.py
 from __future__ import annotations
-
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Dict
 import math
 import queue
-
 import numpy as np
 
 from .....shared.core.math.vec3 import Vec3

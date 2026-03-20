@@ -1,4 +1,3 @@
-<!-- FILE: README.md -->
 # Ludoxel v3.5
 
 Ludoxel is a PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and an OpenGL 4.3 Core Profile renderer. The present codebase contains a persistent flat sandbox, a separate Othello play space, state-dependent block-shape logic for a limited set of structural block families, and a narrowly selected native-acceleration path for arithmetic-intensive kernels. It does not presently constitute a rule-complete reproduction of Minecraft Bedrock Edition or Minecraft Java Edition, and it should not be represented as a finished system.

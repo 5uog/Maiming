@@ -1,7 +1,5 @@
 // Copyright 2026 Kento Konishi (https://github.com/5uog)
 // SPDX-License-Identifier: Apache-2.0
-
-// FILE: src/ludoxel/shared/presentation/opengl/shaders/common/face_instance.glsl
 vec3 face_world_pos(int faceIdx, vec2 uv, vec3 mn, vec3 mx) {
     if (faceIdx == 0) { return vec3(mx.x, mix(mn.y, mx.y, uv.y), mix(mn.z, mx.z, uv.x)); }
     if (faceIdx == 1) { return vec3(mn.x, mix(mn.y, mx.y, uv.y), mix(mx.z, mn.z, uv.x)); }

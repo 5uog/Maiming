@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/blocks/state/state_values.py
 from __future__ import annotations
-
 from collections.abc import Mapping
 
 def bool_str(v: bool) -> str:

@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/config/render_distance.py
 from __future__ import annotations
 
 RENDER_DISTANCE_MIN_CHUNKS = 2

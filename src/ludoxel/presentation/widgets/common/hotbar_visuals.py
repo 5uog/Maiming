@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/common/hotbar_visuals.py
 from __future__ import annotations
-
 from ....shared.domain.blocks.registry.block_registry import BlockRegistry
 from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
 

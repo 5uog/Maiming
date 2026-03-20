@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/viewport/runtime/input_controller.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from PyQt6.QtCore import QPoint, Qt

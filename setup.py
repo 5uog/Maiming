@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: setup.py
 from __future__ import annotations
-
 from pathlib import Path
 import sys
 from setuptools import Extension, setup

@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: MANIFEST.in
 graft assets
 include main.py
 include README.md

@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/blocks/families/stone_types.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 
 from ..block_definition import BlockTextures

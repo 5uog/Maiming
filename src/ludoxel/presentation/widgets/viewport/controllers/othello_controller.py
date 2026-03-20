@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/viewport/controllers/othello_controller.py
 from __future__ import annotations
-
 import time
 from typing import TYPE_CHECKING
 

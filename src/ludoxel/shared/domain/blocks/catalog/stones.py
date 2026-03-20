@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/blocks/catalog/stones.py
 from __future__ import annotations
-
 from ..registry.block_registry import BlockRegistry
 from ..families.decorative_stone_types import DECORATIVE_STONE_TYPES
 from ..families.ore_types import ORE_TYPES

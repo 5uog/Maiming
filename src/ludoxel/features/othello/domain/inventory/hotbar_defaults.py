@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/othello/domain/inventory/hotbar_defaults.py
 from __future__ import annotations
-
 from .....shared.domain.inventory.hotbar import HOTBAR_SIZE, normalize_hotbar_slots
 from .special_items import OTHELLO_SETTINGS_ITEM_ID, OTHELLO_START_ITEM_ID
 

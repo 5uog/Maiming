@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/my_world/domain/world/world_gen.py
 from __future__ import annotations
-
 from .....shared.domain.world.world_gen import generate_flat_world
 from .....shared.domain.world.world_state import WorldState
 

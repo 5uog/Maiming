@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/presentation/opengl/gl/array_view.py
 from __future__ import annotations
-
 import numpy as np
 
 def _as_c_array(data: np.ndarray, *, dtype: object) -> np.ndarray:

@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/blocks/families/ore_types.py
 from __future__ import annotations
-
 from ..sound_groups import SOUND_GROUP_ANCIENT_DEBRIS, SOUND_GROUP_DEEPSLATE, SOUND_GROUP_NETHER_GOLD_ORE, SOUND_GROUP_NETHER_ORE
 from .stone_types import StoneType, cube_textures, column_textures
 

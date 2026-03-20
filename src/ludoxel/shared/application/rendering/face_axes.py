@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/application/rendering/face_axes.py
 from __future__ import annotations
-
 from ...domain.blocks.models.common import LocalBox
 
 _EPS = 1e-7

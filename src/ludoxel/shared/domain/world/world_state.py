@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/world/world_state.py
 from __future__ import annotations
-
 import threading
 from dataclasses import dataclass, field
 from typing import Dict, Tuple, Iterable, Any

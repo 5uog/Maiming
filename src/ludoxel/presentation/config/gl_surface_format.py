@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/config/gl_surface_format.py
 from __future__ import annotations
-
 from PyQt6.QtGui import QSurfaceFormat
 
 def build_gl_surface_format() -> QSurfaceFormat:

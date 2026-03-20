@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/domain/blocks/models/dimensions.py
 from __future__ import annotations
-
 from .common import LocalBox
 
 def px_box(x0: float, y0: float, z0: float, x1: float, y1: float, z1: float, *, uv_hint: str="") -> LocalBox:

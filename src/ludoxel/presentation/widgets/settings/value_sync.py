@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/settings/value_sync.py
 from __future__ import annotations
-
 from .cloud_flow_options import cloud_flow_index_for_value
 
 def _block_signals_set_value(widget, value) -> None:

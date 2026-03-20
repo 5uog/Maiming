@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/common/__init__.py
 from __future__ import annotations
 
 from .hotbar_support import hotbar_binding_text, hotbar_index_from_key, refresh_widget_style

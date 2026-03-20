@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/application/pipelines/runtime_state_pipeline.py
 from __future__ import annotations
-
 from ...shared.domain.play_space import normalize_play_space_id
 from ..persistence import AppState, PersistedInventory, PersistedSettings
 from ..context.runtime.runtime_preferences import RuntimePreferences, coerce_runtime_preferences

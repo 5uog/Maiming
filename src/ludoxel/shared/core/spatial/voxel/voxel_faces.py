@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/core/spatial/voxel/voxel_faces.py
 from __future__ import annotations
 
 FACE_POS_X: int = 0

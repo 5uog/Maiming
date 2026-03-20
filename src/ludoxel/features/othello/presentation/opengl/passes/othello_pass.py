@@ -1,11 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/othello/presentation/opengl/passes/othello_pass.py
 from __future__ import annotations
-
 from dataclasses import dataclass
-
 import numpy as np
 
 from OpenGL.GL import GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LEQUAL, GL_LESS, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_TRIANGLES, glActiveTexture, glBindTexture, glBindVertexArray, glBlendFunc, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable

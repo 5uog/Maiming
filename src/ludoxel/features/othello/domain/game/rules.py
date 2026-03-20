@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/othello/domain/game/rules.py
 from __future__ import annotations
-
 from .board import BOARD_SIZE, row_col_to_square_index as row_col_to_index, square_index_to_row_col as index_to_row_col
 from .types import BOARD_CELL_COUNT, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_EMPTY, SIDE_WHITE, coerce_board, normalize_side, other_side
 

@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/application/context/session_builders.py
 from __future__ import annotations
 
 from ...shared.core.math.vec3 import Vec3

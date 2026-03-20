@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/application/context/my_world/__init__.py
 from __future__ import annotations
 
 from .session_factory import MY_WORLD_PITCH_DEG, MY_WORLD_SPAWN, MY_WORLD_YAW_DEG, MyWorldSessionSeed, create_my_world_session

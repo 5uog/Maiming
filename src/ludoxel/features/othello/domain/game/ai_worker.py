@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/othello/domain/game/ai_worker.py
 from __future__ import annotations
 from concurrent.futures import Future, ProcessPoolExecutor
 import multiprocessing

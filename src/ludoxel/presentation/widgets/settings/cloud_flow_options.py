@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/presentation/widgets/settings/cloud_flow_options.py
 from __future__ import annotations
-
 from ....shared.presentation.opengl.runtime.cloud_flow_direction import CLOUD_FLOW_DIRECTIONS, DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
 
 _LABELS: dict[str, str] = {"east_to_west": "East -> West", "west_to_east": "West -> East", "south_to_north": "South -> North", "north_to_south": "North -> South"}

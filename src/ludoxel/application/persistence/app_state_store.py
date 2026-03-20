@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/application/persistence/app_state_store.py
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 

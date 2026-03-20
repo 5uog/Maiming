@@ -1,7 +1,5 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: pyproject.toml
 [build-system]
 requires = ["setuptools>=82", "wheel>=0.45", "Cython>=3.0,<4"]
 build-backend = "setuptools.build_meta"

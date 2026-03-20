@@ -1,4 +1,5 @@
-# FILE: tools/convert_ogg_to_wav.py
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 import shutil

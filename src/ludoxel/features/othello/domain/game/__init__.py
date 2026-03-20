@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/features/othello/domain/game/__init__.py
 from __future__ import annotations
-
 from .ai import choose_ai_move
 from .board import BOARD_SIZE, OTHELLO_BOARD_BLOCK_Y, OTHELLO_BOARD_DARK_BLOCK_ID, OTHELLO_BOARD_LIGHT_BLOCK_ID, OTHELLO_BOARD_MIN_X, OTHELLO_BOARD_MIN_Z, OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint, othello_board_block_updates, raycast_board_square, square_center, square_index_to_row_col, world_xz_to_square_index
 from .rules import apply_move, counts_for_board, create_initial_board, find_legal_moves, has_any_legal_move, index_to_row_col, other_side, row_col_to_index, winner_for_board

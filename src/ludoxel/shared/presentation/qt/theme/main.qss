@@ -1,7 +1,5 @@
 /*  Copyright 2026 Kento Konishi (https://github.com/5uog)
     SPDX-License-Identifier: Apache-2.0 */
-
-/* FILE: src/ludoxel/shared/presentation/qt/theme/main.qss */
 QMainWindow { background: #121212; }
 QLabel#hud { color: rgba(255,255,255,240); background: rgba(16,16,16,150); border: 2px solid rgba(0,0,0,185); padding: 8px; }
 QWidget#pauseRoot, QWidget#settingsRoot, QWidget#othelloSettingsRoot, QWidget#inventoryRoot, QWidget#deathRoot { background: rgba(0,0,0,150); }

@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/application/tasks/state_persistence.py
 from __future__ import annotations
-
 from pathlib import Path
 
 from ...shared.core.math.vec3 import Vec3

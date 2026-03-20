@@ -1,9 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
-
-# FILE: src/ludoxel/shared/application/rendering/uv_rects.py
 from __future__ import annotations
-
 from ...core.spatial.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
 from ...domain.blocks.models.common import LocalBox
 
