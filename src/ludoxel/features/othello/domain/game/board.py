@@ -4,8 +4,8 @@ from __future__ import annotations
 import math
 from typing import Dict
 
-from .....shared.core.math.vec3 import Vec3
-from .....shared.domain.world.world_state import BlockKey, WorldState
+from .....shared.math.vec3 import Vec3
+from .....shared.world.world_state import BlockKey, WorldState
 from .types import BOARD_CELL_COUNT
 
 BOARD_SIZE: int = int(math.isqrt(int(BOARD_CELL_COUNT)))

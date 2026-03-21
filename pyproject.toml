@@ -39,30 +39,30 @@ dependencies = ["PyQt6>=6.6,<7", "numpy>=1.26,<3", "PyOpenGL>=3.1.7,<4"]
 dev = ["build>=1.2,<2", "Cython>=3.0,<4", "setuptools>=82", "wheel>=0.45"]
 
 [project.scripts]
-ludoxel = "ludoxel.application.apis:run_app"
+ludoxel = "ludoxel.application.boot:run_app"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "ludoxel.application.meta.version.__version__" }
+version = { attr = "ludoxel.application.boot.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [
-    "shared/presentation/qt/theme/*.qss",
-    "shared/presentation/opengl/shaders/*.vert",
-    "shared/presentation/opengl/shaders/*.frag",
-    "shared/presentation/opengl/shaders/*.comp",
-    "shared/presentation/opengl/shaders/common/*.glsl",
-    "features/othello/presentation/opengl/shaders/*.vert",
-    "features/othello/presentation/opengl/shaders/*.frag",
+    "shared/ui/theme/*.qss",
+    "shared/opengl/shaders/*.vert",
+    "shared/opengl/shaders/*.frag",
+    "shared/opengl/shaders/*.comp",
+    "shared/opengl/shaders/common/*.glsl",
+    "features/othello/opengl/shaders/*.vert",
+    "features/othello/opengl/shaders/*.frag",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["ludoxel*"]
-namespaces = false
+namespaces = true
 
 [tool.ruff]
 line-length = 100

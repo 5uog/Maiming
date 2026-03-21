@@ -39,9 +39,11 @@ Disc placement is performed by aiming at a highlighted legal square and pressing
 
 ## Source layout and execution model
 
-The repository intentionally preserves the existing `python -m main` startup route. `main.py` prepends `src` to `sys.path`, after which control passes into the package entry path under `ludoxel.api`. The public project title is **Ludoxel**, whereas the current source package and import namespace remain `ludoxel`. This separation is intentional at the present stage and allows the visible application identity to evolve without forcing an immediate package-level rename across the codebase.
+The repository intentionally preserves the existing `python -m main` startup route. `main.py` prepends `src` to `sys.path`, after which control passes into `ludoxel.application.boot`. The public project title is **Ludoxel**, whereas the current source package and import namespace remain `ludoxel`. This separation is intentional at the present stage and allows the visible application identity to evolve without forcing an immediate package-level rename across the codebase.
 
-The native build remains deliberately narrow. Only `ludoxel.shared.core.spatial.geometry.ray_aabb`, `ludoxel.shared.core.spatial.voxel.voxel_dda`, and `ludoxel.shared.core.math.view_angles` are compiled in place. Those modules are dominated by scalar arithmetic, geometric branching, and dense numerical work. Broader scene and block orchestration layers remain in Python because they are governed primarily by Python object traffic, callback dispatch, dictionary access, and heterogeneous container traversal, all of which reduce the benefit of opaque extension-module compilation and can worsen end-to-end frame cost when moved wholesale across the extension boundary.
+The source tree is now organized by responsibility. `ludoxel.application` contains `boot`, `runtime`, and `audio`; `ludoxel.shared` contains `math`, `world`, `blocks`, `systems`, `rendering`, `opengl`, and `ui`; and Othello-specific code is isolated under `ludoxel.features.othello`. This keeps the common renderer, CPU-side render preparation, shared world model, and shared Qt surface separate from feature-local gameplay code.
+
+The native build remains deliberately narrow. Only `ludoxel.shared.math.geometry.ray_aabb`, `ludoxel.shared.math.voxel.voxel_dda`, and `ludoxel.shared.math.view_angles` are compiled in place. Those modules are dominated by scalar arithmetic, geometric branching, and dense numerical work. Broader scene and block orchestration layers remain in Python because they are governed primarily by Python object traffic, callback dispatch, dictionary access, and heterogeneous container traversal, all of which reduce the benefit of opaque extension-module compilation and can worsen end-to-end frame cost when moved wholesale across the extension boundary.
 
 The editable install and the explicit native build are intentionally separated. The editable install makes the source tree importable for development. The explicit `build_ext --inplace` path performs the optional native compilation step. This separation prevents editable-install metadata evaluation from depending on Cython at the moment when development dependencies may not yet be installed.
 
@@ -58,9 +60,9 @@ python -m venv .venv
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -e ".[dev]" --no-build-isolation
 python .\setup.py build_ext --inplace
-python -c "import ludoxel.shared.core.spatial.geometry.ray_aabb as m; print(m.__file__)"
-python -c "import ludoxel.shared.core.spatial.voxel.voxel_dda as m; print(m.__file__)"
-python -c "import ludoxel.shared.core.math.view_angles as m; print(m.__file__)"
+python -c "import ludoxel.shared.math.geometry.ray_aabb as m; print(m.__file__)"
+python -c "import ludoxel.shared.math.voxel.voxel_dda as m; print(m.__file__)"
+python -c "import ludoxel.shared.math.view_angles as m; print(m.__file__)"
 python -m main
 ```
 
