@@ -163,9 +163,7 @@ def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
     walk_r = math.sin(float(phase) + math.pi)
     arm_sway = float(clampf(float(swing) / 0.5 if float(swing) > 1e-9 else 0.0, 0.0, 1.0)) * float(_ARM_SWAY_Z)
     right_arm_rot_x = float(swing) * float(walk_l) + float(_CROUCH_ARM_ROT_X) * float(crouch)
-    left_arm_rot_x = float(swing) * float(walk_r) + float(_CROUCH_ARM_ROT_X) * float(crouch)
     right_arm_rot_z = -(float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch))
-    left_arm_rot_z = float(arm_sway) + float(_CROUCH_ARM_ROT_Z) * float(crouch)
     right_leg_rot_x = float(swing) * float(walk_r)
     left_leg_rot_x = float(swing) * float(walk_l)
 

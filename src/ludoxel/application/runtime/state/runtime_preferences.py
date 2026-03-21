@@ -12,7 +12,7 @@ from ....features.othello.domain.inventory.special_items import is_special_item_
 from ....features.othello.domain.game.types import OthelloSettings
 from ....shared.world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
 from ....shared.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
-from .camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, cycle_camera_perspective as cycle_camera_perspective_value, is_first_person_camera_perspective, normalize_camera_perspective
+from .camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, cycle_camera_perspective, is_first_person_camera_perspective, normalize_camera_perspective
 from ..keybinds import KeybindSettings
 from .audio_preferences import AudioPreferences
 
@@ -126,7 +126,7 @@ class RuntimePreferences:
         return bool(self.is_first_person_view()) and (not bool(self.hide_hand))
 
     def cycle_camera_perspective(self, step: int = 1) -> None:
-        self.camera_perspective = cycle_camera_perspective_value(self.camera_perspective, step=int(step))
+        self.camera_perspective = cycle_camera_perspective(self.camera_perspective, step=int(step))
 
     def _active_hotbar_state_attrs(self) -> tuple[str, str]:
         if self.is_othello_space():
