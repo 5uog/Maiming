@@ -1,11 +1,13 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
+from dataclasses import dataclass
+
 import math
 import time
 import tracemalloc
 import threading
-from dataclasses import dataclass
 
 from ...math.vec3 import Vec3
 from ....application.runtime.managers.session_manager import SessionManager
@@ -14,7 +16,7 @@ from ...opengl.runtime.gl_renderer import GLRenderer
 from ....application.runtime.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
-from ....application.boot.version import __version__
+from ....application.boot.meta import __version__
 
 @dataclass(frozen=True)
 class HudFps:

@@ -1905,8 +1905,8 @@ src/ludoxel/application/audio/catalog/material_audio_catalog.py
 src/ludoxel/application/audio/catalog/player_audio_catalog.py
 src/ludoxel/application/boot/__init__.py
 src/ludoxel/application/boot/run_app.py
-src/ludoxel/application/boot/version.py
 src/ludoxel/application/boot/meta/__init__.py
+src/ludoxel/application/boot/meta/version.py
 src/ludoxel/application/runtime/__init__.py
 src/ludoxel/application/runtime/keybinds.py
 src/ludoxel/application/runtime/context/__init__.py
@@ -1929,6 +1929,7 @@ src/ludoxel/application/runtime/pipelines/__init__.py
 src/ludoxel/application/runtime/pipelines/runtime_state_pipeline.py
 src/ludoxel/application/runtime/state/__init__.py
 src/ludoxel/application/runtime/state/audio_preferences.py
+src/ludoxel/application/runtime/state/camera_perspective.py
 src/ludoxel/application/runtime/state/render_snapshot.py
 src/ludoxel/application/runtime/state/runtime_preferences.py
 src/ludoxel/application/runtime/state/session_settings.py
@@ -1956,6 +1957,7 @@ src/ludoxel/features/othello/opengl/shaders/othello.vert
 src/ludoxel/features/othello/opengl/shaders/othello_shadow.vert
 src/ludoxel/features/othello/ui/hud_widget.py
 src/ludoxel/features/othello/ui/settings_overlay.py
+src/ludoxel/features/othello/ui/special_item_art.py
 src/ludoxel/features/othello/ui/viewport/othello_controller.py
 src/ludoxel/shared/blocks/block_definition.py
 src/ludoxel/shared/blocks/sound_groups.py
@@ -2012,11 +2014,13 @@ src/ludoxel/shared/opengl/gl/shader_program.py
 src/ludoxel/shared/opengl/gl/storage_buffer.py
 src/ludoxel/shared/opengl/passes/aggregated_face_batch.py
 src/ludoxel/shared/opengl/passes/cloud_pass.py
+src/ludoxel/shared/opengl/passes/falling_block_pass.py
 src/ludoxel/shared/opengl/passes/first_person_arm_pass.py
 src/ludoxel/shared/opengl/passes/held_block_pass.py
 src/ludoxel/shared/opengl/passes/player_model_pass.py
 src/ludoxel/shared/opengl/passes/selection_pass.py
 src/ludoxel/shared/opengl/passes/shadow_map_pass.py
+src/ludoxel/shared/opengl/passes/special_item_pass.py
 src/ludoxel/shared/opengl/passes/sun_pass.py
 src/ludoxel/shared/opengl/passes/textured_face_pass.py
 src/ludoxel/shared/opengl/passes/world_pass.py
@@ -2063,12 +2067,15 @@ src/ludoxel/shared/rendering/chunk_selection.py
 src/ludoxel/shared/rendering/face_axes.py
 src/ludoxel/shared/rendering/face_bucket_layout.py
 src/ludoxel/shared/rendering/face_occlusion.py
+src/ludoxel/shared/rendering/falling_block_face_rows.py
 src/ludoxel/shared/rendering/first_person_geometry.py
 src/ludoxel/shared/rendering/first_person_motion.py
 src/ludoxel/shared/rendering/player_model_pose.py
 src/ludoxel/shared/rendering/player_render_state.py
 src/ludoxel/shared/rendering/player_render_state_composer.py
+src/ludoxel/shared/rendering/player_skin.py
 src/ludoxel/shared/rendering/selection_outline_builder.py
+src/ludoxel/shared/rendering/third_person_camera.py
 src/ludoxel/shared/rendering/uv_rects.py
 src/ludoxel/shared/rendering/visible_faces.py
 src/ludoxel/shared/systems/__init__.py
@@ -2091,6 +2098,7 @@ src/ludoxel/shared/ui/config/game_loop_params.py
 src/ludoxel/shared/ui/config/gl_surface_format.py
 src/ludoxel/shared/ui/config/pause_overlay_params.py
 src/ludoxel/shared/ui/hud/__init__.py
+src/ludoxel/shared/ui/hud/crosshair_art.py
 src/ludoxel/shared/ui/hud/crosshair_widget.py
 src/ludoxel/shared/ui/hud/hotbar_widget.py
 src/ludoxel/shared/ui/hud/hud_controller.py
@@ -2100,9 +2108,11 @@ src/ludoxel/shared/ui/hud/player_metrics.py
 src/ludoxel/shared/ui/overlays/death_overlay.py
 src/ludoxel/shared/ui/overlays/inventory_overlay.py
 src/ludoxel/shared/ui/overlays/pause_overlay.py
+src/ludoxel/shared/ui/overlays/player_skin_preview_widget.py
 src/ludoxel/shared/ui/settings/__init__.py
 src/ludoxel/shared/ui/settings/advanced_scalar_control.py
 src/ludoxel/shared/ui/settings/cloud_flow_options.py
+src/ludoxel/shared/ui/settings/crosshair_widgets.py
 src/ludoxel/shared/ui/settings/overlay.py
 src/ludoxel/shared/ui/settings/page_builders.py
 src/ludoxel/shared/ui/settings/value_sync.py

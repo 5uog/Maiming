@@ -1,11 +1,14 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-import time
+
+from dataclasses import replace
 from pathlib import Path
 
+import time
+
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QGuiApplication, QKeyEvent, QMouseEvent, QWheelEvent
+from PyQt6.QtGui import QGuiApplication, QImage, QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
 from PyQt6.QtWidgets import QMessageBox
 
@@ -34,6 +37,7 @@ from ..settings.overlay import SettingsOverlay
 from .controllers import interaction_controller, settings_controller
 from ....features.othello.ui.viewport import othello_controller as othello_controller
 from ...rendering.first_person_motion import FirstPersonMotionController
+from ...rendering.player_skin import PLAYER_SKIN_KIND_ALEX, load_player_skin_image
 from ...rendering.player_render_state_composer import compose_player_render_state
 from .runtime.input_controller import ViewportInput
 from .runtime.overlay_controller import OverlayRefs, ViewportOverlays
@@ -92,6 +96,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._loading_active = True
         self._loading_status = "Initializing renderer..."
         self._loading_progress: tuple[int, int] = (-1, -1)
+        self._player_skin_image = QImage()
         app = QGuiApplication.instance()
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
@@ -127,6 +132,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._inventory = InventoryOverlay(parent=self, project_root=self._project_root, registry=self._session.block_registry)
 
         self._overlays = ViewportOverlays(refs=OverlayRefs(pause=self._overlay, settings=self._settings, othello_settings=self._othello_settings, inventory=self._inventory, death=self._death, crosshair=self._crosshair, hotbar=self._hotbar, hud_getter=lambda: self._hud, othello_hud_getter=lambda: self._othello_hud), runner=self._runner, inp=self._inp)
+        self._overlay.preview_changed.connect(self.update)
         settings_controller.bind_settings_overlay(self)
         othello_controller.bind_othello_controls(self)
         interaction_controller.bind_overlay_actions(self)
@@ -157,6 +163,8 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_input_bindings(self)
         settings_controller.sync_audio_preferences(self)
         settings_controller.sync_hotbar_widgets(self)
+        settings_controller.sync_crosshair_widgets(self)
+        settings_controller.sync_player_skin(self)
         settings_controller.sync_first_person_target(self)
         settings_controller.sync_view_model_visibility(self)
         othello_controller.sync_hud_text(self)
@@ -167,6 +175,42 @@ class GLViewportWidget(QOpenGLWidget):
     def _for_each_session(self, fn) -> None:
         for session in self._sessions.all_sessions():
             fn(session)
+
+    def record_host_window_geometry(self, *, left: int | None, top: int | None, width: int, height: int, screen_name: str) -> None:
+        self._state.window_left = None if left is None else int(left)
+        self._state.window_top = None if top is None else int(top)
+        self._state.window_width = int(width)
+        self._state.window_height = int(height)
+        self._state.window_screen_name = str(screen_name or "")
+        self._state.normalize()
+
+    def _push_player_skin_to_renderer(self, *, context_current: bool = False) -> None:
+        if self._player_skin_image.isNull() or self.context() is None:
+            return
+        if bool(context_current):
+            self._renderer.set_player_skin_image(self._player_skin_image)
+            return
+        if not bool(self._gl_initialized):
+            return
+        self.makeCurrent()
+        try:
+            self._renderer.set_player_skin_image(self._player_skin_image)
+        finally:
+            self.doneCurrent()
+        self.update()
+
+    def _sync_player_skin_design(self, *, push_to_renderer: bool = False, context_current: bool = False) -> None:
+        try:
+            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind)
+        except Exception:
+            self._state.player_skin_kind = PLAYER_SKIN_KIND_ALEX
+            self._state.normalize()
+            image = load_player_skin_image(self._project_root, kind=self._state.player_skin_kind)
+
+        self._player_skin_image = QImage(image)
+        self._overlay.set_player_skin(self._player_skin_image, slim_arm=True)
+        if bool(push_to_renderer):
+            self._push_player_skin_to_renderer(context_current=bool(context_current))
 
     def save_state(self) -> None:
         settings_controller.sync_state_from_renderer_sun(self)
@@ -192,6 +236,7 @@ class GLViewportWidget(QOpenGLWidget):
         self._loading_progress = (-1, -1)
         self._set_loading_status(text)
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
         if not bool(was_loading):
             self.loading_state_changed.emit(True)
         self.update()
@@ -201,23 +246,53 @@ class GLViewportWidget(QOpenGLWidget):
             return
         self._loading_active = False
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
         self.loading_state_changed.emit(False)
         self.loading_finished.emit()
-        self._prewarm_inactive_space_cache()
 
-    def _prewarm_inactive_space_cache(self) -> None:
-        if not bool(self._gl_initialized):
+    def arm_resume_refresh(self) -> None:
+        now = time.perf_counter()
+        self._last_upload_eye = None
+        self._last_selection_pose = None
+        self._last_selection_space_id = ""
+        self._last_selection_world_revision = -1
+        self._last_selection_pick_ms = 0.0
+        self._force_upload_until_s = max(float(self._force_upload_until_s), float(now) + 0.18)
+        self._force_selection_until_s = max(float(self._force_selection_until_s), float(now) + 0.18)
+        self.update()
+
+    def _build_pause_preview_player_state(self, player_state) -> object:
+        body_yaw_deg, head_yaw_deg, head_pitch_deg = self._overlay.player_preview_angles()
+        if player_state is None:
+            return None
+        return replace(player_state, base_x=0.0, base_y=-0.22, base_z=0.0, body_yaw_deg=float(body_yaw_deg), head_yaw_deg=float(head_yaw_deg), head_pitch_deg=float(head_pitch_deg), is_first_person=False)
+
+    def _update_pause_preview_frame(self, player_state, *, fb_w: int, fb_h: int, dpr: float) -> None:
+        if not bool(self._overlays.paused()) or bool(self._loading_active):
+            self._overlay.set_player_preview_frame(QImage())
             return
-        for session in self._sessions.all_sessions():
-            if session is self._session:
-                continue
-            try:
-                self._upload.prewarm_cache(world=session.world, renderer=self._renderer, eye=session.player.eye_pos(), render_distance_chunks=int(self._state.render_distance_chunks))
-            except Exception:
-                continue
+        preview_widget = self._overlay._skin_preview
+        if int(preview_widget.width()) <= 1 or int(preview_widget.height()) <= 1:
+            self._overlay.set_player_preview_frame(QImage())
+            return
+        w = max(1, int(round(float(preview_widget.width()) * max(1.0, float(dpr)))))
+        h = max(1, int(round(float(preview_widget.height()) * max(1.0, float(dpr)))))
+        preview_state = self._build_pause_preview_player_state(player_state)
+        frame = self._renderer.render_player_preview_frame(w=int(w), h=int(h), player_state=preview_state, restore_framebuffer=int(self.defaultFramebufferObject()), restore_viewport=(0, 0, int(fb_w), int(fb_h)), device_pixel_ratio=float(max(1.0, float(dpr))))
+        self._overlay.set_player_preview_frame(frame)
 
     def _on_application_state_changed(self, state) -> None:
+        was_active = bool(self._application_active)
         self._application_active = bool(state == Qt.ApplicationState.ApplicationActive)
+        if not bool(self._application_active):
+            self._inp.reset()
+            try:
+                self._inp.set_mouse_capture(False)
+            except Exception:
+                pass
+        elif not bool(was_active):
+            self.arm_resume_refresh()
+        settings_controller.sync_cloud_motion_pause(self)
         self._sync_runtime_activity()
 
     def _sync_runtime_activity(self) -> None:
@@ -247,13 +322,11 @@ class GLViewportWidget(QOpenGLWidget):
         now = time.perf_counter()
         self._runner.start()
         self._last_paint_ms = 0.0
-        self._last_selection_pick_ms = 0.0
         self._last_selection_refresh_time_s = float(now)
         self._last_upload_time_s = float(now)
-        self._force_selection_until_s = max(float(self._force_selection_until_s), float(now) + 0.12)
+        self.arm_resume_refresh()
         self._sim_timer.start()
         self._render_timer.start()
-        self.update()
 
     def shutdown(self) -> None:
         if self._shutdown_done:
@@ -382,24 +455,31 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_dead_overlay(self, on: bool) -> None:
         self._overlays.set_dead(bool(on))
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
 
     def _set_paused_overlay(self, on: bool) -> None:
         self._overlays.set_paused(bool(on))
+        if not bool(on):
+            self._overlay.set_player_preview_frame(QImage())
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
 
     def _set_settings_overlay(self, on: bool) -> None:
         self._overlays.set_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
 
     def _set_othello_settings_overlay(self, on: bool) -> None:
         self._overlays.set_othello_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
 
     def _set_inventory_overlay(self, on: bool) -> None:
         if bool(on) and not settings_controller.inventory_available(self):
             return
         self._overlays.set_inventory_open(bool(on))
         self._sync_gameplay_hud_visibility()
+        settings_controller.sync_cloud_motion_pause(self)
 
     @staticmethod
     def _angle_delta_deg(left: float, right: float) -> float:
@@ -528,10 +608,12 @@ class GLViewportWidget(QOpenGLWidget):
         self._last_selection_refresh_time_s = 0.0
         self._force_selection_until_s = time.perf_counter() + 0.12
 
+        self._sync_player_skin_design(push_to_renderer=True, context_current=True)
         settings_controller.apply_runtime_to_renderer(self)
         settings_controller.sync_input_bindings(self)
         settings_controller.sync_audio_preferences(self)
         settings_controller.sync_hotbar_widgets(self)
+        settings_controller.sync_crosshair_widgets(self)
         settings_controller.sync_cloud_motion_pause(self)
         othello_controller.sync_hud_text(self)
         self._sync_gameplay_hud_visibility()
@@ -626,6 +708,7 @@ class GLViewportWidget(QOpenGLWidget):
         player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
 
         self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snap.falling_blocks))
+        self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
     def _tick_sim(self) -> None:
@@ -716,8 +799,11 @@ class GLViewportWidget(QOpenGLWidget):
 
     def showEvent(self, e) -> None:
         super().showEvent(e)
+        self.arm_resume_refresh()
+        settings_controller.sync_cloud_motion_pause(self)
         self._sync_runtime_activity()
 
     def hideEvent(self, e) -> None:
         self._set_runtime_active(False)
+        settings_controller.sync_cloud_motion_pause(self)
         super().hideEvent(e)

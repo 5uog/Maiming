@@ -32,6 +32,9 @@ class TextureAnimationController:
         self._atlas = atlas
         self._origin_s: float | None = None
         self._enabled: bool = True
+        self._paused: bool = False
+        self._paused_accum_s: float = 0.0
+        self._pause_started_s: float | None = None
         self._tracks: list[_RuntimeAnimatedTrack] = []
         for track in tuple(default_texture_animation_tracks() if tracks is None else tracks):
             runtime_track = self._build_runtime_track(track)
@@ -63,6 +66,21 @@ class TextureAnimationController:
             self._restore_base_frames()
             return
         self._origin_s = None
+        self._paused_accum_s = 0.0
+        self._pause_started_s = None
+
+    def set_paused(self, paused: bool, *, elapsed_s: float) -> None:
+        next_paused = bool(paused)
+        now = max(0.0, float(elapsed_s))
+        if next_paused == bool(self._paused):
+            return
+        self._paused = bool(next_paused)
+        if bool(self._paused):
+            self._pause_started_s = float(now)
+            return
+        if self._pause_started_s is not None:
+            self._paused_accum_s += max(0.0, float(now) - float(self._pause_started_s))
+        self._pause_started_s = None
 
     def _load_frame(self, texture_name: str) -> QImage | None:
         path = self._block_dir / f"{str(texture_name)}.png"
@@ -73,9 +91,17 @@ class TextureAnimationController:
     def update(self, elapsed_s: float) -> None:
         if not bool(self._enabled):
             return
+        now_s = max(0.0, float(elapsed_s))
         if self._origin_s is None:
-            self._origin_s = max(0.0, float(elapsed_s))
-        now = max(0.0, float(elapsed_s) - float(self._origin_s))
+            self._origin_s = float(now_s)
+        if bool(self._paused):
+            if self._pause_started_s is None:
+                self._pause_started_s = float(now_s)
+            return
+        if self._pause_started_s is not None:
+            self._paused_accum_s += max(0.0, float(now_s) - float(self._pause_started_s))
+            self._pause_started_s = None
+        now = max(0.0, float(now_s) - float(self._origin_s) - float(self._paused_accum_s))
         for track in self._tracks:
             if not track.frames:
                 continue

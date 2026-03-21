@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
@@ -21,6 +22,9 @@ class SettingsOverlay(QWidget):
     fullscreen_changed = pyqtSignal(bool)
     hide_hud_changed = pyqtSignal(bool)
     hide_hand_changed = pyqtSignal(bool)
+    crosshair_pixels_changed = pyqtSignal(object)
+    crosshair_default_requested = pyqtSignal()
+    crosshair_clear_requested = pyqtSignal()
     camera_perspective_changed = pyqtSignal(str)
     view_bobbing_changed = pyqtSignal(bool)
     camera_shake_changed = pyqtSignal(bool)

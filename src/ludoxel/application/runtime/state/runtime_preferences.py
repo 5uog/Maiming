@@ -1,7 +1,6 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 from ....shared.world.config.render_distance import clamp_render_distance_chunks
@@ -12,9 +11,20 @@ from ....features.othello.domain.inventory.special_items import is_special_item_
 from ....features.othello.domain.game.types import OthelloSettings
 from ....shared.world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, normalize_play_space_id
 from ....shared.opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION, normalize_cloud_flow_direction
+from ....shared.rendering.player_skin import PLAYER_SKIN_KIND_ALEX, normalize_player_skin_kind
+from ....shared.ui.hud.crosshair_art import CROSSHAIR_MODE_DEFAULT, EMPTY_CROSSHAIR_PIXELS, normalize_crosshair_mode, normalize_crosshair_pixels
 from .camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, cycle_camera_perspective, is_first_person_camera_perspective, normalize_camera_perspective
 from ..keybinds import KeybindSettings
 from .audio_preferences import AudioPreferences
+
+
+def _coerce_optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 def _default_hotbar_slots_list() -> list[str]:
     return list(default_hotbar_slots(size=HOTBAR_SIZE))
@@ -53,6 +63,9 @@ class RuntimePreferences:
     auto_sprint_enabled: bool = False
     hide_hud: bool = False
     hide_hand: bool = False
+    crosshair_mode: str = CROSSHAIR_MODE_DEFAULT
+    crosshair_pixels: tuple[str, ...] = field(default_factory=lambda: EMPTY_CROSSHAIR_PIXELS)
+    player_skin_kind: str = PLAYER_SKIN_KIND_ALEX
     camera_perspective: str = CAMERA_PERSPECTIVE_FIRST_PERSON
     fullscreen: bool = False
     view_bobbing_enabled: bool = True
@@ -66,6 +79,11 @@ class RuntimePreferences:
     debug_shadow: bool = False
     vsync_on: bool = False
     hud_visible: bool = False
+    window_left: int | None = None
+    window_top: int | None = None
+    window_width: int = 1280
+    window_height: int = 720
+    window_screen_name: str = ""
     keybinds: KeybindSettings = field(default_factory=KeybindSettings)
     audio: AudioPreferences = field(default_factory=AudioPreferences)
 
@@ -84,6 +102,9 @@ class RuntimePreferences:
         self.auto_sprint_enabled = bool(self.auto_sprint_enabled)
         self.hide_hud = bool(self.hide_hud)
         self.hide_hand = bool(self.hide_hand)
+        self.crosshair_mode = normalize_crosshair_mode(self.crosshair_mode)
+        self.crosshair_pixels = normalize_crosshair_pixels(self.crosshair_pixels)
+        self.player_skin_kind = normalize_player_skin_kind(self.player_skin_kind)
         self.camera_perspective = normalize_camera_perspective(self.camera_perspective)
         self.fullscreen = bool(self.fullscreen)
         self.view_bobbing_enabled = bool(self.view_bobbing_enabled)
@@ -100,6 +121,11 @@ class RuntimePreferences:
         self.view_bobbing_strength = max(0.0, min(1.0, float(self.view_bobbing_strength)))
         self.camera_shake_strength = max(0.0, min(1.0, float(self.camera_shake_strength)))
         self.reach = max(0.0, float(self.reach))
+        self.window_left = _coerce_optional_int(self.window_left)
+        self.window_top = _coerce_optional_int(self.window_top)
+        self.window_width = max(320, int(self.window_width))
+        self.window_height = max(240, int(self.window_height))
+        self.window_screen_name = str(self.window_screen_name or "").strip()
 
         azimuth = float(self.sun_az_deg) % 360.0
         self.sun_az_deg = azimuth if azimuth >= 0.0 else azimuth + 360.0
@@ -190,7 +216,7 @@ class RuntimePreferences:
 
 def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **overrides) -> RuntimePreferences:
     if runtime is not None:
-        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
+        out = RuntimePreferences(current_space_id=str(runtime.current_space_id), invert_x=bool(runtime.invert_x), invert_y=bool(runtime.invert_y), outline_selection=bool(runtime.outline_selection), cloud_wire=bool(runtime.cloud_wire), cloud_enabled=bool(runtime.cloud_enabled), cloud_density=int(runtime.cloud_density), cloud_seed=int(runtime.cloud_seed), cloud_flow_direction=str(runtime.cloud_flow_direction), world_wire=bool(runtime.world_wire), shadow_enabled=bool(runtime.shadow_enabled), creative_mode=bool(runtime.creative_mode), creative_hotbar_slots=list(runtime.creative_hotbar_slots), creative_selected_hotbar_index=int(runtime.creative_selected_hotbar_index), survival_hotbar_slots=list(runtime.survival_hotbar_slots), survival_selected_hotbar_index=int(runtime.survival_selected_hotbar_index), othello_hotbar_slots=list(runtime.othello_hotbar_slots), othello_selected_hotbar_index=int(runtime.othello_selected_hotbar_index), othello_settings=runtime.othello_settings.normalized(), reach=float(runtime.reach), auto_jump_enabled=bool(runtime.auto_jump_enabled), auto_sprint_enabled=bool(runtime.auto_sprint_enabled), hide_hud=bool(runtime.hide_hud), hide_hand=bool(runtime.hide_hand), crosshair_mode=str(runtime.crosshair_mode), crosshair_pixels=tuple(runtime.crosshair_pixels), player_skin_kind=str(runtime.player_skin_kind), camera_perspective=str(runtime.camera_perspective), fullscreen=bool(runtime.fullscreen), view_bobbing_enabled=bool(runtime.view_bobbing_enabled), camera_shake_enabled=bool(runtime.camera_shake_enabled), view_bobbing_strength=float(runtime.view_bobbing_strength), camera_shake_strength=float(runtime.camera_shake_strength), animated_textures_enabled=bool(runtime.animated_textures_enabled), render_distance_chunks=int(runtime.render_distance_chunks), sun_az_deg=float(runtime.sun_az_deg), sun_el_deg=float(runtime.sun_el_deg), debug_shadow=bool(runtime.debug_shadow), vsync_on=bool(runtime.vsync_on), hud_visible=bool(runtime.hud_visible), window_left=_coerce_optional_int(runtime.window_left), window_top=_coerce_optional_int(runtime.window_top), window_width=int(runtime.window_width), window_height=int(runtime.window_height), window_screen_name=str(runtime.window_screen_name), keybinds=runtime.keybinds.normalized(), audio=runtime.audio.normalized())
     else:
         out = RuntimePreferences()
 
@@ -199,6 +225,8 @@ def coerce_runtime_preferences(*, runtime: RuntimePreferences | None = None, **o
             continue
         if key.endswith("_hotbar_slots"):
             setattr(out, key, list(value))
+        elif key == "crosshair_pixels":
+            setattr(out, key, normalize_crosshair_pixels(value))
         elif key == "othello_settings":
             setattr(out, key, value.normalized())
         elif key == "keybinds":

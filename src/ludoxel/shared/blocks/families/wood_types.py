@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 from ..sound_groups import SOUND_GROUP_BAMBOO_WOOD, SOUND_GROUP_CHERRY_WOOD, SOUND_GROUP_NETHER_WOOD, SOUND_GROUP_WOOD

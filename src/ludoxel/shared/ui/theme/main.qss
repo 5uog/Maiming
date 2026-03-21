@@ -7,7 +7,7 @@ QWidget#pauseRoot QFrame#panel, QWidget#settingsRoot QFrame#panel, QWidget#othel
 QWidget#pauseRoot QLabel, QWidget#settingsRoot QLabel, QWidget#othelloSettingsRoot QLabel, QWidget#inventoryRoot QLabel, QWidget#deathRoot QLabel { color: #ffffff; font-size: 13px; }
 QWidget#pauseRoot QLabel#title, QWidget#settingsRoot QLabel#title, QWidget#othelloSettingsRoot QLabel#title, QWidget#inventoryRoot QLabel#title, QWidget#deathRoot QLabel#title { font-size: 22px; color: #ffffff; }
 QWidget#pauseRoot QLabel#subtitle, QWidget#settingsRoot QLabel#subtitle, QWidget#othelloSettingsRoot QLabel#subtitle, QWidget#inventoryRoot QLabel#subtitle { color: rgba(255,255,255,215); }
-QWidget#settingsRoot QLabel#sectionTitle { font-size: 15px; color: #f0f0f0; }
+QWidget#pauseRoot QLabel#sectionTitle, QWidget#settingsRoot QLabel#sectionTitle { font-size: 15px; color: #f0f0f0; }
 QWidget#settingsRoot QLabel#valueLabel { color: #ffffff; }
 QWidget#settingsRoot QWidget#bedrockToggleRow { background: transparent; min-height: 40px; }
 QWidget#settingsRoot QLabel#bedrockToggleLabel { color: #ffffff; font-size: 13px; }

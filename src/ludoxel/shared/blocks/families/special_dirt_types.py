@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ..block_definition import BlockTextures
 from ..sound_groups import SOUND_GROUP_DIRT, SOUND_GROUP_GRASS, SOUND_GROUP_GRAVEL, SOUND_GROUP_MUD, SOUND_GROUP_NETHERRACK, SOUND_GROUP_NYLIUM, SOUND_GROUP_ROOTED_DIRT, SOUND_GROUP_SAND, SOUND_GROUP_SOUL_SAND, SOUND_GROUP_SOUL_SOIL
 from .stone_types import StoneType, cube_textures, side_top_bottom_textures

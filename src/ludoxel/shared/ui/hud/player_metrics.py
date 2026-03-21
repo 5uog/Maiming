@@ -1,9 +1,11 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-import math
+
 from collections import deque
 from dataclasses import dataclass, field
+
+import math
 
 from ....application.runtime.state.session_settings import SessionSettings
 from ...world.entities.player_entity import PlayerEntity

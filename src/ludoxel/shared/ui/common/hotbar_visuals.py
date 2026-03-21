@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ...blocks.registry.block_registry import BlockRegistry
 from ....features.othello.domain.inventory.special_items import get_special_item_descriptor
 

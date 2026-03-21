@@ -1,12 +1,14 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ...world.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from .cloud_flow_options import CLOUD_FLOW_OPTIONS
+from .crosshair_widgets import CrosshairPixelEditor, CrosshairPreviewWidget
 from .advanced_scalar_control import AdvancedScalarControl
 
 def build_video_tab(overlay) -> None:
@@ -56,6 +58,37 @@ def build_video_tab(overlay) -> None:
     camera_row.addWidget(overlay._cmb_camera_perspective)
     camera_row.addStretch(1)
     layout.addLayout(camera_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Crosshair"))
+
+    overlay._lbl_crosshair_help = QLabel("Draw a custom 16x16 crosshair with the left mouse button, erase with the right mouse button, clear the custom design, or return to the default Minecraft-style crosshair.", host)
+    overlay._lbl_crosshair_help.setObjectName("valueLabel")
+    overlay._lbl_crosshair_help.setWordWrap(True)
+    layout.addWidget(overlay._lbl_crosshair_help)
+
+    crosshair_preview_row = QHBoxLayout()
+    overlay._crosshair_preview = CrosshairPreviewWidget(host)
+    crosshair_preview_row.addWidget(overlay._crosshair_preview, stretch=0)
+
+    crosshair_buttons = QVBoxLayout()
+    overlay._btn_crosshair_default = QPushButton("Use Default", host)
+    overlay._btn_crosshair_default.setObjectName("menuBtn")
+    overlay._btn_crosshair_default.clicked.connect(overlay.crosshair_default_requested.emit)
+    crosshair_buttons.addWidget(overlay._btn_crosshair_default)
+
+    overlay._btn_crosshair_clear = QPushButton("Clear Custom", host)
+    overlay._btn_crosshair_clear.setObjectName("menuBtn")
+    overlay._btn_crosshair_clear.clicked.connect(overlay.crosshair_clear_requested.emit)
+    crosshair_buttons.addWidget(overlay._btn_crosshair_clear)
+    crosshair_buttons.addStretch(1)
+    crosshair_preview_row.addLayout(crosshair_buttons, stretch=0)
+    crosshair_preview_row.addStretch(1)
+    layout.addLayout(crosshair_preview_row)
+
+    overlay._crosshair_editor = CrosshairPixelEditor(host)
+    overlay._crosshair_editor.pixels_changed.connect(overlay.crosshair_pixels_changed.emit)
+    layout.addWidget(overlay._crosshair_editor)
 
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "World"))

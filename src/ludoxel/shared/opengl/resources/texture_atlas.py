@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Tuple, Iterable
+
 import math
 
 from PyQt6.QtCore import Qt

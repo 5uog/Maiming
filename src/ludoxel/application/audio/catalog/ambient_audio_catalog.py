@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ...runtime.state.audio_preferences import AUDIO_CATEGORY_AMBIENT
 from ..audio_types import AudioSamplePool, SELECTION_ROUND_ROBIN, make_audio_pool
 

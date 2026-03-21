@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ..sound_groups import SOUND_GROUP_DEEPSLATE_BRICKS, SOUND_GROUP_TUFF
 from .stone_types import StoneType, cube_textures, side_top_bottom_textures
 

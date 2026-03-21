@@ -2,10 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import math
 import random
 import time
-from dataclasses import dataclass
 
 from .insane_engine import InsaneSearchCache, choose_insane_move
 from .rules import BOARD_SIZE, apply_move, counts_for_board, find_legal_moves, other_side

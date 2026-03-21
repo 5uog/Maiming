@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from typing import Callable
 
 from ..math.voxel.voxel_faces import face_neighbor_offset

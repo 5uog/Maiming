@@ -55,6 +55,10 @@ class QtInputAdapter(QObject):
         self._mdx = 0.0
         self._mdy = 0.0
 
+    def clear_mouse_delta(self) -> None:
+        self._mdx = 0.0
+        self._mdy = 0.0
+
     def crouch_held(self) -> bool:
         return self._action_pressed(ACTION_CROUCH)
 

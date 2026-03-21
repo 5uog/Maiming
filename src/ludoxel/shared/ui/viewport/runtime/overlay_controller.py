@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Callable
 
@@ -91,10 +92,10 @@ class ViewportOverlays:
             return
 
         self._r.death.setVisible(False)
-        self._runner.start()
 
         if (not self._paused and not self._inventory_open and not self._settings_open and not self._othello_settings_open):
             self._inp.set_mouse_capture(True)
+            self._runner.start()
             self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
@@ -137,8 +138,8 @@ class ViewportOverlays:
         self._r.othello_settings.setVisible(False)
 
         if not self._inventory_open:
-            self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._runner.start()
             self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
@@ -179,8 +180,8 @@ class ViewportOverlays:
             return
 
         if not self._inventory_open:
-            self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._runner.start()
             self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
@@ -223,8 +224,8 @@ class ViewportOverlays:
         self._othello_settings_return_to_pause = False
 
         if not self._inventory_open:
-            self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._runner.start()
             self._r.hotbar.setVisible(True)
 
         self._raise_game_hud()
@@ -253,7 +254,7 @@ class ViewportOverlays:
         self._r.inventory.setVisible(False)
 
         if not self._paused and not self._dead and not self._settings_open and not self._othello_settings_open:
-            self._runner.start()
             self._inp.set_mouse_capture(True)
+            self._runner.start()
             self._r.hotbar.setVisible(True)
             self._raise_game_hud()

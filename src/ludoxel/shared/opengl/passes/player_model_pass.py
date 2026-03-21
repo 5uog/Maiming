@@ -1,8 +1,10 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Callable
+
 import numpy as np
 
 from OpenGL.GL import glBindVertexArray, glDepthFunc, glDepthMask, glDisable, glDrawArraysInstanced, glEnable, GL_BLEND, GL_CULL_FACE, GL_DEPTH_TEST, GL_LESS, GL_TRIANGLES
@@ -95,6 +97,9 @@ class PlayerModelPass:
         for texture in self._special_item_textures.values():
             texture.destroy()
         self._special_item_textures.clear()
+
+    def set_skin_texture(self, skin_texture: ImageTexture) -> None:
+        self._skin_texture = skin_texture
 
     def _build_held_block_face_rows(self, pose: HeldBlockPose | None) -> tuple[np.ndarray, ...]:
         if pose is None or self._uv_lookup is None:

@@ -46,7 +46,7 @@ package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = { attr = "ludoxel.application.boot.version.__version__" }
+version = { attr = "ludoxel.application.boot.meta.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [

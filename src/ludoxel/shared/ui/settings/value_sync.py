@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_ORDER
 from .cloud_flow_options import cloud_flow_index_for_value
 
@@ -48,6 +49,8 @@ def sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_fullscreen, bool(values["fullscreen"]))
     _sync_toggle(overlay._tg_hide_hud, bool(values["hide_hud"]))
     _sync_toggle(overlay._tg_hide_hand, bool(values["hide_hand"]))
+    overlay._crosshair_editor.set_pixels(values["crosshair_pixels"])
+    overlay._crosshair_preview.set_pattern(mode=values["crosshair_mode"], custom_pixels=values["crosshair_pixels"])
 
     camera_perspective = str(values.get("camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON))
     camera_index = 0

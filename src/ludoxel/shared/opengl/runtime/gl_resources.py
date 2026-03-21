@@ -1,10 +1,12 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
 from OpenGL.GL import glGenVertexArrays, glDeleteVertexArrays
+from PyQt6.QtGui import QImage
 
 from ...blocks.registry.block_registry import BlockRegistry
 from ..gl.shader_program import ShaderProgram
@@ -83,3 +85,10 @@ class GLResources:
         if int(self.empty_vao) != 0:
             glDeleteVertexArrays(1,[int(self.empty_vao)])
             self.empty_vao = 0
+
+    def replace_skin_texture(self, image: QImage) -> ImageTexture:
+        next_texture = ImageTexture.from_image(image)
+        previous_texture = self.skin_texture
+        self.skin_texture = next_texture
+        previous_texture.destroy()
+        return self.skin_texture

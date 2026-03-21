@@ -1,8 +1,10 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-import math
+
 from dataclasses import dataclass
+
+import math
 
 from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
@@ -34,6 +36,7 @@ from ..runtime.selection_controller import SelectionController
 
 _FIRST_PERSON_REFERENCE_FOV_DEG = 80.0
 _FIRST_PERSON_HIGH_FOV_WEIGHT = 0.20
+_THIRD_PERSON_WORLD_NEAR = 0.01
 
 def _first_person_viewmodel_fov_deg(world_fov_deg: float) -> float:
     fov = float(world_fov_deg)
@@ -85,7 +88,10 @@ class FramePipeline:
         view = mat4.look_dir(eye, forward)
         if abs(float(roll_deg)) > 1e-6:
             view = mat4.mul(rotate_z_deg_matrix(float(roll_deg)), view)
-        proj = mat4.perspective(fov_deg,(w / max(h, 1)), float(self.cfg.camera.z_near), float(self.cfg.camera.z_far))
+        world_near = float(self.cfg.camera.z_near)
+        if player_state is not None and not bool(player_state.is_first_person):
+            world_near = min(float(world_near), float(_THIRD_PERSON_WORLD_NEAR))
+        proj = mat4.perspective(fov_deg,(w / max(h, 1)), float(world_near), float(self.cfg.camera.z_far))
         vp = mat4.mul(proj, view)
 
         glViewport(0, 0, w, h)

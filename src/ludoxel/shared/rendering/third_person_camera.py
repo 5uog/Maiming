@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from ...application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_THIRD_PERSON_BACK, normalize_camera_perspective
 
 from ..blocks.models.api import collision_aabbs_for_block
@@ -13,7 +14,7 @@ from ..math.voxel.voxel_dda import dda_grid_traverse
 from ..world.world_state import WorldState
 
 _THIRD_PERSON_DISTANCE = 4.0
-_THIRD_PERSON_COLLISION_MARGIN = 0.08
+_THIRD_PERSON_COLLISION_MARGIN = 0.16
 
 def resolve_camera(*, world: WorldState, block_registry: BlockRegistry, anchor_eye: Vec3, yaw_deg: float, pitch_deg: float, perspective: str) -> tuple[Vec3, float, float, Vec3]:
     normalized_perspective = normalize_camera_perspective(perspective)

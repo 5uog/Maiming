@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
@@ -21,6 +22,8 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
     viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
     viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
     viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
+    viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
+    viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
     viewport._death.respawn_requested.connect(lambda: respawn(viewport))
     viewport._inventory.block_selected.connect(lambda block_id: on_inventory_selected(viewport, str(block_id)))
     viewport._inventory.hotbar_slot_selected.connect(lambda slot_index: settings_controller.select_hotbar_slot(viewport, int(slot_index)))
@@ -35,6 +38,7 @@ def respawn(viewport: "GLViewportWidget") -> None:
 
 def resume_from_overlay(viewport: "GLViewportWidget") -> None:
     viewport._set_paused_overlay(False)
+    viewport.arm_resume_refresh()
     settings_controller.sync_cloud_motion_pause(viewport)
 
 def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bool = False) -> None:
@@ -95,6 +99,7 @@ def on_inventory_selected(viewport: "GLViewportWidget", block_id: str) -> None:
 
 def on_inventory_closed(viewport: "GLViewportWidget") -> None:
     viewport._set_inventory_overlay(False)
+    viewport.arm_resume_refresh()
 
 def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
@@ -136,6 +141,7 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
             settings_controller.sync_cloud_motion_pause(viewport)
         else:
             settings_controller.sync_settings_values(viewport)
+            settings_controller.sync_player_skin(viewport)
             viewport._overlay.set_current_space(viewport._state.current_space_id)
             viewport._set_paused_overlay(True)
             settings_controller.sync_cloud_motion_pause(viewport)

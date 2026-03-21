@@ -29,6 +29,9 @@ class FirstPersonArmPass:
         self._face_pass = None
         self._skin_texture = None
 
+    def set_skin_texture(self, skin_texture: ImageTexture) -> None:
+        self._skin_texture = skin_texture
+
     def draw(self, *, first_person: FirstPersonRenderState | None, view_proj: np.ndarray, sun_dir: Vec3) -> tuple[int, int]:
         if self._face_pass is None or self._skin_texture is None:
             return (0, 0)

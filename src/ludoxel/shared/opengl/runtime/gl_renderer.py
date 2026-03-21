@@ -6,6 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
+from PyQt6.QtGui import QImage
+
 from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
 from ...math.vec3 import Vec3
 from ...blocks.registry.block_registry import BlockRegistry
@@ -66,6 +68,9 @@ class GLRenderer:
     def set_cloud_motion_paused(self, on: bool) -> None:
         self._backend.set_cloud_motion_paused(bool(on))
 
+    def set_texture_animation_paused(self, on: bool) -> None:
+        self._backend.set_texture_animation_paused(bool(on))
+
     def set_world_wireframe(self, on: bool) -> None:
         self._state.world_wireframe = bool(on)
 
@@ -121,3 +126,9 @@ class GLRenderer:
 
     def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()) -> None:
         self._backend.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state, falling_blocks=falling_blocks)
+
+    def set_player_skin_image(self, image: QImage) -> None:
+        self._backend.set_player_skin_image(image)
+
+    def render_player_preview_frame(self, *, w: int, h: int, player_state: PlayerRenderState | None, restore_framebuffer: int, restore_viewport: tuple[int, int, int, int], device_pixel_ratio: float=1.0) -> QImage:
+        return self._backend.render_player_preview_frame(width=int(w), height=int(h), player_state=player_state, restore_framebuffer=int(restore_framebuffer), restore_viewport=restore_viewport, device_pixel_ratio=float(device_pixel_ratio))

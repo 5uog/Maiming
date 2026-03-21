@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from typing import Callable
 
+import time
 import numpy as np
 
 from OpenGL.GL import glGenFramebuffers, glDeleteFramebuffers, glGenTextures, glTexImage2D, glTexParameterfv, glBindFramebuffer, glCheckFramebufferStatus, glDeleteTextures, glBindTexture, glTexParameteri, glFramebufferTexture2D, glDrawBuffer, glReadBuffer, glViewport, glClear, glEnable, glDisable, glDepthMask, glDepthFunc, glPolygonOffset, glCullFace, GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER, GL_TEXTURE_BORDER_COLOR, GL_TEXTURE_COMPARE_MODE, GL_TEXTURE_COMPARE_FUNC, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL, GL_NONE, GL_BLEND, GL_DEPTH_TEST, GL_LESS, GL_DEPTH_BUFFER_BIT, GL_CULL_FACE, GL_FRONT, GL_POLYGON_OFFSET_FILL

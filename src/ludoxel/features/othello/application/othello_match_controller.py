@@ -1,6 +1,7 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import replace
 
 from ..domain.game.rules import apply_move, counts_for_board, create_initial_board, find_legal_moves, winner_for_board

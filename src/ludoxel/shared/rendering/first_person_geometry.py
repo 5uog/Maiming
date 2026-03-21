@@ -1,8 +1,10 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from dataclasses import dataclass, replace
 from typing import Callable, Literal, Sequence
+
 import math
 import numpy as np
 
@@ -81,8 +83,8 @@ _FIRST_PERSON_MIN_SCALE_MULTIPLIER = 0.25
 _FIRST_PERSON_SCALE_SEARCH_STEPS = 18
 _FIRST_PERSON_FIT_EPSILON = 1e-6
 
-_ARM_BASE_BOX = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
-_ARM_SLEEVE_BOX = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
+_ARM_BASE_BOX_SLIM = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.0, 2.0 * _PX)
+_ARM_SLEEVE_BOX_SLIM = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
 _SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8.5 * _PX)
 _SPECIAL_ITEM_RENDER_SCALE = 1.55
 
@@ -95,8 +97,8 @@ _FENCE_INVENTORY_BOXES: tuple[TexturedBox, ...] = (TexturedBox(box=px_box(6, 0, 
 _WALL_INVENTORY_BOXES: tuple[TexturedBox, ...] = tuple(TexturedBox(box=b) for b in boxes_for_wall(props={"north": "low", "south": "low", "east": "none", "west": "none", "up": "true"}, get_state=(lambda _x, _y, _z: None), get_def=(lambda _block_id: None), x=0, y=0, z=0))
 _HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0, "stairs": 1.0, "wall": 1.16, "fence": 1.12, "fence_gate": 1.72}
 
-_ALEX_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
-_ALEX_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
+_SLIM_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
+_SLIM_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
 
 def _uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float]) -> UVRect:
     u0_a, v0_a, u1_a, v1_a = texture_uv
@@ -342,12 +344,14 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
     if first_person is None or (not bool(first_person.show_arm)):
         return _empty_face_rows()
 
-    arm_boxes = (_ARM_BASE_BOX, _ARM_SLEEVE_BOX)
+    arm_boxes = (_ARM_BASE_BOX_SLIM, _ARM_SLEEVE_BOX_SLIM)
     base_parent_transform = _fitted_first_person_parent_transform(boxes=arm_boxes, projection=projection, safe_frame=_ARM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier))), projection_scale_exponent=float(_ARM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier))))
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ARM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
 
-    for box, uv_map in ((arm_boxes[0], _ALEX_RIGHT_ARM_BASE_UV_PX),(arm_boxes[1], _ALEX_RIGHT_ARM_SLEEVE_UV_PX)):
+    base_uv_map = _SLIM_RIGHT_ARM_BASE_UV_PX
+    sleeve_uv_map = _SLIM_RIGHT_ARM_SLEEVE_UV_PX
+    for box, uv_map in ((arm_boxes[0], base_uv_map),(arm_boxes[1], sleeve_uv_map)):
         model = _model_matrix_for_box(parent_transform, box)
         for face_idx in range(6):
             uv_rect = _skin_uv_rect(uv_map[int(face_idx)], int(skin_width), int(skin_height))

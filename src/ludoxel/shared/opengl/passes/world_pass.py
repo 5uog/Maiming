@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 
+import time
 import numpy as np
 
 from OpenGL.GL import glActiveTexture, glBindTexture, glEnable, glDisable, glCullFace, glPolygonMode, GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE_2D, GL_CULL_FACE, GL_BACK, GL_FRONT_AND_BACK, GL_LINE
