@@ -8,41 +8,9 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
-DEFAULT_EXTENSIONS: tuple[str, ...] = (
-    ".py",
-    ".glsl",
-    ".vert",
-    ".frag",
-    ".geom",
-    ".comp",
-    ".tesc",
-    ".tese",
-    ".qss",
-)
-
-LANGUAGE_BY_SUFFIX: dict[str, str] = {
-    ".py": "py",
-    ".glsl": "glsl",
-    ".vert": "glsl",
-    ".frag": "glsl",
-    ".geom": "glsl",
-    ".comp": "glsl",
-    ".tesc": "glsl",
-    ".tese": "glsl",
-    ".qss": "qss",
-}
-
-DEFAULT_EXCLUDE_PARTS: tuple[str, ...] = (
-    "__pycache__",
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "venv",
-    "build",
-    "dist",
-)
+DEFAULT_EXTENSIONS: tuple[str, ...] = (".py", ".glsl", ".vert", ".frag", ".geom", ".comp", ".tesc", ".tese", ".qss")
+LANGUAGE_BY_SUFFIX: dict[str, str] = {".py": "py", ".glsl": "glsl", ".vert": "glsl", ".frag": "glsl", ".geom": "glsl", ".comp": "glsl", ".tesc": "glsl", ".tese": "glsl", ".qss": "qss"}
+DEFAULT_EXCLUDE_PARTS: tuple[str, ...] = ("__pycache__", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "venv", "build", "dist")
 
 def _project_root_from_script() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -90,11 +58,7 @@ def _is_excluded(path: Path, src_root: Path, exclude_parts: tuple[str, ...]) -> 
     excluded = set(exclude_parts)
     return any(part in excluded for part in rel_parts)
 
-def _iter_target_files(
-    src_root: Path,
-    extensions: tuple[str, ...],
-    exclude_parts: tuple[str, ...],
-) -> Iterable[Path]:
+def _iter_target_files(src_root: Path, extensions: tuple[str, ...], exclude_parts: tuple[str, ...]) -> Iterable[Path]:
     allowed = {ext.lower() for ext in extensions}
     files: list[Path] = []
     for path in src_root.rglob("*"):
@@ -120,27 +84,14 @@ def _render_entry(path: Path, src_root: Path) -> str:
     fence = _fence_for(content)
     lang = _language_for(path)
     body = content if content.endswith("\n") else f"{content}\n"
-    return (
-        f"FILE: {rel}\n"
-        f"{fence}{lang}\n"
-        f"{body}"
-        f"{fence}\n"
-    )
+    return (f"FILE: {rel}\n" f"{fence}{lang}\n" f"{body}" f"{fence}\n")
 
-def build_dump(
-    src_root: Path,
-    extensions: tuple[str, ...],
-    exclude_parts: tuple[str, ...],
-) -> tuple[str, int]:
+def build_dump(src_root: Path, extensions: tuple[str, ...], exclude_parts: tuple[str, ...]) -> tuple[str, int]:
     if not src_root.is_dir():
         raise FileNotFoundError(f"src directory not found: {src_root}")
 
     files = list(_iter_target_files(src_root, extensions, exclude_parts))
-    lines = [
-        f"SOURCE_ROOT: {src_root.resolve().as_posix()}",
-        f"FILE_COUNT: {len(files)}",
-        "",
-    ]
+    lines = [f"SOURCE_ROOT: {src_root.resolve().as_posix()}", f"FILE_COUNT: {len(files)}", ""]
     chunks = ["\n".join(lines)]
     for index, path in enumerate(files):
         if index:
@@ -153,47 +104,12 @@ def parse_args() -> argparse.Namespace:
     default_src = project_root / "src/"
     default_output = project_root / "src_code_blocks.txt"
 
-    parser = argparse.ArgumentParser(
-        description=(
-            "Collect code files under src/ and export them into a single txt file, "
-            "wrapping each file in fenced code blocks."
-        )
-    )
-    parser.add_argument(
-        "--src",
-        type=Path,
-        default=default_src,
-        help=f"source root to scan (default: {default_src})",
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=default_output,
-        help=f"output txt file path (default: {default_output})",
-    )
-    parser.add_argument(
-        "--extensions",
-        type=_parse_extensions,
-        default=DEFAULT_EXTENSIONS,
-        help=(
-            "comma-separated file extensions to include "
-            f"(default: {','.join(DEFAULT_EXTENSIONS)})"
-        ),
-    )
-    parser.add_argument(
-        "--exclude-parts",
-        type=_split_csv,
-        default=DEFAULT_EXCLUDE_PARTS,
-        help=(
-            "comma-separated directory names to skip if they appear anywhere under src "
-            f"(default: {','.join(DEFAULT_EXCLUDE_PARTS)})"
-        ),
-    )
-    parser.add_argument(
-        "--stdout",
-        action="store_true",
-        help="write the result to stdout instead of a file",
-    )
+    parser = argparse.ArgumentParser(description=("Collect code files under src/ and export them into a single txt file, " "wrapping each file in fenced code blocks."))
+    parser.add_argument("--src", type=Path, default=default_src, help=f"source root to scan (default: {default_src})")
+    parser.add_argument("--output", type=Path, default=default_output, help=f"output txt file path (default: {default_output})")
+    parser.add_argument("--extensions", type=_parse_extensions, default=DEFAULT_EXTENSIONS, help=("comma-separated file extensions to include " f"(default: {','.join(DEFAULT_EXTENSIONS)})"))
+    parser.add_argument("--exclude-parts", type=_split_csv, default=DEFAULT_EXCLUDE_PARTS, help=("comma-separated directory names to skip if they appear anywhere under src " f"(default: {','.join(DEFAULT_EXCLUDE_PARTS)})"))
+    parser.add_argument("--stdout", action="store_true", help="write the result to stdout instead of a file")
     return parser.parse_args()
 
 def main() -> int:
@@ -202,11 +118,7 @@ def main() -> int:
     output_path = args.output.resolve()
 
     try:
-        text, count = build_dump(
-            src_root=src_root,
-            extensions=args.extensions,
-            exclude_parts=args.exclude_parts,
-        )
+        text, count = build_dump(src_root=src_root, extensions=args.extensions, exclude_parts=args.exclude_parts)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

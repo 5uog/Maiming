@@ -1,11 +1,15 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
+
 graft assets
+
 include main.py
 include README.md
 include LICENSE
+
 recursive-include src/ludoxel/shared/ui/theme *.qss
 recursive-include src/ludoxel/shared/opengl/shaders *.vert *.frag *.comp *.glsl
 recursive-include src/ludoxel/features/othello/opengl/shaders *.vert *.frag *.comp *.glsl
 recursive-include src/ludoxel/features/othello/data *.json
+
 global-exclude __pycache__ *.py[cod]

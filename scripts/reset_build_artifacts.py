@@ -1,8 +1,12 @@
+# Copyright 2026 Kento Konishi (https://github.com/5uog)
+# SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
+from pathlib import Path
+
 import argparse
 import shutil
 import sys
-from pathlib import Path
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=("Remove repository-local __pycache__ directories, the top-level build directory, and generated .pyd files under src/ludoxel/shared/math."))
@@ -101,11 +105,7 @@ def main() -> int:
         if not remove_file(path, dry_run=args.dry_run):
             failure_count += 1
 
-    print(
-        f"pycache_dirs: {len(pycache_dirs)} "
-        f"pyd_files: {len(pyd_files)} "
-        f"failures: {failure_count}"
-    )
+    print(f"pycache_dirs: {len(pycache_dirs)} " f"pyd_files: {len(pyd_files)} " f"failures: {failure_count}")
     return 0 if failure_count == 0 else 1
 
 if __name__ == "__main__":

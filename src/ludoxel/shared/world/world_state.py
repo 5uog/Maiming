@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import threading
-
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, Tuple
+
+import threading
 
 from ..math.chunking.chunk_grid import ChunkKey, chunk_key, neighbor_chunk_keys_for_cell
 

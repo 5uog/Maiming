@@ -1,9 +1,11 @@
 # Copyright 2026 Kento Konishi (https://github.com/5uog)
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 from pathlib import Path
-import sys
 from setuptools import Extension, setup
+
+import sys
 
 _ROOT = Path(__file__).resolve().parent
 _SRC = _ROOT / "src"

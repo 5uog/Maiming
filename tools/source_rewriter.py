@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from pathlib import Path
+
 import argparse
 import ast
 import io
 import sys
 import tokenize
-from dataclasses import dataclass, field
-from pathlib import Path
 
 SKIP_TOKEN_TYPES = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT, tokenize.ENDMARKER}
 TRANSFORM_COMPRESS = "compress"

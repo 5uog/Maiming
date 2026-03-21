@@ -8,31 +8,14 @@ build-backend = "setuptools.build_meta"
 name = "ludoxel"
 dynamic = ["version"]
 description = "PyQt6 desktop application for controlled experimentation on a restricted voxel-world model, a first-person interaction pipeline, and an OpenGL 4.3 Core Profile renderer."
-keywords = [
-    "minecraft",
-    "pvp",
-    "aim",
-    "simulation",
-    "opengl",
-    "voxel",
-    "shadow-map",
-    "cython",
-]
+keywords = ["minecraft", "pvp", "aim", "simulation", "opengl", "voxel", "shadow-map", "cython"]
 
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 
 requires-python = ">=3.13,<3.15"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Operating System :: OS Independent",
-    "Topic :: Games/Entertainment",
-    "Topic :: Scientific/Engineering :: Visualization",
-]
+classifiers = ["Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14", "Operating System :: OS Independent", "Topic :: Games/Entertainment", "Topic :: Scientific/Engineering :: Visualization"]
 dependencies = ["PyQt6>=6.6,<7", "numpy>=1.26,<3", "PyOpenGL>=3.1.7,<4"]
 
 [project.optional-dependencies]
@@ -49,16 +32,7 @@ include-package-data = true
 version = { attr = "ludoxel.application.boot.meta.version.__version__" }
 
 [tool.setuptools.package-data]
-ludoxel = [
-    "shared/ui/theme/*.qss",
-    "shared/opengl/shaders/*.vert",
-    "shared/opengl/shaders/*.frag",
-    "shared/opengl/shaders/*.comp",
-    "shared/opengl/shaders/common/*.glsl",
-    "features/othello/opengl/shaders/*.vert",
-    "features/othello/opengl/shaders/*.frag",
-    "features/othello/data/*.json",
-]
+ludoxel = ["shared/ui/theme/*.qss", "shared/opengl/shaders/*.vert", "shared/opengl/shaders/*.frag", "shared/opengl/shaders/*.comp", "shared/opengl/shaders/common/*.glsl", "features/othello/opengl/shaders/*.vert", "features/othello/opengl/shaders/*.frag", "features/othello/data/*.json"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
