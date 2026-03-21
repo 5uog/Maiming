@@ -150,7 +150,7 @@ def build_dump(
 
 def parse_args() -> argparse.Namespace:
     project_root = _project_root_from_script()
-    default_src = project_root / "src"
+    default_src = project_root / "src/"
     default_output = project_root / "src_code_blocks.txt"
 
     parser = argparse.ArgumentParser(

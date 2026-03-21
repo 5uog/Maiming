@@ -4,6 +4,7 @@ graft assets
 include main.py
 include README.md
 include LICENSE
-recursive-include src/ludoxel/presentation/theme *.qss
-recursive-include src/ludoxel/infrastructure/rendering/opengl/_internal/shaders *.vert *.frag *.comp *.glsl
+recursive-include src/ludoxel/shared/presentation/qt/theme *.qss
+recursive-include src/ludoxel/shared/presentation/opengl/shaders *.vert *.frag *.comp *.glsl
+recursive-include src/ludoxel/features/othello/presentation/opengl/shaders *.vert *.frag *.comp *.glsl
 global-exclude __pycache__ *.py[cod]

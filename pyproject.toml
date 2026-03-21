@@ -50,7 +50,7 @@ version = { attr = "ludoxel.application.meta.version.__version__" }
 
 [tool.setuptools.package-data]
 ludoxel = [
-    "presentation/theme/*.qss",
+    "shared/presentation/qt/theme/*.qss",
     "shared/presentation/opengl/shaders/*.vert",
     "shared/presentation/opengl/shaders/*.frag",
     "shared/presentation/opengl/shaders/*.comp",
