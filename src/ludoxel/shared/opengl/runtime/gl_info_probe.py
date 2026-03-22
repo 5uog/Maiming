@@ -64,7 +64,7 @@ def _gl_get_string(name: int) -> str:
     if raw is None:
         return ""
 
-    if isinstance(raw, (bytes, bytearray)):
+    if isinstance(raw,(bytes, bytearray)):
         return raw.decode("utf-8", errors="replace")
 
     return str(raw)
@@ -80,7 +80,7 @@ def _gl_get_int(name: int) -> int | None:
         return None
 
     try:
-        if hasattr(raw, "__len__") and (not isinstance(raw, (str, bytes, bytearray))):
+        if hasattr(raw, "__len__") and (not isinstance(raw,(str, bytes, bytearray))):
             if len(raw) <= 0:
                 return None
             return int(raw[0])

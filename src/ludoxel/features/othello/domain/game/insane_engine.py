@@ -140,7 +140,7 @@ def _position_score(player_bits: int, opponent_bits: int) -> int:
 
 def _corner_closeness_penalty(player_bits: int, opponent_bits: int) -> int:
     score = 0
-    corners = ((0, (1, 8, 9)), (7, (6, 14, 15)), (56, (48, 49, 57)), (63, (54, 55, 62)))
+    corners = ((0,(1, 8, 9)),(7,(6, 14, 15)),(56,(48, 49, 57)),(63,(54, 55, 62)))
     for corner, adjacent in corners:
         corner_mask = 1 << int(corner)
         if ((int(player_bits) | int(opponent_bits)) & corner_mask) != 0:

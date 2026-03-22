@@ -19,7 +19,7 @@ class StorageBuffer:
 
     def destroy(self) -> None:
         if int(self.buffer) != 0:
-            glDeleteBuffers(1, [int(self.buffer)])
+            glDeleteBuffers(1,[int(self.buffer)])
             self.buffer = 0
             self.capacity_bytes = 0
 
@@ -64,6 +64,6 @@ class StorageBuffer:
         raw = glGetBufferSubData(self._target, 0, size)
         glBindBuffer(self._target, 0)
 
-        if isinstance(raw, (bytes, bytearray)):
+        if isinstance(raw,(bytes, bytearray)):
             return bytes(raw)
         return bytes(raw)

@@ -23,7 +23,7 @@ def normalize_crosshair_mode(value: object) -> str:
 
 def normalize_crosshair_pixels(value: object) -> tuple[str, ...]:
     rows: list[str] = []
-    if isinstance(value, (list, tuple)):
+    if isinstance(value,(list, tuple)):
         for raw_row in value[:CROSSHAIR_GRID_SIZE]:
             text = str(raw_row or "")
             row = "".join("1" if ch == "1" else "0" for ch in text[:CROSSHAIR_GRID_SIZE])

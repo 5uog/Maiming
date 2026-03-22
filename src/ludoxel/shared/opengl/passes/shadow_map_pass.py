@@ -144,10 +144,10 @@ class ShadowMapPass:
 
     def _destroy_shadow_map(self) -> None:
         if int(self._tex) != 0:
-            glDeleteTextures(1, [int(self._tex)])
+            glDeleteTextures(1,[int(self._tex)])
             self._tex = 0
         if int(self._fbo) != 0:
-            glDeleteFramebuffers(1, [int(self._fbo)])
+            glDeleteFramebuffers(1,[int(self._fbo)])
             self._fbo = 0
         self._ok = False
 
@@ -167,7 +167,7 @@ class ShadowMapPass:
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1.0, 1.0, 1.0, 1.0])
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR,[1.0, 1.0, 1.0, 1.0])
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL)
@@ -185,8 +185,8 @@ class ShadowMapPass:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         if status != int(GL_FRAMEBUFFER_COMPLETE):
-            glDeleteTextures(1, [int(tex)])
-            glDeleteFramebuffers(1, [int(fbo)])
+            glDeleteTextures(1,[int(tex)])
+            glDeleteFramebuffers(1,[int(fbo)])
             self._tex = 0
             self._fbo = 0
             self._ok = False

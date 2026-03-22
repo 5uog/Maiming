@@ -26,7 +26,7 @@ def coerce_int(value: object, default: int) -> int:
 def coerce_bool(value: object, default: bool) -> bool:
     if isinstance(value, bool):
         return bool(value)
-    if isinstance(value, (int, float)):
+    if isinstance(value,(int, float)):
         return bool(value)
     if isinstance(value, str):
         token = str(value).strip().lower()

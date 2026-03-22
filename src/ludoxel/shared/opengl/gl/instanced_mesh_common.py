@@ -54,7 +54,7 @@ def upload_instance_rows_range(*, buffer: int, instance_data: np.ndarray, capaci
 
 def destroy_mesh_handles(*, vao: int, buffers: tuple[int, ...]) -> None:
     for buffer in buffers:
-        glDeleteBuffers(1, [int(buffer)])
-    glDeleteVertexArrays(1, [int(vao)])
+        glDeleteBuffers(1,[int(buffer)])
+    glDeleteVertexArrays(1,[int(vao)])
     glBindVertexArray(0)
     glBindBuffer(GL_ARRAY_BUFFER, 0)

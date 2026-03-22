@@ -49,15 +49,15 @@ def _cube_vertices_with_color(color: tuple[float, float, float]) -> np.ndarray:
 
     def face(nx, ny, nz, corners):
         (a, c0, c1, d0) = corners
-        return [(*a, nx, ny, nz, r, g, b), (*c0, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*a, nx, ny, nz, r, g, b), (*c1, nx, ny, nz, r, g, b), (*d0, nx, ny, nz, r, g, b)]
+        return [(*a, nx, ny, nz, r, g, b),(*c0, nx, ny, nz, r, g, b),(*c1, nx, ny, nz, r, g, b),(*a, nx, ny, nz, r, g, b),(*c1, nx, ny, nz, r, g, b),(*d0, nx, ny, nz, r, g, b)]
 
     faces: list[tuple[float, ...]] = []
-    faces.extend(face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)]))
-    faces.extend(face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)]))
-    faces.extend(face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)]))
-    faces.extend(face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)]))
-    faces.extend(face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)]))
-    faces.extend(face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)]))
+    faces.extend(face(1, 0, 0,[(p, -p, -p),(p, -p, p),(p, p, p),(p, p, -p)]))
+    faces.extend(face(-1, 0, 0,[(-p, -p, p),(-p, -p, -p),(-p, p, -p),(-p, p, p)]))
+    faces.extend(face(0, 1, 0,[(-p, p, -p),(p, p, -p),(p, p, p),(-p, p, p)]))
+    faces.extend(face(0, -1, 0,[(-p, -p, p),(p, -p, p),(p, -p, -p),(-p, -p, -p)]))
+    faces.extend(face(0, 0, 1,[(p, -p, p),(-p, -p, p),(-p, p, p),(p, p, p)]))
+    faces.extend(face(0, 0, -1,[(-p, -p, -p),(p, -p, -p),(p, p, -p),(-p, p, -p)]))
     return np.asarray(faces, dtype=np.float32)
 
 
@@ -98,13 +98,13 @@ def build_othello_piece_vertices(*, segments: int=48) -> np.ndarray:
         p0_bottom = (x0, -half_h, z0)
         p1_bottom = (x1, -half_h, z1)
 
-        add_triangle(center_top, p0_top, p1_top, (0.0, 1.0, 0.0), top_color)
-        add_triangle(center_bottom, p1_bottom, p0_bottom, (0.0, -1.0, 0.0), bottom_color)
+        add_triangle(center_top, p0_top, p1_top,(0.0, 1.0, 0.0), top_color)
+        add_triangle(center_bottom, p1_bottom, p0_bottom,(0.0, -1.0, 0.0), bottom_color)
 
         nx0 = math.cos((a0 + a1) * 0.5)
         nz0 = math.sin((a0 + a1) * 0.5)
-        add_triangle(p0_top, p0_bottom, p1_bottom, (nx0, 0.0, nz0), rim_color)
-        add_triangle(p0_top, p1_bottom, p1_top, (nx0, 0.0, nz0), rim_color)
+        add_triangle(p0_top, p0_bottom, p1_bottom,(nx0, 0.0, nz0), rim_color)
+        add_triangle(p0_top, p1_bottom, p1_top,(nx0, 0.0, nz0), rim_color)
 
     return np.asarray(vertices, dtype=np.float32)
 

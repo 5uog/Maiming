@@ -319,7 +319,7 @@ class WorldState:
             revision = 0
 
         out: Dict[BlockKey, str] = {}
-        raw = d.get("blocks", [])
+        raw = d.get("blocks",[])
         if isinstance(raw, list):
             for it in raw:
                 if not isinstance(it, list) or len(it) != 4:

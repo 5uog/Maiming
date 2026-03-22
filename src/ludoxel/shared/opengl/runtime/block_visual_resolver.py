@@ -29,7 +29,7 @@ class BlockVisualResolver:
 
         uv = self.atlas.uv.get(str(tex_name))
         if uv is None:
-            uv = self.atlas.uv.get("default", (0.0, 0.0, 1.0, 1.0))
+            uv = self.atlas.uv.get("default",(0.0, 0.0, 1.0, 1.0))
 
         return (float(uv[0]), float(uv[1]), float(uv[2]), float(uv[3]))
 

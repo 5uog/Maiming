@@ -99,7 +99,7 @@ class FramePipeline:
         world_near = float(self.cfg.camera.z_near)
         if player_state is not None and not bool(player_state.is_first_person):
             world_near = min(float(world_near), float(_THIRD_PERSON_WORLD_NEAR))
-        proj = mat4.perspective(fov_deg, (w / max(h, 1)), float(world_near), float(self.cfg.camera.z_far))
+        proj = mat4.perspective(fov_deg,(w / max(h, 1)), float(world_near), float(self.cfg.camera.z_far))
         vp = mat4.mul(proj, view)
 
         glViewport(0, 0, w, h)
@@ -138,7 +138,7 @@ class FramePipeline:
         if first_person is not None and bool(first_person.show_view_model) and (bool(first_person.show_arm) or first_person.visible_block_id is not None or first_person.visible_special_item_icon is not None):
             glClear(GL_DEPTH_BUFFER_BIT)
             hand_fov_deg = _first_person_viewmodel_fov_deg(float(fov_deg))
-            hand_vp = mat4.perspective(hand_fov_deg, (w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
+            hand_vp = mat4.perspective(hand_fov_deg,(w / max(h, 1)), float(FIRST_PERSON_HAND_NEAR), float(self.cfg.camera.z_far))
             if first_person.visible_special_item_icon is not None:
                 self.special_item_pass.draw(first_person=first_person, view_proj=hand_vp, sun_dir=self.state.sun_dir)
             elif first_person.visible_block_id is not None:

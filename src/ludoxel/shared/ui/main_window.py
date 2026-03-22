@@ -44,12 +44,12 @@ def _restored_window_geometry(screen: QScreen | None, *, left: int | None, top: 
     clamped_height = max(_MIN_WINDOW_HEIGHT, min(int(height), int(available.height())))
 
     if left is None:
-        clamped_left = int(available.x() + max(0, (int(available.width()) - clamped_width) // 2))
+        clamped_left = int(available.x() + max(0,(int(available.width()) - clamped_width) // 2))
     else:
         clamped_left = int(max(int(available.left()), min(int(left), int(available.right()) - clamped_width + 1)))
 
     if top is None:
-        clamped_top = int(available.y() + max(0, (int(available.height()) - clamped_height) // 2))
+        clamped_top = int(available.y() + max(0,(int(available.height()) - clamped_height) // 2))
     else:
         clamped_top = int(max(int(available.top()), min(int(top), int(available.bottom()) - clamped_height + 1)))
 

@@ -121,7 +121,7 @@ class TextureAtlas:
 
     def destroy(self) -> None:
         if int(self.tex_id) != 0:
-            glDeleteTextures(1, [int(self.tex_id)])
+            glDeleteTextures(1,[int(self.tex_id)])
             self.tex_id = 0
 
 

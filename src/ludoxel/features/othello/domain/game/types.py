@@ -295,16 +295,16 @@ class OthelloGameState:
         if not isinstance(data, dict):
             return OthelloGameState()
 
-        settings = OthelloSettings.from_dict(data.get("settings", {}))
+        settings = OthelloSettings.from_dict(data.get("settings",{}))
 
-        animations_raw = data.get("animations", [])
+        animations_raw = data.get("animations",[])
         animations: list[OthelloAnimationState] = []
         if isinstance(animations_raw, list):
             for value in animations_raw:
                 if isinstance(value, dict):
                     animations.append(OthelloAnimationState.from_dict(value))
 
-        legal_moves_raw = data.get("legal_moves", [])
+        legal_moves_raw = data.get("legal_moves",[])
         legal_moves: list[int] = []
         if isinstance(legal_moves_raw, list):
             for value in legal_moves_raw:

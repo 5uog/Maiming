@@ -12,7 +12,7 @@ from .instanced_mesh_common import attach_instance_buffer, create_static_vertex_
 
 
 def _create_default_vertex_buffer(vertices: np.ndarray) -> tuple[int, int, int]:
-    return create_static_vertex_buffer(vertices=vertices, cols=8, label="Static mesh vertices", attrs=((0, 3, 0), (1, 3, 12), (2, 2, 24)))
+    return create_static_vertex_buffer(vertices=vertices, cols=8, label="Static mesh vertices", attrs=((0, 3, 0),(1, 3, 12),(2, 2, 24)))
 
 
 @dataclass
@@ -27,7 +27,7 @@ class MeshBuffer:
     @staticmethod
     def create_cube_instanced() -> "MeshBuffer":
         vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_cube_vertices(), dtype=np.float32))
-        instance_vbo = attach_instance_buffer(stride_bytes=7 * 4, attrs=((3, 3, 0), (4, 4, 12)))
+        instance_vbo = attach_instance_buffer(stride_bytes=7 * 4, attrs=((3, 3, 0),(4, 4, 12)))
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -37,7 +37,7 @@ class MeshBuffer:
     @staticmethod
     def create_cube_transform_instanced() -> "MeshBuffer":
         vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_cube_vertices(), dtype=np.float32))
-        instance_vbo = attach_instance_buffer(stride_bytes=16 * 4, attrs=((3, 4, 0), (4, 4, 16), (5, 4, 32), (6, 4, 48)))
+        instance_vbo = attach_instance_buffer(stride_bytes=16 * 4, attrs=((3, 4, 0),(4, 4, 16),(5, 4, 32),(6, 4, 48)))
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -47,7 +47,7 @@ class MeshBuffer:
     @staticmethod
     def create_quad_instanced(face: int) -> "MeshBuffer":
         vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
-        instance_vbo = attach_instance_buffer(stride_bytes=12 * 4, attrs=((3, 3, 0), (4, 3, 12), (5, 4, 24), (6, 1, 40), (7, 1, 44)))
+        instance_vbo = attach_instance_buffer(stride_bytes=12 * 4, attrs=((3, 3, 0),(4, 3, 12),(5, 4, 24),(6, 1, 40),(7, 1, 44)))
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -57,7 +57,7 @@ class MeshBuffer:
     @staticmethod
     def create_quad_transform_instanced(face: int) -> "MeshBuffer":
         vao, vbo, vertex_count = _create_default_vertex_buffer(np.asarray(_quad_vertices(face), dtype=np.float32))
-        instance_vbo = attach_instance_buffer(stride_bytes=20 * 4, attrs=((3, 4, 0), (4, 4, 16), (5, 4, 32), (6, 4, 48), (7, 4, 64)))
+        instance_vbo = attach_instance_buffer(stride_bytes=20 * 4, attrs=((3, 4, 0),(4, 4, 16),(5, 4, 32),(6, 4, 48),(7, 4, 64)))
 
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
@@ -81,34 +81,34 @@ class MeshBuffer:
 
 def _face(nx, ny, nz, corners):
     (a, b, c, d) = corners
-    return [(*a, nx, ny, nz, 0.0, 0.0), (*b, nx, ny, nz, 1.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*a, nx, ny, nz, 0.0, 0.0), (*c, nx, ny, nz, 1.0, 1.0), (*d, nx, ny, nz, 0.0, 1.0)]
+    return [(*a, nx, ny, nz, 0.0, 0.0),(*b, nx, ny, nz, 1.0, 0.0),(*c, nx, ny, nz, 1.0, 1.0),(*a, nx, ny, nz, 0.0, 0.0),(*c, nx, ny, nz, 1.0, 1.0),(*d, nx, ny, nz, 0.0, 1.0)]
 
 
 def _quad_vertices(face: int):
     p = 0.5
 
     if face == 0:
-        return _face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)])
+        return _face(1, 0, 0,[(p, -p, -p),(p, -p, p),(p, p, p),(p, p, -p)])
     if face == 1:
-        return _face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)])
+        return _face(-1, 0, 0,[(-p, -p, p),(-p, -p, -p),(-p, p, -p),(-p, p, p)])
     if face == 2:
-        return _face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)])
+        return _face(0, 1, 0,[(-p, p, -p),(p, p, -p),(p, p, p),(-p, p, p)])
     if face == 3:
-        return _face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)])
+        return _face(0, -1, 0,[(-p, -p, p),(p, -p, p),(p, -p, -p),(-p, -p, -p)])
     if face == 4:
-        return _face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)])
-    return _face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)])
+        return _face(0, 0, 1,[(p, -p, p),(-p, -p, p),(-p, p, p),(p, p, p)])
+    return _face(0, 0, -1,[(-p, -p, -p),(p, -p, -p),(p, p, -p),(-p, p, -p)])
 
 
 def _cube_vertices():
     p = 0.5
     faces = []
 
-    faces.extend(_face(1, 0, 0, [(p, -p, -p), (p, -p, p), (p, p, p), (p, p, -p)]))
-    faces.extend(_face(-1, 0, 0, [(-p, -p, p), (-p, -p, -p), (-p, p, -p), (-p, p, p)]))
-    faces.extend(_face(0, 1, 0, [(-p, p, -p), (p, p, -p), (p, p, p), (-p, p, p)]))
-    faces.extend(_face(0, -1, 0, [(-p, -p, p), (p, -p, p), (p, -p, -p), (-p, -p, -p)]))
-    faces.extend(_face(0, 0, 1, [(p, -p, p), (-p, -p, p), (-p, p, p), (p, p, p)]))
-    faces.extend(_face(0, 0, -1, [(-p, -p, -p), (p, -p, -p), (p, p, -p), (-p, p, -p)]))
+    faces.extend(_face(1, 0, 0,[(p, -p, -p),(p, -p, p),(p, p, p),(p, p, -p)]))
+    faces.extend(_face(-1, 0, 0,[(-p, -p, p),(-p, -p, -p),(-p, p, -p),(-p, p, p)]))
+    faces.extend(_face(0, 1, 0,[(-p, p, -p),(p, p, -p),(p, p, p),(-p, p, p)]))
+    faces.extend(_face(0, -1, 0,[(-p, -p, p),(p, -p, p),(p, -p, -p),(-p, -p, -p)]))
+    faces.extend(_face(0, 0, 1,[(p, -p, p),(-p, -p, p),(-p, p, p),(p, p, p)]))
+    faces.extend(_face(0, 0, -1,[(-p, -p, -p),(p, -p, -p),(p, p, -p),(-p, p, -p)]))
 
     return faces

@@ -54,7 +54,7 @@ class PlacementPolicy:
         if cur == "double" or cur == want:
             return None
 
-        return format_state(str(base), {"type": "double"})
+        return format_state(str(base),{"type": "double"})
 
     def resolve_slab_merge_state(self, *, existing_state: str, block_id: str, hit_face: int, hit_point: Vec3) -> str | None:
         desired_type = self._choose_half_type(int(hit_face), hit_point)

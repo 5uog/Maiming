@@ -23,7 +23,8 @@
     "editor.detectIndentation": true,
     "editor.insertSpaces": true,
     "editor.tabSize": 4,
-    "editor.wordWrap": "on",
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 200,
     "editor.suggestSelection": "first",
     "editor.acceptSuggestionOnEnter": "smart",
     "editor.snippetSuggestions": "top",
@@ -39,7 +40,8 @@
 
     "[python]": {
         "editor.formatOnSave": false,
-        "editor.wordWrap": "off",
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.wordWrapColumn": 200,
         "editor.rulers": [88, 100]
     },
 

@@ -255,7 +255,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
             if not bool(state.is_first_person):
                 buffers: list[list[list[float]]] = [[] for _ in range(6)]
                 special_model = _model_matrix_for_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
-                _append_face_instance(buffers, int(FACE_POS_Z), special_model, (0.0, 0.0, 1.0, 1.0))
+                _append_face_instance(buffers, int(FACE_POS_Z), special_model,(0.0, 0.0, 1.0, 1.0))
                 special_item_face_rows = _rows_from_buffers(buffers)
                 visible_special_item_icon = str(first_person.visible_special_item_icon)
 
@@ -265,7 +265,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
         return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=shadow_rows)
 
     skin_buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    for model, uv_map in ((head, _HEAD_BASE_UV_PX), (hat, _HEAD_HAT_UV_PX), (body, _BODY_BASE_UV_PX), (jacket, _BODY_JACKET_UV_PX), (right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX), (right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX), (left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX), (left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX), (right_leg, _RIGHT_LEG_BASE_UV_PX), (right_pants, _RIGHT_LEG_PANTS_UV_PX), (left_leg, _LEFT_LEG_BASE_UV_PX), (left_pants, _LEFT_LEG_PANTS_UV_PX)):
+    for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
         _append_unit_cube_rows(skin_buffers, model, uv_map)
 
     return PlayerModelPose(skin_face_rows=_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)

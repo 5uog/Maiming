@@ -83,7 +83,7 @@ class AggregatedFaceBatch:
 
         for buf in self._indirect_buffers:
             if int(buf) != 0:
-                glDeleteBuffers(1, [int(buf)])
+                glDeleteBuffers(1,[int(buf)])
         self._indirect_buffers = []
         self._indirect_caps = [0 for _ in range(FACE_COUNT)]
 

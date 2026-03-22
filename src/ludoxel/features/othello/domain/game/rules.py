@@ -5,7 +5,7 @@ from __future__ import annotations
 from .board import BOARD_SIZE, row_col_to_square_index as row_col_to_index, square_index_to_row_col as index_to_row_col
 from .types import BOARD_CELL_COUNT, OTHELLO_WINNER_DRAW, SIDE_BLACK, SIDE_EMPTY, SIDE_WHITE, coerce_board, normalize_side, other_side
 
-_DIRECTIONS: tuple[tuple[int, int], ...] = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+_DIRECTIONS: tuple[tuple[int, int], ...] = ((-1, -1),(-1, 0),(-1, 1),(0, -1),(0, 1),(1, -1),(1, 0),(1, 1))
 
 
 def create_initial_board() -> tuple[int, ...]:

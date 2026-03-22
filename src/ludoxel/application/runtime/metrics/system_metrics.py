@@ -150,7 +150,7 @@ def _windows_total_mem_bytes() -> int | None:
         import ctypes
 
         class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64), ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64), ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64), ("ullAvailExtendedVirtual", ctypes.c_uint64)]
+            _fields_ = [("dwLength", ctypes.c_uint32),("dwMemoryLoad", ctypes.c_uint32),("ullTotalPhys", ctypes.c_uint64),("ullAvailPhys", ctypes.c_uint64),("ullTotalPageFile", ctypes.c_uint64),("ullAvailPageFile", ctypes.c_uint64),("ullTotalVirtual", ctypes.c_uint64),("ullAvailVirtual", ctypes.c_uint64),("ullAvailExtendedVirtual", ctypes.c_uint64)]
 
         ms = MEMORYSTATUSEX()
         ms.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
@@ -168,7 +168,7 @@ def _windows_rss_bytes_psapi() -> int | None:
         import ctypes.wintypes as wt
 
         class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
-            _fields_ = [("cb", wt.DWORD), ("PageFaultCount", wt.DWORD), ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t), ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t), ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t), ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+            _fields_ = [("cb", wt.DWORD),("PageFaultCount", wt.DWORD),("PeakWorkingSetSize", ctypes.c_size_t),("WorkingSetSize", ctypes.c_size_t),("QuotaPeakPagedPoolUsage", ctypes.c_size_t),("QuotaPagedPoolUsage", ctypes.c_size_t),("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),("QuotaNonPagedPoolUsage", ctypes.c_size_t),("PagefileUsage", ctypes.c_size_t),("PeakPagefileUsage", ctypes.c_size_t)]
 
         counters = PROCESS_MEMORY_COUNTERS()
         counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)

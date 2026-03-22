@@ -42,7 +42,7 @@ from ..hud.hotbar_widget import HotbarWidget
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
 from ..overlays.pause_overlay import PauseOverlay
-from ..settings.overlay import SettingsOverlay
+from ..settings.settings_overlay import SettingsOverlay
 from ..config.game_loop_params import DEFAULT_GAME_LOOP_PARAMS, GameLoopParams
 from ..config.gl_surface_format import build_gl_surface_format
 from .controllers import interaction_controller, settings_controller

@@ -24,7 +24,7 @@ class CrosshairWidget(QWidget):
 
     def set_pattern(self, *, mode: object, custom_pixels: object) -> None:
         self._mode = str(mode or "")
-        self._custom_pixels = tuple(str(row) for row in custom_pixels) if isinstance(custom_pixels, (list, tuple)) else EMPTY_CROSSHAIR_PIXELS
+        self._custom_pixels = tuple(str(row) for row in custom_pixels) if isinstance(custom_pixels,(list, tuple)) else EMPTY_CROSSHAIR_PIXELS
         self._image = render_crosshair_image(self._mode, self._custom_pixels, scale=int(_GAME_CROSSHAIR_SCALE))
         self.update()
 

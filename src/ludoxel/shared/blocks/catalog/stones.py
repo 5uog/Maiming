@@ -32,5 +32,5 @@ _STONE_VARIANT_RECIPES: tuple[CatalogVariantRecipe, ...] = (CatalogVariantRecipe
 
 def register_stones(reg: BlockRegistry) -> None:
     for v in _all_stones():
-        stone_tags = tuple(_STONE_LIKE_TAGS) + tuple(str(tag) for tag in getattr(v, "tags", ()))
+        stone_tags = tuple(_STONE_LIKE_TAGS) + tuple(str(tag) for tag in getattr(v, "tags",()))
         register_catalog_variants(reg, v, textures=v.textures, tags=stone_tags, recipes=_STONE_VARIANT_RECIPES, sound_group=lambda stone: getattr(stone, "sound_group", "stone"))

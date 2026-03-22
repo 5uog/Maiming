@@ -61,8 +61,8 @@ class OthelloHudWidget(QWidget):
         if title_text:
             width = min(680, max(320, self.width() // 2))
             height = max(64, self._title_label.sizeHint().height() + 18)
-            x = max(0, (self.width() - int(width)) // 2)
-            y = max(0, (self.height() - int(height)) // 2)
+            x = max(0,(self.width() - int(width)) // 2)
+            y = max(0,(self.height() - int(height)) // 2)
             self._title_label.setGeometry(int(x), int(y), int(width), int(height))
             self._title_label.setVisible(True)
             self._title_label.raise_()

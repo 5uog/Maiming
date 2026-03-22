@@ -48,7 +48,7 @@ def split_face_sources_to_buckets(face_sources: np.ndarray, bucket_counts: Bucke
         if slot < 0 or slot >= int(counts[fi]):
             continue
 
-        out[fi][slot,:] = row[:12]
+        out[fi][slot, :] = row[:12]
 
     return out
 

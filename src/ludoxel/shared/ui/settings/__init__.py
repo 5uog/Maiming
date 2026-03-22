@@ -3,6 +3,6 @@
 from __future__ import annotations
 
 from .advanced_scalar_control import AdvancedScalarControl
-from .overlay import SettingsOverlay
+from .settings_overlay import SettingsOverlay
 
 __all__ = ["AdvancedScalarControl", "SettingsOverlay"]

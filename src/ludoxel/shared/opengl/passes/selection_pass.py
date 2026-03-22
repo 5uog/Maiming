@@ -48,10 +48,10 @@ class SelectionPass:
 
     def destroy(self) -> None:
         if int(self._vbo) != 0:
-            glDeleteBuffers(1, [int(self._vbo)])
+            glDeleteBuffers(1,[int(self._vbo)])
             self._vbo = 0
         if int(self._vao) != 0:
-            glDeleteVertexArrays(1, [int(self._vao)])
+            glDeleteVertexArrays(1,[int(self._vao)])
             self._vao = 0
         self._prog = None
         self._vertex_count = 0

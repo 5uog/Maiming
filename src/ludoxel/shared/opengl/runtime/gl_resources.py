@@ -84,7 +84,7 @@ class GLResources:
         self.player_model_shadow_prog.destroy()
 
         if int(self.empty_vao) != 0:
-            glDeleteVertexArrays(1, [int(self.empty_vao)])
+            glDeleteVertexArrays(1,[int(self.empty_vao)])
             self.empty_vao = 0
 
     def replace_skin_texture(self, image: QImage) -> ImageTexture:

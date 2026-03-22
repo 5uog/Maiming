@@ -42,7 +42,7 @@ def ray_aabb_face(ray: Ray, aabb: AABB) -> RayHitFace | None:
     enter_face: int = -1
     exit_face: int = -1
 
-    for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x), (o.y, d.y, aabb.mn.y, aabb.mx.y), (o.z, d.z, aabb.mn.z, aabb.mx.z))):
+    for axis, (o_comp, d_comp, mn, mx) in enumerate(((o.x, d.x, aabb.mn.x, aabb.mx.x),(o.y, d.y, aabb.mn.y, aabb.mx.y),(o.z, d.z, aabb.mn.z, aabb.mx.z))):
         if abs(d_comp) < 1e-12:
             if o_comp < mn or o_comp > mx:
                 return None

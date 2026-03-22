@@ -162,7 +162,7 @@ class HUDWidget(QWidget):
         right_on = bool(str(self._raw_right_text).strip())
 
         if left_on and right_on:
-            panel_w = max(1, min(int(self._max_panel_w), (int(aw) - int(self._panel_gap)) // 2))
+            panel_w = max(1, min(int(self._max_panel_w),(int(aw) - int(self._panel_gap)) // 2))
         else:
             panel_w = max(1, min(int(self._max_panel_w), int(aw)))
 

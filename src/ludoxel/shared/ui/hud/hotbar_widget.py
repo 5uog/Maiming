@@ -88,7 +88,7 @@ class HotbarWidget(QWidget):
         self._panel.adjustSize()
         pw = int(self._panel.sizeHint().width())
         ph = int(self._panel.sizeHint().height())
-        x = max(0, (int(self.width()) - pw) // 2)
+        x = max(0,(int(self.width()) - pw) // 2)
         y = max(0, int(self.height()) - ph - 18)
         self._panel.setGeometry(x, y, pw, ph)
 

@@ -51,7 +51,7 @@ def _normalize_exempt_cells(collision_exempt_cell: object) -> frozenset[tuple[in
         return collision_exempt_cell
     if isinstance(collision_exempt_cell, tuple) and len(collision_exempt_cell) == 3:
         return frozenset({(int(collision_exempt_cell[0]), int(collision_exempt_cell[1]), int(collision_exempt_cell[2]))})
-    if isinstance(collision_exempt_cell, (set, list, tuple)):
+    if isinstance(collision_exempt_cell,(set, list, tuple)):
         out: set[tuple[int, int, int]] = set()
         for cell in collision_exempt_cell:
             if isinstance(cell, tuple) and len(cell) == 3:

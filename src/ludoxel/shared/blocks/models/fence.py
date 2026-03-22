@@ -13,7 +13,7 @@ from ..structure.structural_rules import fence_connects_to_neighbor_state
 def boxes_for_fence(*, get_state: GetState, get_def: GetDef, x: int, y: int, z: int) -> List[LocalBox]:
     connections = {"north": False, "south": False, "east": False, "west": False}
 
-    for d, (dx, dz) in (("north", (0, -1)), ("south", (0, 1)), ("east", (1, 0)), ("west", (-1, 0))):
+    for d, (dx, dz) in (("north",(0, -1)),("south",(0, 1)),("east",(1, 0)),("west",(-1, 0))):
         s = get_state(int(x + dx), int(y), int(z + dz))
         connections[d] = fence_connects_to_neighbor_state(s, side_from_neighbor=opposite_cardinal(str(d)), get_def=get_def)
 

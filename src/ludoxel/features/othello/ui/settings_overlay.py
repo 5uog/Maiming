@@ -55,9 +55,9 @@ class OthelloSettingsOverlay(QWidget):
         sep.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(sep)
 
-        self._difficulty = self._add_combo(layout, panel, "AI difficulty", ((OTHELLO_DIFFICULTY_WEAK, "Weak"), (OTHELLO_DIFFICULTY_MEDIUM, "Medium"), (OTHELLO_DIFFICULTY_STRONG, "Strong"), (OTHELLO_DIFFICULTY_INSANE, "Insane")))
-        self._time_control = self._add_combo(layout, panel, "Time control", ((OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"), (OTHELLO_TIME_CONTROL_NONE, "No limit")))
-        self._player_side = self._add_combo(layout, panel, "Player order", ((SIDE_BLACK, "Player moves first"), (SIDE_WHITE, "Player moves second")))
+        self._difficulty = self._add_combo(layout, panel, "AI difficulty",((OTHELLO_DIFFICULTY_WEAK, "Weak"),(OTHELLO_DIFFICULTY_MEDIUM, "Medium"),(OTHELLO_DIFFICULTY_STRONG, "Strong"),(OTHELLO_DIFFICULTY_INSANE, "Insane")))
+        self._time_control = self._add_combo(layout, panel, "Time control",((OTHELLO_TIME_CONTROL_PER_SIDE_20M, "20 minutes per side"),(OTHELLO_TIME_CONTROL_NONE, "No limit")))
+        self._player_side = self._add_combo(layout, panel, "Player order",((SIDE_BLACK, "Player moves first"),(SIDE_WHITE, "Player moves second")))
 
         btn_save = QPushButton("Save", panel)
         btn_save.setObjectName("menuBtn")

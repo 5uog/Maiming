@@ -174,7 +174,7 @@ def _load_opening_book_from_disk() -> OpeningBook:
     except Exception:
         return OpeningBook(moves_by_key={})
 
-    lines_raw = raw.get("lines", [])
+    lines_raw = raw.get("lines",[])
     if not isinstance(lines_raw, list):
         return OpeningBook(moves_by_key={})
 

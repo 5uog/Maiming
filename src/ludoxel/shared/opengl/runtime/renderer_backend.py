@@ -270,7 +270,7 @@ class RendererBackend:
             return QImage()
         pose = build_player_model_pose(player_state)
         aspect = float(target_width) / max(1.0, float(target_height))
-        view = mat4.look_dir(_PREVIEW_EYE, (_PREVIEW_TARGET - _PREVIEW_EYE).normalized())
+        view = mat4.look_dir(_PREVIEW_EYE,(_PREVIEW_TARGET - _PREVIEW_EYE).normalized())
         proj = mat4.perspective(float(_PREVIEW_FOV_DEG), float(aspect), float(_PREVIEW_NEAR), float(_PREVIEW_FAR))
         view_proj = mat4.mul(proj, view)
 
@@ -296,13 +296,13 @@ class RendererBackend:
 
     def _destroy_preview_target(self) -> None:
         if int(self._preview_depth_rbo) != 0:
-            glDeleteRenderbuffers(1, [int(self._preview_depth_rbo)])
+            glDeleteRenderbuffers(1,[int(self._preview_depth_rbo)])
             self._preview_depth_rbo = 0
         if int(self._preview_color_tex) != 0:
-            glDeleteTextures(1, [int(self._preview_color_tex)])
+            glDeleteTextures(1,[int(self._preview_color_tex)])
             self._preview_color_tex = 0
         if int(self._preview_fbo) != 0:
-            glDeleteFramebuffers(1, [int(self._preview_fbo)])
+            glDeleteFramebuffers(1,[int(self._preview_fbo)])
             self._preview_fbo = 0
         self._preview_width = 0
         self._preview_height = 0
@@ -337,9 +337,9 @@ class RendererBackend:
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
         if status != int(GL_FRAMEBUFFER_COMPLETE):
-            glDeleteRenderbuffers(1, [int(depth_rbo)])
-            glDeleteTextures(1, [int(color_tex)])
-            glDeleteFramebuffers(1, [int(fbo)])
+            glDeleteRenderbuffers(1,[int(depth_rbo)])
+            glDeleteTextures(1,[int(color_tex)])
+            glDeleteFramebuffers(1,[int(fbo)])
             return False
 
         self._preview_fbo = int(fbo)
