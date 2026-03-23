@@ -16,9 +16,9 @@ from ....shared.world.inventory.hotbar import HOTBAR_SIZE as DOMAIN_HOTBAR_SIZE,
 from ....shared.world.inventory.hotbar_defaults import default_hotbar_slots
 from ....features.othello.domain.inventory.hotbar_defaults import default_othello_hotbar_slots
 from ....features.othello.domain.game.types import OthelloGameState, OthelloSettings
+from ....shared.math.scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 from ....shared.world.play_space import PLAY_SPACE_MY_WORLD, normalize_play_space_id
 from ....shared.world.world_state import WorldState
-from .scalar_coercion import coerce_bool, coerce_float, coerce_int, mapping_bool, mapping_float, mapping_int, mapping_str
 
 
 def _inventory_branch_to_dict(*, slots: object, selected_index: object, size: int) -> tuple[list[str], int]:

@@ -218,7 +218,7 @@ def _write_lines_to_path(path: Path, lines: tuple[tuple[int, ...], ...]) -> None
     """I define W(path, lines) as deterministic JSON serialization of the normalized line corpus. I always write an explicit version field because this file is application state, not an opaque cache artifact."""
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"version": 1, "lines": [list(line) for line in tuple(lines)]}
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")), encoding="utf-8")
 
 
 def _merge_lines(*sources: tuple[tuple[int, ...], ...]) -> tuple[tuple[int, ...], ...]:
@@ -327,8 +327,8 @@ def export_opening_book_file(export_path: str | Path, *, project_root: str | Pat
     return normalized_path
 
 
-def clear_opening_book_cache(project_root: str | Path | None = None) -> None:
-    """I invalidate every memoized projection derived from L_u(root) and L(root). I accept an optional root parameter for interface symmetry even though the current invalidation scope is global across cached project keys."""
+def clear_opening_book_cache(_project_root: str | Path | None = None) -> None:
+    """I invalidate every memoized projection derived from the user and effective opening-book corpora. The root argument is presently ignored because invalidation is global across all cached project keys."""
     _load_user_opening_book_lines_cached.cache_clear()
     _load_opening_book_cached.cache_clear()
 

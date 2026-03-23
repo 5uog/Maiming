@@ -9,7 +9,8 @@ import numpy as np
 from ..blocks.block_definition import BlockDefinition
 from ..blocks.state.state_codec import parse_state
 from .face_bucket_layout import FACE_COUNT, BucketCounts, empty_face_bucket_arrays, normalize_bucket_counts
-from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
+from .face_row_utils import atlas_face_uv
+from .uv_rects import UVRect
 from .visible_faces import iter_visible_faces
 
 UVLookup = Callable[[str, int], UVRect]
@@ -77,12 +78,7 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
             mxx, mxy, mxz = face.mx
 
             atlas = uv_lookup(str(state_str), int(fi))
-
-            uv_hint = str(getattr(face.box, "uv_hint", ""))
-            if defn is not None and str(defn.kind) == "fence_gate" and uv_hint:
-                u0, v0, u1, v1 = fence_gate_uv_rect(atlas, int(fi), face.box)
-            else:
-                u0, v0, u1, v1 = sub_uv_rect(atlas, int(fi), face.box)
+            u0, v0, u1, v1 = atlas_face_uv(atlas, int(fi), face.box, kind=(None if defn is None else str(defn.kind)))
 
             rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), 1.0, 0.0, float(fi), float(slot)])
 

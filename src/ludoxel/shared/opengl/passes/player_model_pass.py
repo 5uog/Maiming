@@ -12,9 +12,10 @@ from OpenGL.GL import glBindVertexArray, glDepthFunc, glDepthMask, glDisable, gl
 from ....features.othello.ui.special_item_art import build_special_item_icon_image
 from ...math.vec3 import Vec3
 from ...rendering.face_occlusion import is_local_face_occluded
-from ...rendering.first_person_geometry import TexturedBox, held_block_model_boxes_for_kind
+from ...rendering.face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
+from ...rendering.first_person_geometry import held_block_model_boxes_for_kind
 from ...rendering.player_model_pose import HeldBlockPose, PlayerModelPose
-from ...rendering.uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
+from ...rendering.uv_rects import UVRect
 from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram
@@ -24,51 +25,6 @@ from ..runtime.gl_renderer_params import ShadowParams
 from ..runtime.render_metrics import PassFrameMetrics
 from .shadow_map_pass import ShadowMapInfo
 from .textured_face_pass import TexturedFacePass
-
-
-def _empty_face_rows() -> tuple[np.ndarray, ...]:
-    return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
-
-
-def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
-    row = list(np.asarray(model, dtype=np.float32).reshape(16))
-    row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
-    buffers[int(face_idx)].append(row)
-
-
-def _rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
-    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
-
-
-def _uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float]) -> UVRect:
-    u0_a, v0_a, u1_a, v1_a = texture_uv
-    px0, py0, px1, py1 = px_rect
-    return (float(u0_a + (u1_a - u0_a) * (float(px0) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py0) / 16.0)), float(u0_a + (u1_a - u0_a) * (float(px1) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py1) / 16.0)))
-
-
-def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UVRect, *, kind: str) -> UVRect:
-    face_uv_pixels = textured_box.face_uv_pixels
-    if face_uv_pixels is not None:
-        px_rect = face_uv_pixels.get(int(face_idx))
-        if px_rect is not None:
-            return _uv_rect_from_pixels(texture_uv, px_rect)
-
-    if kind == "fence_gate" and bool(textured_box.box.uv_hint):
-        return fence_gate_uv_rect(texture_uv, int(face_idx), textured_box.box)
-    return sub_uv_rect(texture_uv, int(face_idx), textured_box.box)
-
-
-def _model_matrix_for_box(parent_transform: np.ndarray, box) -> np.ndarray:
-    center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
-    center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
-    center_z = 0.5 * (float(box.mn_z) + float(box.mx_z))
-    size_x = float(box.mx_x) - float(box.mn_x)
-    size_y = float(box.mx_y) - float(box.mn_y)
-    size_z = float(box.mx_z) - float(box.mn_z)
-    from ...math.transform_matrices import compose_matrices, scale_matrix, translate_matrix
-
-    return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
-
 
 @dataclass
 class PlayerModelPass:
@@ -113,11 +69,11 @@ class PlayerModelPass:
 
     def _build_held_block_face_rows(self, pose: HeldBlockPose | None) -> tuple[np.ndarray, ...]:
         if pose is None or self._uv_lookup is None:
-            return _empty_face_rows()
+            return empty_textured_face_rows()
 
         boxes = list(held_block_model_boxes_for_kind(pose.block_kind))
         if not boxes:
-            return _empty_face_rows()
+            return empty_textured_face_rows()
 
         kind = "" if pose.block_kind is None else str(pose.block_kind)
         buffers: list[list[list[float]]] = [[] for _ in range(6)]
@@ -127,11 +83,11 @@ class PlayerModelPass:
                 if is_local_face_occluded(box=textured_box.box, face_idx=int(face_idx), boxes=local_boxes):
                     continue
                 texture_uv = self._uv_lookup(str(pose.block_id), int(face_idx))
-                uv_rect = _face_uv_from_atlas(textured_box, int(face_idx), texture_uv, kind=kind)
-                model = _model_matrix_for_box(pose.parent_transform, textured_box.box)
-                _append_face_instance(buffers, int(face_idx), model, uv_rect)
+                uv_rect = atlas_face_uv(texture_uv, int(face_idx), textured_box.box, kind=kind, face_uv_pixels=textured_box.face_uv_pixels)
+                model = model_matrix_for_local_box(pose.parent_transform, textured_box.box)
+                append_face_instance(buffers, int(face_idx), model, uv_rect)
 
-        return _rows_from_buffers(buffers)
+        return face_rows_from_buffers(buffers)
 
     def draw_world(self, *, pose: PlayerModelPose, view_proj: np.ndarray, light_view_proj: np.ndarray, sun_dir: Vec3, debug_shadow: bool, shadow_enabled: bool, shadow: ShadowParams, shadow_info: ShadowMapInfo) -> tuple[int, int]:
         del light_view_proj, debug_shadow, shadow_enabled, shadow, shadow_info

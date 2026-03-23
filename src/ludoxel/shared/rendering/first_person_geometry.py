@@ -18,8 +18,9 @@ from ..blocks.models.fence_gate import boxes_for_fence_gate
 from ..blocks.models.slab import boxes_for_slab
 from ..blocks.models.stairs import boxes_for_stairs
 from .face_occlusion import is_local_face_occluded
+from .face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
 from ..math.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
-from .uv_rects import UVRect, fence_gate_uv_rect, sub_uv_rect
+from .uv_rects import UVRect
 from .player_render_state import FirstPersonRenderState
 
 DefLookup = Callable[[str], BlockDefinition | None]
@@ -91,6 +92,7 @@ _SPECIAL_ITEM_RENDER_SCALE = 1.55
 
 @dataclass(frozen=True)
 class TexturedBox:
+    """I define this record as the pair (B, U), where B is a local cuboid and U is an optional per-face pixel-rectangle family over the six voxel faces. I use the record to carry enough information to derive both geometry and face-local atlas coordinates without coupling held-item rendering to any single block family implementation."""
     box: LocalBox
     face_uv_pixels: dict[int, tuple[float, float, float, float]] | None = None
 
@@ -101,19 +103,6 @@ _HELD_BLOCK_KIND_SCALE_MULTIPLIERS: dict[str, float] = {"cube": 1.0, "slab": 1.0
 
 _SLIM_RIGHT_ARM_BASE_UV_PX = {FACE_POS_X: (40.0, 20.0, 44.0, 32.0), FACE_NEG_X: (47.0, 20.0, 51.0, 32.0), FACE_POS_Y: (44.0, 16.0, 47.0, 20.0), FACE_NEG_Y: (47.0, 16.0, 50.0, 20.0), FACE_POS_Z: (44.0, 20.0, 47.0, 32.0), FACE_NEG_Z: (51.0, 20.0, 54.0, 32.0)}
 _SLIM_RIGHT_ARM_SLEEVE_UV_PX = {FACE_POS_X: (40.0, 36.0, 44.0, 48.0), FACE_NEG_X: (47.0, 36.0, 51.0, 48.0), FACE_POS_Y: (44.0, 32.0, 47.0, 36.0), FACE_NEG_Y: (47.0, 32.0, 50.0, 36.0), FACE_POS_Z: (44.0, 36.0, 47.0, 48.0), FACE_NEG_Z: (51.0, 36.0, 54.0, 48.0)}
-
-
-def _uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, float]) -> UVRect:
-    u0_a, v0_a, u1_a, v1_a = texture_uv
-    px0, py0, px1, py1 = px_rect
-    return (float(u0_a + (u1_a - u0_a) * (float(px0) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py0) / 16.0)), float(u0_a + (u1_a - u0_a) * (float(px1) / 16.0)), float(v0_a + (v1_a - v0_a) * (float(py1) / 16.0)))
-
-
-def _skin_uv_rect(px_rect: tuple[float, float, float, float], width: int, height: int) -> UVRect:
-    px0, py0, px1, py1 = px_rect
-    w = max(1.0, float(width))
-    h = max(1.0, float(height))
-    return (float(px0) / w, 1.0 - float(py1) / h, float(px1) / w, 1.0 - float(py0) / h)
 
 
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
@@ -179,38 +168,6 @@ def held_block_model_boxes_for_kind(kind: str | None) -> tuple[TexturedBox, ...]
 def _held_block_kind_scale_multiplier(kind: str | None) -> float:
     normalized = "" if kind is None else str(kind).strip().lower()
     return float(_HELD_BLOCK_KIND_SCALE_MULTIPLIERS.get(normalized, 1.0))
-
-
-def _empty_face_rows() -> tuple[np.ndarray, ...]:
-    return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
-
-
-def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: UVRect) -> None:
-    row = list(np.asarray(model, dtype=np.float32).reshape(16))
-    row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
-    buffers[int(face_idx)].append(row)
-
-
-def _face_uv_from_atlas(textured_box: TexturedBox, face_idx: int, texture_uv: UVRect, *, kind: str) -> UVRect:
-    face_uv_pixels = textured_box.face_uv_pixels
-    if face_uv_pixels is not None:
-        px_rect = face_uv_pixels.get(int(face_idx))
-        if px_rect is not None:
-            return _uv_rect_from_pixels(texture_uv, px_rect)
-
-    if kind == "fence_gate" and bool(textured_box.box.uv_hint):
-        return fence_gate_uv_rect(texture_uv, int(face_idx), textured_box.box)
-    return sub_uv_rect(texture_uv, int(face_idx), textured_box.box)
-
-
-def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
-    center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
-    center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
-    center_z = 0.5 * (float(box.mn_z) + float(box.mx_z))
-    size_x = float(box.mx_x) - float(box.mn_x)
-    size_y = float(box.mx_y) - float(box.mn_y)
-    size_z = float(box.mx_z) - float(box.mn_z)
-    return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
 
 
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
@@ -343,12 +300,13 @@ def _fitted_first_person_parent_transform(*, boxes: Sequence[LocalBox], projecti
 
 
 def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, uv_lookup: UVLookup, def_lookup: DefLookup) -> tuple[np.ndarray, ...]:
+    """I define F_i as the packed instanced-face payload for the visible held block under the current first-person transform, where each row is vec(M_box, U_face). I return the six-face family (F_0,...,F_5) after equip hiding, projection fitting, face occlusion, and atlas-UV resolution have been applied coherently."""
     if first_person is None or first_person.visible_block_id is None:
-        return _empty_face_rows()
+        return empty_textured_face_rows()
 
     boxes = list(held_block_model_boxes(first_person.visible_block_id, def_lookup))
     if not boxes:
-        return _empty_face_rows()
+        return empty_textured_face_rows()
 
     block_def = def_lookup(str(first_person.visible_block_id))
     kind = "" if block_def is None else str(block_def.kind_name())
@@ -363,16 +321,17 @@ def build_first_person_held_block_face_rows(first_person: FirstPersonRenderState
             if is_local_face_occluded(box=textured_box.box, face_idx=int(face_idx), boxes=local_boxes):
                 continue
             texture_uv = uv_lookup(str(first_person.visible_block_id), int(face_idx))
-            uv_rect = _face_uv_from_atlas(textured_box, int(face_idx), texture_uv, kind=kind)
-            model = _model_matrix_for_box(parent_transform, textured_box.box)
-            _append_face_instance(buffers, int(face_idx), model, uv_rect)
+            uv_rect = atlas_face_uv(texture_uv, int(face_idx), textured_box.box, kind=kind, face_uv_pixels=textured_box.face_uv_pixels)
+            model = model_matrix_for_local_box(parent_transform, textured_box.box)
+            append_face_instance(buffers, int(face_idx), model, uv_rect)
 
-    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+    return face_rows_from_buffers(buffers)
 
 
 def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray, skin_width: int, skin_height: int) -> tuple[np.ndarray, ...]:
+    """I define A_i as the instanced-face payload for the visible first-person slim arm and sleeve, parameterized by the current camera-space swing state and skin-image dimensions. I fit the arm into a protected projection frame and then map each cuboid face through the corresponding skin rectangle."""
     if first_person is None or (not bool(first_person.show_arm)):
-        return _empty_face_rows()
+        return empty_textured_face_rows()
 
     arm_boxes = (_ARM_BASE_BOX_SLIM, _ARM_SLEEVE_BOX_SLIM)
     base_parent_transform = _fitted_first_person_parent_transform(boxes=arm_boxes, projection=projection, safe_frame=_ARM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier))), projection_scale_exponent=float(_ARM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_arm_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier))))
@@ -381,35 +340,37 @@ def build_first_person_arm_face_rows(first_person: FirstPersonRenderState | None
 
     base_uv_map = _SLIM_RIGHT_ARM_BASE_UV_PX
     sleeve_uv_map = _SLIM_RIGHT_ARM_SLEEVE_UV_PX
-    for box, uv_map in ((arm_boxes[0], base_uv_map),(arm_boxes[1], sleeve_uv_map)):
-        model = _model_matrix_for_box(parent_transform, box)
+    for box, uv_map in ((arm_boxes[0], base_uv_map), (arm_boxes[1], sleeve_uv_map)):
+        model = model_matrix_for_local_box(parent_transform, box)
         for face_idx in range(6):
-            uv_rect = _skin_uv_rect(uv_map[int(face_idx)], int(skin_width), int(skin_height))
-            _append_face_instance(buffers, int(face_idx), model, uv_rect)
+            uv_rect = skin_uv_rect(uv_map[int(face_idx)], width=int(skin_width), height=int(skin_height))
+            append_face_instance(buffers, int(face_idx), model, uv_rect)
 
-    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+    return face_rows_from_buffers(buffers)
 
 
 def build_first_person_special_item_face_rows(first_person: FirstPersonRenderState | None, *, projection: np.ndarray) -> tuple[np.ndarray, ...]:
+    """I define S_pos_z as the single textured quad used for an enlarged first-person special-item icon, with every other face bucket forced empty. I still pass the icon through the same projection-fit and equip-hide operators used by held blocks so that its screen-space motion remains kinematically consistent."""
     if first_person is None or first_person.visible_special_item_icon is None:
-        return _empty_face_rows()
+        return empty_textured_face_rows()
 
     boxes = (_SPECIAL_ITEM_ICON_BOX,)
     base_parent_transform = _fitted_first_person_parent_transform(boxes=boxes, projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))))
     parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
-    model = _model_matrix_for_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
+    model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
-    _append_face_instance(buffers, int(FACE_POS_Z), model,(0.0, 0.0, 1.0, 1.0))
-    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
+    append_face_instance(buffers, int(FACE_POS_Z), model, (0.0, 0.0, 1.0, 1.0))
+    return face_rows_from_buffers(buffers)
 
 
 def cube_rows_from_boxes(boxes: Sequence[LocalBox], parent_transform: np.ndarray) -> np.ndarray:
+    """I define R_j = vec(M_parent * T(c_j) * S(s_j)) for each local box j, and I stack these 16-component rows into a contiguous matrix in R^(n x 16). This is the compact shadow-caster representation used when only the cuboid transform, not per-face UV data, is required."""
     if not boxes:
         return np.zeros((0, 16), dtype=np.float32)
 
     rows = []
     for box in boxes:
-        rows.append(np.asarray(_model_matrix_for_box(parent_transform, box), dtype=np.float32).reshape(16))
+        rows.append(np.asarray(model_matrix_for_local_box(parent_transform, box), dtype=np.float32).reshape(16))
     return np.ascontiguousarray(np.vstack(rows), dtype=np.float32)
 
 

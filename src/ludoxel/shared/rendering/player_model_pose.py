@@ -12,6 +12,7 @@ from ..blocks.models.common import LocalBox
 from ..math.scalars import clampf, lerpf
 from ..math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
 from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
+from .face_row_utils import append_face_instance, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
 from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform, cube_rows_from_boxes, held_block_model_boxes_for_kind
 from .player_render_state import PlayerRenderState
 
@@ -90,6 +91,7 @@ _LEFT_LEG_PANTS_UV_PX = _skin_cube_uv_map(pos_x=(0.0, 52.0, 4.0, 64.0), neg_x=(8
 
 @dataclass(frozen=True)
 class HeldBlockPose:
+    """I define this record as the tuple (block_id, block_kind, M_parent) that parameterizes third-person held-block rendering. I isolate the parent transform from the later face-expansion step so that pose generation and face-row materialization remain independently cacheable."""
     block_id: str
     block_kind: str | None
     parent_transform: np.ndarray
@@ -97,6 +99,7 @@ class HeldBlockPose:
 
 @dataclass(frozen=True)
 class PlayerModelPose:
+    """I define this record as the cached player-render state image P = (F_skin, H, F_special, icon, R_shadow). I use it as the stable boundary between expensive pose synthesis and the later OpenGL passes that only consume packed face or transform rows."""
     skin_face_rows: tuple[np.ndarray, ...]
     held_block_pose: HeldBlockPose | None
     special_item_face_rows: tuple[np.ndarray, ...]
@@ -108,38 +111,9 @@ def _as_rows(matrix: np.ndarray) -> np.ndarray:
     return np.asarray(matrix, dtype=np.float32).reshape(16)
 
 
-def _empty_face_rows() -> tuple[np.ndarray, ...]:
-    return tuple(np.zeros((0, 20), dtype=np.float32) for _ in range(6))
-
-
-def _skin_uv_rect(px_rect: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
-    px0, py0, px1, py1 = px_rect
-    return (float(px0) / float(_SKIN_WIDTH), 1.0 - float(py1) / float(_SKIN_HEIGHT), float(px1) / float(_SKIN_WIDTH), 1.0 - float(py0) / float(_SKIN_HEIGHT))
-
-
-def _append_face_instance(buffers: list[list[list[float]]], face_idx: int, model: np.ndarray, uv_rect: tuple[float, float, float, float]) -> None:
-    row = list(np.asarray(model, dtype=np.float32).reshape(16))
-    row.extend([float(uv_rect[0]), float(uv_rect[1]), float(uv_rect[2]), float(uv_rect[3])])
-    buffers[int(face_idx)].append(row)
-
-
-def _rows_from_buffers(buffers: list[list[list[float]]]) -> tuple[np.ndarray, ...]:
-    return tuple(np.asarray(face_rows, dtype=np.float32) if face_rows else np.zeros((0, 20), dtype=np.float32) for face_rows in buffers)
-
-
 def _append_unit_cube_rows(buffers: list[list[list[float]]], model: np.ndarray, uv_map_pixels: dict[int, tuple[float, float, float, float]]) -> None:
     for face_idx in range(6):
-        _append_face_instance(buffers, int(face_idx), model, _skin_uv_rect(uv_map_pixels[int(face_idx)]))
-
-
-def _model_matrix_for_box(parent_transform: np.ndarray, box: LocalBox) -> np.ndarray:
-    center_x = 0.5 * (float(box.mn_x) + float(box.mx_x))
-    center_y = 0.5 * (float(box.mn_y) + float(box.mx_y))
-    center_z = 0.5 * (float(box.mn_z) + float(box.mx_z))
-    size_x = float(box.mx_x) - float(box.mn_x)
-    size_y = float(box.mx_y) - float(box.mn_y)
-    size_z = float(box.mx_z) - float(box.mn_z)
-    return compose_matrices(parent_transform, translate_matrix(center_x, center_y, center_z), scale_matrix(size_x, size_y, size_z))
+        append_face_instance(buffers, int(face_idx), model, skin_uv_rect(uv_map_pixels[int(face_idx)], width=int(_SKIN_WIDTH), height=int(_SKIN_HEIGHT)))
 
 
 def _shadow_attack_angles(swing_progress: float) -> tuple[float, float, float]:
@@ -165,8 +139,9 @@ def _attack_swing_weight(swing_progress: float) -> float:
 
 @lru_cache(maxsize=64)
 def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerModelPose:
+    """I define P(state) as the fully materialized third-person player pose, including articulated body cuboids, optional held-item attachment state, optional special-item quad rows, and the shadow-only cuboid stack. I cache P because every downstream renderer treats it as immutable over a frame, whereas its synthesis traverses the most expensive local kinematic path."""
     empty_shadow = np.zeros((0, 16), dtype=np.float32)
-    empty_faces = _empty_face_rows()
+    empty_faces = empty_textured_face_rows()
     if state is None:
         return PlayerModelPose(skin_face_rows=empty_faces, held_block_pose=None, special_item_face_rows=empty_faces, visible_special_item_icon=None, shadow_rows=empty_shadow)
 
@@ -250,9 +225,9 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
                 shadow_rows_list.extend([row for row in special_shadow_rows])
             if not bool(state.is_first_person):
                 buffers: list[list[list[float]]] = [[] for _ in range(6)]
-                special_model = _model_matrix_for_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
-                _append_face_instance(buffers, int(FACE_POS_Z), special_model,(0.0, 0.0, 1.0, 1.0))
-                special_item_face_rows = _rows_from_buffers(buffers)
+                special_model = model_matrix_for_local_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
+                append_face_instance(buffers, int(FACE_POS_Z), special_model, (0.0, 0.0, 1.0, 1.0))
+                special_item_face_rows = face_rows_from_buffers(buffers)
                 visible_special_item_icon = str(first_person.visible_special_item_icon)
 
     shadow_rows = np.ascontiguousarray(np.vstack(shadow_rows_list), dtype=np.float32)
@@ -264,8 +239,9 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
     for model, uv_map in ((head, _HEAD_BASE_UV_PX),(hat, _HEAD_HAT_UV_PX),(body, _BODY_BASE_UV_PX),(jacket, _BODY_JACKET_UV_PX),(right_arm, _VISUAL_LEFT_ARM_BASE_UV_PX),(right_sleeve, _VISUAL_LEFT_ARM_SLEEVE_UV_PX),(left_arm, _VISUAL_RIGHT_ARM_BASE_UV_PX),(left_sleeve, _VISUAL_RIGHT_ARM_SLEEVE_UV_PX),(right_leg, _RIGHT_LEG_BASE_UV_PX),(right_pants, _RIGHT_LEG_PANTS_UV_PX),(left_leg, _LEFT_LEG_BASE_UV_PX),(left_pants, _LEFT_LEG_PANTS_UV_PX)):
         _append_unit_cube_rows(skin_buffers, model, uv_map)
 
-    return PlayerModelPose(skin_face_rows=_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)
+    return PlayerModelPose(skin_face_rows=face_rows_from_buffers(skin_buffers), held_block_pose=held_block_pose, special_item_face_rows=special_item_face_rows, visible_special_item_icon=visible_special_item_icon, shadow_rows=shadow_rows)
 
 
 def build_player_model_pose(state: PlayerRenderState | None) -> PlayerModelPose:
+    """I define this function as the public projection pi(state) = P(state) onto the cached player-render pose space. I keep the wrapper narrow so that callers depend on one stable entry point while the cache policy remains private to this module."""
     return _build_player_model_pose_cached(state)
