@@ -79,22 +79,7 @@ def build_chunk_face_sources(*, blocks: Iterable[tuple[int, int, int, str]], get
             atlas = uv_lookup(str(state_str), int(fi))
             u0, v0, u1, v1 = atlas_face_uv(atlas, int(fi), face.box, kind=(None if defn is None else str(defn.kind)))
 
-            rows.append([
-                float(mnx),
-                float(mny),
-                float(mnz),
-                float(mxx),
-                float(mxy),
-                float(mxz),
-                float(u0),
-                float(v0),
-                float(u1),
-                float(v1),
-                1.0,
-                0.0,
-                float(fi),
-                float(slot),
-            ])
+            rows.append([float(mnx), float(mny), float(mnz), float(mxx), float(mxy), float(mxz), float(u0), float(v0), float(u1), float(v1), 1.0, 0.0, float(fi), float(slot)])
 
     counts = normalize_bucket_counts(bucket_counts)
 

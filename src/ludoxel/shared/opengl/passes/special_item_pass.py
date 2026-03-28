@@ -23,10 +23,7 @@ class SpecialItemPass:
     def initialize(self, *, prog: ShaderProgram) -> None:
         self._face_pass = TexturedFacePass()
         self._face_pass.initialize(prog)
-        self._textures = {
-            "start": ImageTexture.from_image(build_special_item_icon_image("start", size=192)),
-            "settings": ImageTexture.from_image(build_special_item_icon_image("settings", size=192)),
-        }
+        self._textures = {"start": ImageTexture.from_image(build_special_item_icon_image("start", size=192)), "settings": ImageTexture.from_image(build_special_item_icon_image("settings", size=192))}
 
     def destroy(self) -> None:
         if self._face_pass is not None:

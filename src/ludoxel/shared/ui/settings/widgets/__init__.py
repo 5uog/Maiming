@@ -6,13 +6,4 @@ from .advanced_scalar_control import AdvancedScalarControl
 from .controls import BedrockToggleRow, KeybindCaptureButton, KeybindRow, WheelPassthroughDoubleSpinBox, WheelPassthroughSlider
 from .crosshair_widgets import CrosshairPixelEditor, CrosshairPreviewWidget
 
-__all__ = [
-    "AdvancedScalarControl",
-    "BedrockToggleRow",
-    "CrosshairPixelEditor",
-    "CrosshairPreviewWidget",
-    "KeybindCaptureButton",
-    "KeybindRow",
-    "WheelPassthroughDoubleSpinBox",
-    "WheelPassthroughSlider",
-]
+__all__ = ["AdvancedScalarControl", "BedrockToggleRow", "CrosshairPixelEditor", "CrosshairPreviewWidget", "KeybindCaptureButton", "KeybindRow", "WheelPassthroughDoubleSpinBox", "WheelPassthroughSlider"]

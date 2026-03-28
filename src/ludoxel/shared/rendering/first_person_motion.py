@@ -137,14 +137,4 @@ class FirstPersonMotionController:
 
     def sample(self) -> FirstPersonMotionSample:
         """I define sample() as the immutable projection of the controller's mutable fields onto the FirstPersonMotionSample record. I use this readout so that downstream render-state composition cannot accidentally mutate live controller state."""
-        return FirstPersonMotionSample(
-            visible_item_id=self.visible_item_id,
-            target_item_id=self.target_item_id,
-            equip_progress=float(self.equip_progress),
-            prev_equip_progress=float(self.prev_equip_progress),
-            swing_progress=float(self.swing_progress),
-            prev_swing_progress=float(self.prev_swing_progress),
-            show_arm=bool(self.show_arm),
-            show_view_model=bool(self.show_view_model),
-            slim_arm=bool(self.slim_arm),
-        )
+        return FirstPersonMotionSample(visible_item_id=self.visible_item_id, target_item_id=self.target_item_id, equip_progress=float(self.equip_progress), prev_equip_progress=float(self.prev_equip_progress), swing_progress=float(self.swing_progress), prev_swing_progress=float(self.prev_swing_progress), show_arm=bool(self.show_arm), show_view_model=bool(self.show_view_model), slim_arm=bool(self.slim_arm))

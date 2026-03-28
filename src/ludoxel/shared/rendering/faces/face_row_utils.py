@@ -33,12 +33,7 @@ def uv_rect_from_pixels(texture_uv: UVRect, px_rect: tuple[float, float, float, 
     u0_a, v0_a, u1_a, v1_a = texture_uv
     px0, py0, px1, py1 = px_rect
     scale = max(float(texture_size_px), 1.0)
-    return (
-        float(u0_a + (u1_a - u0_a) * (float(px0) / scale)),
-        float(v0_a + (v1_a - v0_a) * (float(py0) / scale)),
-        float(u0_a + (u1_a - u0_a) * (float(px1) / scale)),
-        float(v0_a + (v1_a - v0_a) * (float(py1) / scale)),
-    )
+    return (float(u0_a + (u1_a - u0_a) * (float(px0) / scale)), float(v0_a + (v1_a - v0_a) * (float(py0) / scale)), float(u0_a + (u1_a - u0_a) * (float(px1) / scale)), float(v0_a + (v1_a - v0_a) * (float(py1) / scale)))
 
 
 def skin_uv_rect(px_rect: tuple[float, float, float, float], *, width: int, height: int) -> UVRect:

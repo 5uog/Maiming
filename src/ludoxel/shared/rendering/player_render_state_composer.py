@@ -18,36 +18,5 @@ def compose_player_render_state_from_parts(*, player_model: PlayerModelSnapshotD
     """I define the composed player render state as the direct product of the authoritative player-model snapshot and the sampled first-person motion state, enriched by registry and special-item lookups. I use this pure constructor to turn runtime DTOs into the immutable render-state records consumed by the pose builders."""
     visible_def = None if motion.visible_item_id is None else block_registry.get(str(motion.visible_item_id))
     special_descriptor = None if motion.visible_item_id is None else get_special_item_descriptor(motion.visible_item_id)
-    first_person = FirstPersonRenderState(
-        visible_item_id=motion.visible_item_id,
-        target_item_id=motion.target_item_id,
-        visible_block_id=None if visible_def is None else str(motion.visible_item_id),
-        visible_block_kind=None if visible_def is None else str(visible_def.kind),
-        visible_special_item_icon=None if special_descriptor is None else str(special_descriptor.icon_key),
-        equip_progress=float(motion.equip_progress),
-        prev_equip_progress=float(motion.prev_equip_progress),
-        swing_progress=float(motion.swing_progress),
-        prev_swing_progress=float(motion.prev_swing_progress),
-        show_arm=bool(motion.show_arm),
-        show_view_model=bool(motion.show_view_model),
-        slim_arm=bool(motion.slim_arm),
-        view_bob_x=float(player_model.first_person_tx),
-        view_bob_y=float(player_model.first_person_ty),
-        view_bob_z=float(player_model.first_person_tz),
-        view_bob_yaw_deg=float(player_model.first_person_yaw_deg),
-        view_bob_pitch_deg=float(player_model.first_person_pitch_deg),
-        view_bob_roll_deg=float(player_model.first_person_roll_deg),
-    )
-    return PlayerRenderState(
-        base_x=float(player_model.base_x),
-        base_y=float(player_model.base_y),
-        base_z=float(player_model.base_z),
-        body_yaw_deg=float(player_model.body_yaw_deg),
-        head_yaw_deg=float(player_model.head_yaw_deg),
-        head_pitch_deg=float(player_model.head_pitch_deg),
-        limb_phase_rad=float(player_model.limb_phase_rad),
-        limb_swing_amount=float(player_model.limb_swing_amount),
-        crouch_amount=float(player_model.crouch_amount),
-        is_first_person=bool(player_model.is_first_person),
-        first_person=first_person,
-    )
+    first_person = FirstPersonRenderState(visible_item_id=motion.visible_item_id, target_item_id=motion.target_item_id, visible_block_id=None if visible_def is None else str(motion.visible_item_id), visible_block_kind=None if visible_def is None else str(visible_def.kind), visible_special_item_icon=None if special_descriptor is None else str(special_descriptor.icon_key), equip_progress=float(motion.equip_progress), prev_equip_progress=float(motion.prev_equip_progress), swing_progress=float(motion.swing_progress), prev_swing_progress=float(motion.prev_swing_progress), show_arm=bool(motion.show_arm), show_view_model=bool(motion.show_view_model), slim_arm=bool(motion.slim_arm), view_bob_x=float(player_model.first_person_tx), view_bob_y=float(player_model.first_person_ty), view_bob_z=float(player_model.first_person_tz), view_bob_yaw_deg=float(player_model.first_person_yaw_deg), view_bob_pitch_deg=float(player_model.first_person_pitch_deg), view_bob_roll_deg=float(player_model.first_person_roll_deg))
+    return PlayerRenderState(base_x=float(player_model.base_x), base_y=float(player_model.base_y), base_z=float(player_model.base_z), body_yaw_deg=float(player_model.body_yaw_deg), head_yaw_deg=float(player_model.head_yaw_deg), head_pitch_deg=float(player_model.head_pitch_deg), limb_phase_rad=float(player_model.limb_phase_rad), limb_swing_amount=float(player_model.limb_swing_amount), crouch_amount=float(player_model.crouch_amount), is_first_person=bool(player_model.is_first_person), first_person=first_person)

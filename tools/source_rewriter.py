@@ -11,6 +11,57 @@ import io
 import sys
 import tokenize
 
+"""
+I use this command-line module to rewrite Python source files under the package subtree rooted at src/<package_root> by composing an import-normalization transform with a bracket-layout transform over a finite ordered file family.
+
+Let F = <f_1, ..., f_n> be the path sequence returned by iter_python_files(src_root). For each f_i in F, I decode a source string s_i in Sigma*, and I compute
+
+    s_i^I = T_I(s_i; m_I)
+    s_i^B = T_B(s_i^I; m_B, u)
+
+where T_I denotes the import-rewrite operator selected by --imports, m_I in {keep, absolute, relative}, T_B denotes the bracket-layout operator selected by --brackets, m_B in {keep, compress, expand}, and u denotes the indentation unit supplied by --indent. I write s_i^B back to persistent storage iff s_i^B != s_i and --check is not asserted. I otherwise preserve the extant file image and only report the induced change set.
+
+The import path rewrite is constrained to package-local references. I resolve each module coordinate as a tuple over dotted-name segments, and I compute relative import depth by shared-prefix reduction. If p = (p_0, ..., p_k) is the current package coordinate and q = (q_0, ..., q_m) is the target module coordinate, then
+
+    c = common_prefix_len(p, q)
+    level = len(p) - c + 1
+    tail = q[c:]
+
+and I emit the relative module specification "." * level when tail = (), or "." * level + ".".join(tail) otherwise. In relative mode, I do not rewrite directly from arbitrary mixed input. I first canonicalize through the absolute form and only thereafter reduce into the relative form, because the absolute coordinate is the stable intermediary on which the tuple arithmetic is well-defined.
+
+The bracket-layout rewrite is likewise governed by local syntactic admissibility predicates. I compress only those bracket groups for which multiline structure exists and for which the token slice contains neither comments nor multiline string literals. I expand only those groups whose top-level interior admits a comma-separated sequence and whose control structure is not blocked by generator-form syntax or unresolved lambda binding depth. Formally, if G is a bracket node and A(G) is its top-level sequence analysis, I permit expansion iff
+
+    expandable(G) <=> commas(A(G)) != empty and blocked(A(G)) = False.
+
+I preserve syntax by rejecting any candidate that cannot be tokenized or whose abstract syntax tree cannot be reconstructed. For the comma-elision pass used after compression, I accept the deletion of a trailing comma on a candidate interval [a, b) only when
+
+    AST(current) = AST(current[:a] + current[b:]).
+
+This equality is computed over ast.dump(..., include_attributes=False), so the preserved invariant is semantic tree identity at the Python AST level rather than lexical equality.
+
+I use the following invocation forms.
+
+    python tools/source_rewriter.py
+    python tools/source_rewriter.py --check
+    python tools/source_rewriter.py --brackets compress
+    python tools/source_rewriter.py --brackets expand
+    python tools/source_rewriter.py --imports absolute
+    python tools/source_rewriter.py --imports relative
+    python tools/source_rewriter.py --imports relative --brackets compress
+    python tools/source_rewriter.py --root <project_root> --src <source_root> --package-root ludoxel
+
+The operational effect of each principal mode is as follows. The default state is a fixed point with respect to both transform families, because m_I = keep and m_B = keep. The check state computes the rewrite image and the induced change predicate without mutating the filesystem. The absolute-import state maps package-local import coordinates into a canonical dotted path rooted at <package_root>. The relative-import state computes the same canonical form first and then reduces it into a minimal valid relative specification with respect to the importing module coordinate. The compress state contracts admissible multiline bracket groups into a single lexical line and then removes only those trailing commas whose deletion is AST-preserving. The expand state distributes admissible top-level sequence elements over distinct lines using the indentation unit u.
+
+I return process status 0 when the traversal completes without errors and, in check mode, no file would change. I return status 1 when at least one file operation fails or when check mode detects a nonempty rewrite set. I return status 2 when the source root does not exist or when the traversal domain contains no Python files. Thus, if D is the discovered file domain and C is the changed-file set, the exit relation is
+
+    rc = 2, if D = empty
+    rc = 1, if errors > 0
+    rc = 1, if --check and |C| > 0
+    rc = 0, otherwise.
+
+I therefore use this module as a deterministic source-to-source normalization tool whose admissible mutations are bounded by token-level safety predicates, AST-level equivalence checks where required, and a path-resolution model anchored in the package coordinate system.
+"""
+
 SKIP_TOKEN_TYPES = {tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT, tokenize.ENDMARKER}
 TRANSFORM_COMPRESS = "compress"
 TRANSFORM_EXPAND = "expand"
@@ -91,7 +142,7 @@ class RelativeModuleSpec:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=("Rewrite Python source under src/ludoxel/**/*.py. " "You may independently rewrite bracket-group layout and package import style."))
+    parser = argparse.ArgumentParser(description=("I rewrite Python source under src/<package_root> by composing a package-local import transform with a bracket-layout transform."))
     parser.add_argument("--brackets", choices=[BRACKETS_KEEP, TRANSFORM_COMPRESS, TRANSFORM_EXPAND], default=BRACKETS_KEEP, help="Bracket-group rewrite mode. Default is keep.")
     parser.add_argument("--imports", choices=[IMPORTS_KEEP, IMPORTS_RELATIVE, IMPORTS_ABSOLUTE], default=IMPORTS_KEEP, help="Import rewrite mode for package-local imports. Relative mode first canonicalizes through absolute imports. Default is keep.")
     parser.add_argument("--compress", action="store_true", help="Compatibility alias for --brackets compress.")
