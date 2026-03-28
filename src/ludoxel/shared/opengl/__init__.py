@@ -20,6 +20,6 @@ def __getattr__(name: str):
         return GLResources
 
     if str(name) == "build_chunk_mesh_cpu":
-        from ludoxel.shared.rendering.chunk_face_payload_cpu import build_chunk_mesh_cpu
+        from ludoxel.shared.rendering.faces.chunk_face_payload_cpu import build_chunk_mesh_cpu
         return build_chunk_mesh_cpu
     raise AttributeError(str(name))

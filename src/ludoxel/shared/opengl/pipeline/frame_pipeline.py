@@ -8,7 +8,7 @@ import math
 
 from OpenGL.GL import glClearColor, glClear, glViewport, glEnable, glDepthFunc, glDepthMask, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_LESS
 
-from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
+from ...rendering.render_snapshot import FallingBlockRenderSampleDTO
 from ...math import mat4
 from ...math.vec3 import Vec3
 from ...math.view_angles import forward_from_yaw_pitch_deg
@@ -28,7 +28,7 @@ from ..runtime.light_space import compute_light_view_proj
 from ...rendering.first_person_geometry import FIRST_PERSON_HAND_NEAR
 from ...rendering.player_model_pose import build_player_model_pose
 from ..runtime.gl_renderer_params import GLRendererParams
-from ....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....features.othello.rendering.othello_render_state import OthelloRenderState
 from ...rendering.player_render_state import PlayerRenderState
 from ..runtime.render_metrics import PassFrameMetrics, RendererFrameMetrics
 from ..runtime.render_state import RendererRuntimeState

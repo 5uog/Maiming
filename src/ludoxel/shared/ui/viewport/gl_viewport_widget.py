@@ -19,7 +19,7 @@ from ....application.runtime.tasks.state_persistence import apply_persisted_stat
 from ....application.audio import AudioManager, PLAYER_EVENT_LAND, PLAYER_EVENT_STEP
 
 from ....features.othello.application.othello_match_controller import OthelloMatchController
-from ....features.othello.domain.game.ai_worker import OthelloAiWorker
+from ....features.othello.domain.engine.ai_worker import OthelloAiWorker
 from ....features.othello.domain.game.types import OthelloAnalysis
 from ....features.othello.ui.hud_widget import OthelloHudWidget
 from ....features.othello.ui.settings_overlay import OthelloSettingsOverlay

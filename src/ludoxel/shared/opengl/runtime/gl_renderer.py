@@ -8,13 +8,13 @@ import numpy as np
 
 from PyQt6.QtGui import QImage
 
-from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
+from ...rendering.render_snapshot import FallingBlockRenderSampleDTO
 from ...math.vec3 import Vec3
 from ...blocks.registry.block_registry import BlockRegistry
 from ...math.chunking.chunk_grid import ChunkKey
 from .gl_renderer_params import GLRendererParams, default_gl_renderer_params
 from .cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
-from ....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....features.othello.rendering.othello_render_state import OthelloRenderState
 from ...rendering.player_render_state import PlayerRenderState
 from .render_metrics import RendererFrameMetrics
 from .render_state import RendererRuntimeState

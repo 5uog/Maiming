@@ -12,8 +12,8 @@ from ..blocks.models.common import LocalBox
 from ..math.scalars import clampf, lerpf
 from ..math.transform_matrices import compose_matrices, rotate_x_rad_matrix, rotate_y_rad_matrix, rotate_z_rad_matrix, scale_matrix, translate_matrix
 from ..math.voxel.voxel_faces import FACE_NEG_X, FACE_NEG_Y, FACE_NEG_Z, FACE_POS_X, FACE_POS_Y, FACE_POS_Z
-from .box_instance_rows import cube_rows_from_boxes
-from .face_row_utils import append_face_instance, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
+from .faces.box_instance_rows import cube_rows_from_boxes
+from .faces.face_row_utils import append_face_instance, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
 from .first_person_geometry import THIRD_PERSON_RIGHT_HAND_ANCHOR, build_third_person_item_hand_transform
 from .held_block_geometry import held_block_model_boxes_for_kind
 from .player_render_state import PlayerRenderState

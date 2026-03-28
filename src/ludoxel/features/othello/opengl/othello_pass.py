@@ -12,9 +12,9 @@ from ....shared.math.vec3 import Vec3
 from ....shared.opengl.gl.colored_mesh_buffer import ColoredMeshBuffer
 from ....shared.opengl.gl.gl_state_guard import GLStateGuard
 from ....shared.opengl.gl.shader_program import ShaderProgram
-from ..application.rendering.othello_scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
+from ..rendering.othello_scene import build_othello_board_vertices, build_othello_instance_rows, build_othello_piece_vertices
 from ....shared.opengl.runtime.gl_renderer_params import ShadowParams
-from ..application.rendering.othello_render_state import OthelloRenderState
+from ..rendering.othello_render_state import OthelloRenderState
 from ....shared.opengl.runtime.render_metrics import PassFrameMetrics
 from ....shared.opengl.passes.shadow_map_pass import ShadowMapInfo
 

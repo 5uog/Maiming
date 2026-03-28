@@ -9,7 +9,7 @@ import numpy as np
 
 from ..blocks.models.api import render_boxes_for_block
 from ..blocks.models.common import LocalBox
-from .face_occlusion import is_block_face_occluded, is_local_face_occluded
+from .faces.face_occlusion import is_block_face_occluded, is_local_face_occluded
 from .render_types import DefLookup, GetState
 
 

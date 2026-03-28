@@ -9,7 +9,7 @@ import numpy as np
 from OpenGL.GL import glDispatchCompute, glMemoryBarrier, GL_SHADER_STORAGE_BARRIER_BIT, GL_BUFFER_UPDATE_BARRIER_BIT
 
 from ...math.chunking.chunk_grid import ChunkKey
-from ...rendering.face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
+from ...rendering.faces.face_bucket_layout import FACE_COUNT, BucketCounts, bucket_offsets, empty_face_bucket_arrays, normalize_bucket_counts
 from ..gl.array_view import as_float32_rows
 from ..gl.shader_program import ShaderProgram
 from ..gl.storage_buffer import StorageBuffer

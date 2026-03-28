@@ -10,7 +10,7 @@ import numpy as np
 from PyQt6.QtGui import QImage
 from OpenGL.GL import glBindFramebuffer, glBindRenderbuffer, glBindTexture, glCheckFramebufferStatus, glClear, glClearColor, glDeleteFramebuffers, glDeleteRenderbuffers, glDeleteTextures, glDepthFunc, glDisable, glEnable, glFramebufferRenderbuffer, glFramebufferTexture2D, glGenFramebuffers, glGenRenderbuffers, glGenTextures, glReadPixels, glRenderbufferStorage, glTexImage2D, glTexParameteri, glViewport, GL_BLEND, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT0, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_ATTACHMENT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_COMPONENT24, GL_DEPTH_TEST, GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_LESS, GL_LINEAR, GL_RENDERBUFFER, GL_RGBA, GL_RGBA8, GL_SCISSOR_TEST, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_UNSIGNED_BYTE
 
-from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
+from ...rendering.render_snapshot import FallingBlockRenderSampleDTO
 from ...math import mat4
 from ...math.vec3 import Vec3
 from ...blocks.registry.block_registry import BlockRegistry
@@ -31,11 +31,11 @@ from ..passes.sun_pass import SunPass
 from ..passes.world_pass import WorldPass
 from ..pipeline.frame_pipeline import FramePipeline
 from ...rendering.selection_outline_builder import SelectionOutlineBuilder
-from ...rendering.face_bucket_layout import BucketCounts
+from ...rendering.faces.face_bucket_layout import BucketCounts
 from .gl_info_probe import GLInfoSnapshot, probe_gl_info
 from .gl_renderer_params import GLRendererParams
 from .gl_resources import GLResources
-from ....features.othello.application.rendering.othello_render_state import OthelloRenderState
+from ....features.othello.rendering.othello_render_state import OthelloRenderState
 from ...rendering.player_model_pose import build_player_model_pose
 from ...rendering.player_render_state import PlayerRenderState
 from .render_metrics import RendererFrameMetrics

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from .advanced_scalar_control import AdvancedScalarControl
+from .widgets.advanced_scalar_control import AdvancedScalarControl
 from .settings_overlay import SettingsOverlay
 
 __all__ = ["AdvancedScalarControl", "SettingsOverlay"]

@@ -7,12 +7,12 @@ from typing import Callable
 
 import numpy as np
 
-from ....application.runtime.state.render_snapshot import FallingBlockRenderSampleDTO
+from ...rendering.render_snapshot import FallingBlockRenderSampleDTO
 from ...blocks.block_definition import BlockDefinition
 from ...math.vec3 import Vec3
 from ..gl.shader_program import ShaderProgram
 from ..resources.texture_atlas import TextureAtlas
-from ...rendering.falling_block_face_rows import build_falling_block_face_rows
+from ...rendering.faces.falling_block_face_rows import build_falling_block_face_rows
 from .textured_face_pass import TexturedFacePass
 
 UVRect = tuple[float, float, float, float]

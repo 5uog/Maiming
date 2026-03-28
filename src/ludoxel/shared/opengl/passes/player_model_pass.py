@@ -11,11 +11,11 @@ from OpenGL.GL import glBindVertexArray, glDepthFunc, glDepthMask, glDisable, gl
 
 from ....features.othello.ui.special_item_art import build_special_item_icon_image
 from ...math.vec3 import Vec3
-from ...rendering.face_occlusion import is_local_face_occluded
-from ...rendering.face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
+from ...rendering.faces.face_occlusion import is_local_face_occluded
+from ...rendering.faces.face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box
 from ...rendering.held_block_geometry import held_block_model_boxes_for_kind
 from ...rendering.player_model_pose import HeldBlockPose, PlayerModelPose
-from ...rendering.uv_rects import UVRect
+from ...rendering.faces.uv_rects import UVRect
 from ..gl.gl_state_guard import GLStateGuard
 from ..gl.mesh_buffer import MeshBuffer
 from ..gl.shader_program import ShaderProgram

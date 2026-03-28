@@ -16,7 +16,7 @@ from ...world.config.render_distance import clamp_render_distance_chunks
 from ...math.chunking.chunk_grid import ChunkKey, chunk_key, normalize_chunk_key
 from ...world.world_state import WorldState
 from .gl_renderer import GLRenderer
-from ...rendering.chunk_face_payload_cpu import build_chunk_mesh_cpu
+from ...rendering.faces.chunk_face_payload_cpu import build_chunk_mesh_cpu
 
 
 @dataclass(frozen=True)

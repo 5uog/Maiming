@@ -14,7 +14,7 @@ from ....shared.systems.collision_system import can_auto_jump_one_block, integra
 from ....shared.systems.gravity_system import GravitySystem
 from ....shared.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
 from ....shared.world.world_state import WorldState
-from ..state.render_snapshot import CameraDTO, FallingBlockRenderSampleDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
+from ....shared.rendering.render_snapshot import CameraDTO, FallingBlockRenderSampleDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
 from ..state.session_settings import SessionSettings
 from ....shared.systems.interaction_service import InteractionService
 

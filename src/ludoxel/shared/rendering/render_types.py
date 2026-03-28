@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from ..blocks.block_definition import BlockDefinition
-from .uv_rects import UVRect
+from .faces.uv_rects import UVRect
 
 UVLookup = Callable[[str, int], UVRect]
 DefLookup = Callable[[str], BlockDefinition | None]

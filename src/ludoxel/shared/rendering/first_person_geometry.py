@@ -12,8 +12,8 @@ from ..blocks.models.common import LocalBox
 from ..math.scalars import clampf
 from ..math.transform_matrices import compose_matrices, identity_matrix, rotate_x_deg_matrix, rotate_y_deg_matrix, rotate_z_deg_matrix, scale_matrix, translate_matrix
 from ..math.voxel.voxel_faces import FACE_POS_Z
-from .face_occlusion import is_local_face_occluded
-from .face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
+from .faces.face_occlusion import is_local_face_occluded
+from .faces.face_row_utils import append_face_instance, atlas_face_uv, empty_textured_face_rows, face_rows_from_buffers, model_matrix_for_local_box, skin_uv_rect
 from .held_block_geometry import held_block_kind_scale_multiplier, held_block_model_boxes
 from .player_render_state import FirstPersonRenderState
 from .player_skin_uv_maps import SLIM_RIGHT_ARM_BASE_UV_PX, SLIM_RIGHT_ARM_SLEEVE_UV_PX

@@ -5,18 +5,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import math
+import os
 import time
-import tracemalloc
 import threading
 
 from ...math.vec3 import Vec3
 from ....application.runtime.managers.session_manager import SessionManager
 from ...world.config.render_distance import clamp_render_distance_chunks
 from ...opengl.runtime.gl_renderer import GLRenderer
-from ....application.runtime.metrics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
+from ...diagnostics import SystemInfo, ProcessMemorySnapshot, GpuUtilizationSampler, read_system_info, read_process_memory
 from .hud_payload import HudPayload
 from .player_metrics import PlayerMetricsTracker
 from ....application.boot.meta import __version__
+
+_ENABLE_PY_ALLOC_HUD = str(os.environ.get("LUDOXEL_ENABLE_PY_ALLOC_HUD", "")).strip().lower() in {"1", "true", "yes", "on"}
 
 
 @dataclass(frozen=True)
@@ -78,12 +80,15 @@ class HudController:
         if bool(self._external_metrics_started):
             return
         self._external_metrics_started = True
-        if not tracemalloc.is_tracing():
-            tracemalloc.start()
-        cur, peak = tracemalloc.get_traced_memory()
         now = time.perf_counter()
-        self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=0.0, last_bytes=int(cur), last_t=float(now))
-        self._py_last_sample_t = float(now)
+        if bool(_ENABLE_PY_ALLOC_HUD):
+            import tracemalloc
+
+            if not tracemalloc.is_tracing():
+                tracemalloc.start()
+            cur, peak = tracemalloc.get_traced_memory()
+            self._py = _PyAllocState(cur_bytes=int(cur), peak_bytes=int(peak), rate_mib_s=0.0, last_bytes=int(cur), last_t=float(now))
+            self._py_last_sample_t = float(now)
         self._ext_thread = threading.Thread(target=self._external_probe_loop, name="HudExternalProbe", daemon=True)
         self._ext_thread.start()
 
@@ -171,7 +176,11 @@ class HudController:
         return f"{float(v):.{digits}f}"
 
     def _update_py_alloc(self) -> None:
-        if not bool(self._external_metrics_started) or not tracemalloc.is_tracing():
+        if (not bool(_ENABLE_PY_ALLOC_HUD)) or (not bool(self._external_metrics_started)):
+            return
+        import tracemalloc
+
+        if not tracemalloc.is_tracing():
             return
         now = time.perf_counter()
         if (now - float(self._py_last_sample_t)) < 0.35:
@@ -216,6 +225,9 @@ class HudController:
         gpu_txt = "n/a" if gpu is None else f"{gpu:.0f}%"
 
         self._update_py_alloc()
+        alloc_line = "Alloc off"
+        if bool(_ENABLE_PY_ALLOC_HUD):
+            alloc_line = f"Alloc {self._py.rate_mib_s:.1f} MiB/s"
 
         used_bytes = ext.rss_bytes
         used_label = "rss"
@@ -259,7 +271,7 @@ class HudController:
         lines: list[str] = []
         lines.append(f"FPS {fps.render_fps:.1f} | Submit {fps.submit_fps:.1f} | SIM {fps.sim_fps:.1f} | T {t_txt}  {vs}")
         lines.append("F4 shadow-debug  F3 HUD  ESC menu  Click capture\n")
-        lines.append(f"GPU {gpu_txt} | {mem_line}\nAlloc {self._py.rate_mib_s:.1f} MiB/s")
+        lines.append(f"GPU {gpu_txt} | {mem_line}\n{alloc_line}")
         lines.append(f"CPU paint {float(paint_ms):.2f} ms\nworld {float(world_perf.cpu_ms):.2f} ms | shadow {float(shadow_perf.cpu_ms):.2f} ms | pick {float(selection_pick_ms):.2f} ms")
         lines.append(f"Draw {int(world_perf.draw_calls)}/{int(shadow_perf.draw_calls)} (W/S) | Inst {int(world_perf.instances)}/{int(shadow_perf.instances)} (W/S)\n")
         lines.append(f"XYZ {px:.2f} {py:.2f} {pz:.2f} |\nBlock {bx} {by} {bz} | Chunk {cx} {cy} {cz} [{rx} {rz}] |")

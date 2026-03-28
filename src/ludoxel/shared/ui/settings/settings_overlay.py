@@ -4,15 +4,445 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPalette
-from PyQt6.QtWidgets import QDialog, QFrame, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 
-from ....application.runtime.keybinds import action_display_name
-from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON
+from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS, action_display_name
+from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ..config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
+from ...math.scalars import clampf, clampi, round_clampi
 from ...opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
-from ..common.settings_controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
-from .page_builders import build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
-from .value_sync import sync_overlay_values
+from ...world.config.movement_params import DEFAULT_MOVEMENT_PARAMS
+from .widgets.advanced_scalar_control import AdvancedScalarControl
+from .widgets.controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
+from .cloud_flow_options import CLOUD_FLOW_OPTIONS, cloud_flow_index_for_value
+from .widgets.crosshair_widgets import CrosshairPixelEditor, CrosshairPreviewWidget
+
+
+def _block_signals_set_value(widget, value) -> None:
+    widget.blockSignals(True)
+    widget.setValue(value)
+    widget.blockSignals(False)
+
+
+def _sync_toggle(row, checked: bool) -> None:
+    row.sync_checked(bool(checked))
+
+
+def _sync_overlay_values(overlay, **values) -> None:
+    fov_int = round_clampi(float(values["fov_deg"]), int(overlay._params.fov_min), int(overlay._params.fov_max))
+    _block_signals_set_value(overlay._sld_fov, fov_int)
+    overlay._lbl_fov.setText(f"FOV: {fov_int}")
+
+    sensitivity = clampf(float(values["sens_deg_per_px"]), float(overlay._params.sens_min), float(overlay._params.sens_max))
+    sensitivity_int = round_clampi(float(sensitivity) * float(overlay._params.sens_scale), int(overlay._params.sens_milli_min), int(overlay._params.sens_milli_max))
+    _block_signals_set_value(overlay._sld_sens, sensitivity_int)
+    overlay._lbl_sens.setText(f"Mouse sensitivity: {sensitivity:.3f} deg/px")
+
+    render_distance = clampi(int(values["render_distance_chunks"]), int(overlay._params.render_dist_min), int(overlay._params.render_dist_max))
+    _block_signals_set_value(overlay._sld_rd, render_distance)
+    overlay._lbl_rd.setText(f"Render distance: {render_distance} chunks")
+
+    azimuth = round_clampi(float(values["sun_az_deg"]) % 360.0, int(overlay._params.sun_az_min), int(overlay._params.sun_az_max))
+    _block_signals_set_value(overlay._sld_sun_az, azimuth)
+    overlay._lbl_sun_az.setText(f"Sun azimuth: {azimuth} deg")
+
+    elevation = round_clampi(float(values["sun_el_deg"]), int(overlay._params.sun_el_min), int(overlay._params.sun_el_max))
+    _block_signals_set_value(overlay._sld_sun_el, elevation)
+    overlay._lbl_sun_el.setText(f"Sun elevation: {elevation} deg")
+
+    overlay._cb_inv_x.blockSignals(True)
+    overlay._cb_inv_y.blockSignals(True)
+    overlay._cb_inv_x.setChecked(bool(values["inv_x"]))
+    overlay._cb_inv_y.setChecked(bool(values["inv_y"]))
+    overlay._cb_inv_x.blockSignals(False)
+    overlay._cb_inv_y.blockSignals(False)
+
+    _sync_toggle(overlay._tg_fullscreen, bool(values["fullscreen"]))
+    _sync_toggle(overlay._tg_hide_hud, bool(values["hide_hud"]))
+    _sync_toggle(overlay._tg_hide_hand, bool(values["hide_hand"]))
+    overlay._crosshair_editor.set_pixels(values["crosshair_pixels"])
+    overlay._crosshair_preview.set_pattern(mode=values["crosshair_mode"], custom_pixels=values["crosshair_pixels"])
+
+    camera_perspective = str(values.get("camera_perspective", CAMERA_PERSPECTIVE_FIRST_PERSON))
+    camera_index = 0
+    for index, candidate in enumerate(CAMERA_PERSPECTIVE_ORDER):
+        if camera_perspective == str(candidate):
+            camera_index = int(index)
+            break
+    overlay._cmb_camera_perspective.blockSignals(True)
+    overlay._cmb_camera_perspective.setCurrentIndex(int(camera_index))
+    overlay._cmb_camera_perspective.blockSignals(False)
+
+    _sync_toggle(overlay._tg_view_bobbing, bool(values["view_bobbing_enabled"]))
+    _sync_toggle(overlay._tg_camera_shake, bool(values["camera_shake_enabled"]))
+    _sync_toggle(overlay._tg_animated_textures, bool(values["animated_textures_enabled"]))
+
+    bob_percent = round_clampi(clampf(float(values["view_bobbing_strength"]), 0.0, 1.0) * 100.0, 0, 100)
+    _block_signals_set_value(overlay._sld_view_bobbing_strength, bob_percent)
+    overlay._lbl_view_bobbing_strength.setText(f"View Bobbing strength: {bob_percent}%")
+    overlay._sld_view_bobbing_strength.setEnabled(bool(values["view_bobbing_enabled"]))
+
+    shake_percent = round_clampi(clampf(float(values["camera_shake_strength"]), 0.0, 1.0) * 100.0, 0, 100)
+    _block_signals_set_value(overlay._sld_camera_shake_strength, shake_percent)
+    overlay._lbl_camera_shake_strength.setText(f"Camera Shake strength: {shake_percent}%")
+    overlay._sld_camera_shake_strength.setEnabled(bool(values["camera_shake_enabled"]))
+
+    _sync_toggle(overlay._tg_outline_sel, bool(values["outline_selection"]))
+    _sync_toggle(overlay._tg_world_wire, bool(values["world_wire"]))
+    _sync_toggle(overlay._tg_shadow_enabled, bool(values["shadow_enabled"]))
+    _sync_toggle(overlay._tg_clouds_enabled, bool(values["clouds_enabled"]))
+    _sync_toggle(overlay._tg_cloud_wire, bool(values["cloud_wire"]))
+
+    overlay._cmb_cloud_flow.blockSignals(True)
+    overlay._cmb_cloud_flow.setCurrentIndex(int(cloud_flow_index_for_value(str(values["cloud_flow_direction"]))))
+    overlay._cmb_cloud_flow.blockSignals(False)
+
+    cloud_density = clampi(int(values["cloud_density"]), 0, 4)
+    _block_signals_set_value(overlay._sld_cloud_density, cloud_density)
+    overlay._lbl_cloud_density.setText(f"Cloud density: {cloud_density}")
+
+    cloud_seed = clampi(int(values["cloud_seed"]), 0, 9999)
+    _block_signals_set_value(overlay._sld_cloud_seed, cloud_seed)
+    overlay._lbl_cloud_seed.setText(f"Cloud seed: {cloud_seed}")
+    overlay._update_cloud_controls_enabled(bool(values["clouds_enabled"]))
+
+    overlay._btn_mode_toggle.blockSignals(True)
+    overlay._btn_mode_toggle.setChecked(bool(values["creative_mode"]))
+    overlay._btn_mode_toggle.blockSignals(False)
+    overlay._update_mode_toggle_text(bool(values["creative_mode"]))
+
+    _sync_toggle(overlay._tg_auto_jump, bool(values["auto_jump_enabled"]))
+    _sync_toggle(overlay._tg_auto_sprint, bool(values["auto_sprint_enabled"]))
+
+    overlay._ctl_gravity.set_value(float(values["gravity"]))
+    overlay._ctl_walk_speed.set_value(float(values["walk_speed"]))
+    overlay._ctl_sprint_speed.set_value(float(values["sprint_speed"]))
+    overlay._ctl_jump_v0.set_value(float(values["jump_v0"]))
+    overlay._ctl_auto_jump_cooldown.set_value(float(values["auto_jump_cooldown_s"]))
+    overlay._ctl_fly_speed.set_value(float(values["fly_speed"]))
+    overlay._ctl_fly_ascend_speed.set_value(float(values["fly_ascend_speed"]))
+    overlay._ctl_fly_descend_speed.set_value(float(values["fly_descend_speed"]))
+
+    master_percent = round_clampi(clampf(float(values["audio_master"]), 0.0, 1.0) * 100.0, 0, 100)
+    ambient_percent = round_clampi(clampf(float(values["audio_ambient"]), 0.0, 1.0) * 100.0, 0, 100)
+    block_percent = round_clampi(clampf(float(values["audio_block"]), 0.0, 1.0) * 100.0, 0, 100)
+    player_percent = round_clampi(clampf(float(values["audio_player"]), 0.0, 1.0) * 100.0, 0, 100)
+
+    _block_signals_set_value(overlay._sld_master_volume, master_percent)
+    _block_signals_set_value(overlay._sld_ambient_volume, ambient_percent)
+    _block_signals_set_value(overlay._sld_block_volume, block_percent)
+    _block_signals_set_value(overlay._sld_player_volume, player_percent)
+    overlay._lbl_master_volume.setText(f"Master volume: {master_percent}%")
+    overlay._lbl_ambient_volume.setText(f"Ambient volume: {ambient_percent}%")
+    overlay._lbl_block_volume.setText(f"Block volume: {block_percent}%")
+    overlay._lbl_player_volume.setText(f"Player volume: {player_percent}%")
+
+    keybinds = values["keybinds"].normalized()
+    for action, row in overlay._keybind_rows.items():
+        row.sync_binding_text(keybinds.binding_for_action(str(action)))
+
+
+def _build_video_tab(overlay) -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+    layout.addWidget(overlay._section(host, "Display"))
+    overlay._tg_fullscreen = overlay._add_toggle(layout, host, "Fullscreen", overlay.fullscreen_changed.emit)
+    overlay._tg_hide_hud = overlay._add_toggle(layout, host, "Hide HUD", overlay.hide_hud_changed.emit)
+    overlay._tg_hide_hand = overlay._add_toggle(layout, host, "Hide Hand", overlay.hide_hand_changed.emit)
+    overlay._tg_view_bobbing = overlay._add_toggle(layout, host, "View Bobbing", overlay._on_view_bobbing_toggled)
+
+    bob_row = QVBoxLayout()
+    overlay._lbl_view_bobbing_strength = QLabel("View Bobbing strength: 35%", host)
+    overlay._lbl_view_bobbing_strength.setObjectName("valueLabel")
+    overlay._sld_view_bobbing_strength = overlay._new_slider(host, int(overlay._params.bob_strength_percent_min), int(overlay._params.bob_strength_percent_max))
+    overlay._sld_view_bobbing_strength.valueChanged.connect(overlay._on_view_bobbing_strength)
+    bob_row.addWidget(overlay._lbl_view_bobbing_strength)
+    bob_row.addWidget(overlay._sld_view_bobbing_strength)
+    layout.addLayout(bob_row)
+
+    overlay._tg_camera_shake = overlay._add_toggle(layout, host, "Camera Shake", overlay._on_camera_shake_toggled)
+    shake_row = QVBoxLayout()
+    overlay._lbl_camera_shake_strength = QLabel("Camera Shake strength: 20%", host)
+    overlay._lbl_camera_shake_strength.setObjectName("valueLabel")
+    overlay._sld_camera_shake_strength = overlay._new_slider(host, int(overlay._params.shake_strength_percent_min), int(overlay._params.shake_strength_percent_max))
+    overlay._sld_camera_shake_strength.valueChanged.connect(overlay._on_camera_shake_strength)
+    shake_row.addWidget(overlay._lbl_camera_shake_strength)
+    shake_row.addWidget(overlay._sld_camera_shake_strength)
+    layout.addLayout(shake_row)
+
+    fov_row = QVBoxLayout()
+    overlay._lbl_fov = QLabel("FOV: 80", host)
+    overlay._lbl_fov.setObjectName("valueLabel")
+    overlay._sld_fov = overlay._new_slider(host, int(overlay._params.fov_min), int(overlay._params.fov_max))
+    overlay._sld_fov.valueChanged.connect(overlay._on_fov)
+    fov_row.addWidget(overlay._lbl_fov)
+    fov_row.addWidget(overlay._sld_fov)
+    layout.addLayout(fov_row)
+
+    camera_row = QHBoxLayout()
+    overlay._lbl_camera_perspective = QLabel("Camera perspective", host)
+    overlay._lbl_camera_perspective.setObjectName("valueLabel")
+    camera_row.addWidget(overlay._lbl_camera_perspective)
+    overlay._cmb_camera_perspective = QComboBox(host)
+    for value in CAMERA_PERSPECTIVE_ORDER:
+        overlay._cmb_camera_perspective.addItem(str(CAMERA_PERSPECTIVE_LABELS[str(value)]), userData=str(value))
+    overlay._cmb_camera_perspective.currentIndexChanged.connect(overlay._on_camera_perspective)
+    camera_row.addWidget(overlay._cmb_camera_perspective)
+    camera_row.addStretch(1)
+    layout.addLayout(camera_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Crosshair"))
+
+    overlay._lbl_crosshair_help = QLabel("Draw a custom 16x16 crosshair with the left mouse button, erase with the right mouse button, or use Clear Board to restore the default Minecraft-style crosshair and reset the editor board.", host)
+    overlay._lbl_crosshair_help.setObjectName("valueLabel")
+    overlay._lbl_crosshair_help.setWordWrap(True)
+    layout.addWidget(overlay._lbl_crosshair_help)
+
+    crosshair_preview_row = QHBoxLayout()
+    overlay._crosshair_preview = CrosshairPreviewWidget(host)
+    crosshair_preview_row.addWidget(overlay._crosshair_preview, stretch=0)
+
+    crosshair_buttons = QVBoxLayout()
+    overlay._btn_crosshair_clear = QPushButton("Clear Board", host)
+    overlay._btn_crosshair_clear.setObjectName("menuBtn")
+    overlay._btn_crosshair_clear.clicked.connect(overlay.crosshair_clear_requested.emit)
+    crosshair_buttons.addWidget(overlay._btn_crosshair_clear)
+    crosshair_buttons.addStretch(1)
+    crosshair_preview_row.addLayout(crosshair_buttons, stretch=0)
+    crosshair_preview_row.addStretch(1)
+    layout.addLayout(crosshair_preview_row)
+
+    overlay._crosshair_editor = CrosshairPixelEditor(host)
+    overlay._crosshair_editor.pixels_changed.connect(overlay.crosshair_pixels_changed.emit)
+    layout.addWidget(overlay._crosshair_editor)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "World"))
+
+    rd_row = QVBoxLayout()
+    overlay._lbl_rd = QLabel("Render distance: 6 chunks", host)
+    overlay._lbl_rd.setObjectName("valueLabel")
+    overlay._sld_rd = overlay._new_slider(host, int(overlay._params.render_dist_min), int(overlay._params.render_dist_max))
+    overlay._sld_rd.valueChanged.connect(overlay._on_rd)
+    rd_row.addWidget(overlay._lbl_rd)
+    rd_row.addWidget(overlay._sld_rd)
+    layout.addLayout(rd_row)
+
+    overlay._tg_animated_textures = overlay._add_toggle(layout, host, "Animated Textures", overlay.animated_textures_changed.emit)
+    overlay._tg_outline_sel = overlay._add_toggle(layout, host, "Outline selection", overlay.outline_selection_changed.emit)
+    overlay._tg_world_wire = overlay._add_toggle(layout, host, "World wireframe", overlay.world_wireframe_changed.emit)
+    overlay._tg_shadow_enabled = overlay._add_toggle(layout, host, "Shadow map", overlay.shadow_enabled_changed.emit)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Clouds"))
+
+    overlay._tg_clouds_enabled = overlay._add_toggle(layout, host, "Show clouds", overlay._on_clouds_toggled)
+    overlay._tg_cloud_wire = overlay._add_toggle(layout, host, "Cloud wireframe", overlay.cloud_wireframe_changed.emit)
+
+    cloud_flow_row = QHBoxLayout()
+    overlay._lbl_cloud_flow = QLabel("Cloud flow direction", host)
+    overlay._lbl_cloud_flow.setObjectName("valueLabel")
+    cloud_flow_row.addWidget(overlay._lbl_cloud_flow)
+    overlay._cmb_cloud_flow = QComboBox(host)
+    for value, label in CLOUD_FLOW_OPTIONS:
+        overlay._cmb_cloud_flow.addItem(str(label), userData=str(value))
+    overlay._cmb_cloud_flow.currentIndexChanged.connect(overlay._on_cloud_flow_direction)
+    cloud_flow_row.addWidget(overlay._cmb_cloud_flow)
+    cloud_flow_row.addStretch(1)
+    layout.addLayout(cloud_flow_row)
+
+    cloud_density_row = QVBoxLayout()
+    overlay._lbl_cloud_density = QLabel("Cloud density: 1", host)
+    overlay._lbl_cloud_density.setObjectName("valueLabel")
+    overlay._sld_cloud_density = overlay._new_slider(host, 0, 4)
+    overlay._sld_cloud_density.valueChanged.connect(overlay._on_cloud_density)
+    cloud_density_row.addWidget(overlay._lbl_cloud_density)
+    cloud_density_row.addWidget(overlay._sld_cloud_density)
+    layout.addLayout(cloud_density_row)
+
+    cloud_seed_row = QVBoxLayout()
+    overlay._lbl_cloud_seed = QLabel("Cloud seed: 1337", host)
+    overlay._lbl_cloud_seed.setObjectName("valueLabel")
+    overlay._sld_cloud_seed = overlay._new_slider(host, 0, 9999)
+    overlay._sld_cloud_seed.valueChanged.connect(overlay._on_cloud_seed)
+    cloud_seed_row.addWidget(overlay._lbl_cloud_seed)
+    cloud_seed_row.addWidget(overlay._sld_cloud_seed)
+    layout.addLayout(cloud_seed_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Sun"))
+
+    sun_az_row = QVBoxLayout()
+    overlay._lbl_sun_az = QLabel("Sun azimuth: 45 deg", host)
+    overlay._lbl_sun_az.setObjectName("valueLabel")
+    overlay._sld_sun_az = overlay._new_slider(host, int(overlay._params.sun_az_min), int(overlay._params.sun_az_max))
+    overlay._sld_sun_az.valueChanged.connect(overlay._on_sun_az)
+    sun_az_row.addWidget(overlay._lbl_sun_az)
+    sun_az_row.addWidget(overlay._sld_sun_az)
+    layout.addLayout(sun_az_row)
+
+    sun_el_row = QVBoxLayout()
+    overlay._lbl_sun_el = QLabel("Sun elevation: 60 deg", host)
+    overlay._lbl_sun_el.setObjectName("valueLabel")
+    overlay._sld_sun_el = overlay._new_slider(host, int(overlay._params.sun_el_min), int(overlay._params.sun_el_max))
+    overlay._sld_sun_el.valueChanged.connect(overlay._on_sun_el)
+    sun_el_row.addWidget(overlay._lbl_sun_el)
+    sun_el_row.addWidget(overlay._sld_sun_el)
+    layout.addLayout(sun_el_row)
+
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
+
+
+def _build_controls_tab(overlay) -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+    layout.addWidget(overlay._section(host, "Mouse"))
+
+    sens_row = QVBoxLayout()
+    overlay._lbl_sens = QLabel("Mouse sensitivity: 0.090 deg/px", host)
+    overlay._lbl_sens.setObjectName("valueLabel")
+    overlay._sld_sens = overlay._new_slider(host, int(overlay._params.sens_milli_min), int(overlay._params.sens_milli_max))
+    overlay._sld_sens.valueChanged.connect(overlay._on_sens)
+    sens_row.addWidget(overlay._lbl_sens)
+    sens_row.addWidget(overlay._sld_sens)
+    layout.addLayout(sens_row)
+
+    invert_row = QHBoxLayout()
+    overlay._cb_inv_x = QCheckBox("Invert X", host)
+    overlay._cb_inv_y = QCheckBox("Invert Y", host)
+    overlay._cb_inv_x.toggled.connect(overlay.invert_x_changed.emit)
+    overlay._cb_inv_y.toggled.connect(overlay.invert_y_changed.emit)
+    invert_row.addWidget(overlay._cb_inv_x)
+    invert_row.addWidget(overlay._cb_inv_y)
+    invert_row.addStretch(1)
+    layout.addLayout(invert_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Movement Keys"))
+    for action in CONTROL_SECTION_MOVEMENT:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Gameplay Keys"))
+    for action in CONTROL_SECTION_GAMEPLAY:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Hotbar Keys"))
+    for action in HOTBAR_ACTIONS:
+        overlay._add_keybind_row(layout, host, str(action))
+
+    row_reset = QHBoxLayout()
+    row_reset.addStretch(1)
+    btn_reset_bindings = QPushButton("Reset Keybinds", host)
+    btn_reset_bindings.setObjectName("menuBtn")
+    btn_reset_bindings.clicked.connect(overlay.keybind_reset_requested.emit)
+    row_reset.addWidget(btn_reset_bindings)
+    layout.addLayout(row_reset)
+
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
+
+
+def _build_audio_tab(overlay) -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+    layout.addWidget(overlay._section(host, "Mixer"))
+
+    overlay._lbl_master_volume = QLabel("Master volume: 100%", host)
+    overlay._lbl_master_volume.setObjectName("valueLabel")
+    overlay._sld_master_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_master_volume.valueChanged.connect(overlay._on_master_volume)
+    layout.addWidget(overlay._lbl_master_volume)
+    layout.addWidget(overlay._sld_master_volume)
+
+    overlay._lbl_ambient_volume = QLabel("Ambient volume: 100%", host)
+    overlay._lbl_ambient_volume.setObjectName("valueLabel")
+    overlay._sld_ambient_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_ambient_volume.valueChanged.connect(overlay._on_ambient_volume)
+    layout.addWidget(overlay._lbl_ambient_volume)
+    layout.addWidget(overlay._sld_ambient_volume)
+
+    overlay._lbl_block_volume = QLabel("Block volume: 100%", host)
+    overlay._lbl_block_volume.setObjectName("valueLabel")
+    overlay._sld_block_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_block_volume.valueChanged.connect(overlay._on_block_volume)
+    layout.addWidget(overlay._lbl_block_volume)
+    layout.addWidget(overlay._sld_block_volume)
+
+    overlay._lbl_player_volume = QLabel("Player volume: 100%", host)
+    overlay._lbl_player_volume.setObjectName("valueLabel")
+    overlay._sld_player_volume = overlay._new_slider(host, 0, 100)
+    overlay._sld_player_volume.valueChanged.connect(overlay._on_player_volume)
+    layout.addWidget(overlay._lbl_player_volume)
+    layout.addWidget(overlay._sld_player_volume)
+
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
+
+
+def _build_game_tab(overlay) -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+    layout.addWidget(overlay._section(host, "Game Mode"))
+
+    overlay._btn_mode_toggle = QPushButton(host)
+    overlay._btn_mode_toggle.setObjectName("modeToggle")
+    overlay._btn_mode_toggle.setCheckable(True)
+    overlay._btn_mode_toggle.clicked.connect(overlay._on_mode_toggle_clicked)
+    layout.addWidget(overlay._btn_mode_toggle)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Player Options"))
+
+    overlay._tg_auto_jump = overlay._add_toggle(layout, host, "Auto-Jump", overlay.auto_jump_changed.emit)
+    overlay._tg_auto_sprint = overlay._add_toggle(layout, host, "Auto-Sprint", overlay.auto_sprint_changed.emit)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Movement Parameters"))
+
+    overlay._ctl_gravity = AdvancedScalarControl(title="Gravity", min_value=float(overlay._params.gravity_milli_min) / float(overlay._params.gravity_scale), max_value=float(overlay._params.gravity_milli_max) / float(overlay._params.gravity_scale), slider_scale=float(overlay._params.gravity_scale), decimals=int(overlay._params.gravity_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.gravity), parent=host)
+    overlay._ctl_gravity.value_changed.connect(overlay.gravity_changed.emit)
+    layout.addWidget(overlay._ctl_gravity)
+
+    overlay._ctl_walk_speed = AdvancedScalarControl(title="Walk speed", min_value=float(overlay._params.walk_speed_milli_min) / float(overlay._params.walk_speed_scale), max_value=float(overlay._params.walk_speed_milli_max) / float(overlay._params.walk_speed_scale), slider_scale=float(overlay._params.walk_speed_scale), decimals=int(overlay._params.walk_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.walk_speed), parent=host)
+    overlay._ctl_walk_speed.value_changed.connect(overlay.walk_speed_changed.emit)
+    layout.addWidget(overlay._ctl_walk_speed)
+
+    overlay._ctl_sprint_speed = AdvancedScalarControl(title="Sprint speed", min_value=float(overlay._params.sprint_speed_milli_min) / float(overlay._params.sprint_speed_scale), max_value=float(overlay._params.sprint_speed_milli_max) / float(overlay._params.sprint_speed_scale), slider_scale=float(overlay._params.sprint_speed_scale), decimals=int(overlay._params.sprint_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.sprint_speed), parent=host)
+    overlay._ctl_sprint_speed.value_changed.connect(overlay.sprint_speed_changed.emit)
+    layout.addWidget(overlay._ctl_sprint_speed)
+
+    overlay._ctl_jump_v0 = AdvancedScalarControl(title="Jump velocity", min_value=float(overlay._params.jump_v0_milli_min) / float(overlay._params.jump_v0_scale), max_value=float(overlay._params.jump_v0_milli_max) / float(overlay._params.jump_v0_scale), slider_scale=float(overlay._params.jump_v0_scale), decimals=int(overlay._params.jump_v0_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.jump_v0), parent=host)
+    overlay._ctl_jump_v0.value_changed.connect(overlay.jump_v0_changed.emit)
+    layout.addWidget(overlay._ctl_jump_v0)
+
+    overlay._ctl_auto_jump_cooldown = AdvancedScalarControl(title="Auto-jump cooldown", min_value=float(overlay._params.auto_jump_cooldown_milli_min) / float(overlay._params.auto_jump_cooldown_scale), max_value=float(overlay._params.auto_jump_cooldown_milli_max) / float(overlay._params.auto_jump_cooldown_scale), slider_scale=float(overlay._params.auto_jump_cooldown_scale), decimals=int(overlay._params.auto_jump_cooldown_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.auto_jump_cooldown_s), parent=host)
+    overlay._ctl_auto_jump_cooldown.value_changed.connect(overlay.auto_jump_cooldown_changed.emit)
+    layout.addWidget(overlay._ctl_auto_jump_cooldown)
+
+    layout.addWidget(overlay._section(host, "Flight Parameters"))
+
+    overlay._ctl_fly_speed = AdvancedScalarControl(title="Flight speed", min_value=float(overlay._params.fly_speed_milli_min) / float(overlay._params.fly_speed_scale), max_value=float(overlay._params.fly_speed_milli_max) / float(overlay._params.fly_speed_scale), slider_scale=float(overlay._params.fly_speed_scale), decimals=int(overlay._params.fly_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_speed), parent=host)
+    overlay._ctl_fly_speed.value_changed.connect(overlay.fly_speed_changed.emit)
+    layout.addWidget(overlay._ctl_fly_speed)
+
+    overlay._ctl_fly_ascend_speed = AdvancedScalarControl(title="Ascend speed", min_value=float(overlay._params.fly_ascend_speed_milli_min) / float(overlay._params.fly_ascend_speed_scale), max_value=float(overlay._params.fly_ascend_speed_milli_max) / float(overlay._params.fly_ascend_speed_scale), slider_scale=float(overlay._params.fly_ascend_speed_scale), decimals=int(overlay._params.fly_ascend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_ascend_speed), parent=host)
+    overlay._ctl_fly_ascend_speed.value_changed.connect(overlay.fly_ascend_speed_changed.emit)
+    layout.addWidget(overlay._ctl_fly_ascend_speed)
+
+    overlay._ctl_fly_descend_speed = AdvancedScalarControl(title="Descend speed", min_value=float(overlay._params.fly_descend_speed_milli_min) / float(overlay._params.fly_descend_speed_scale), max_value=float(overlay._params.fly_descend_speed_milli_max) / float(overlay._params.fly_descend_speed_scale), slider_scale=float(overlay._params.fly_descend_speed_scale), decimals=int(overlay._params.fly_descend_speed_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.fly_descend_speed), parent=host)
+    overlay._ctl_fly_descend_speed.value_changed.connect(overlay.fly_descend_speed_changed.emit)
+    layout.addWidget(overlay._ctl_fly_descend_speed)
+
+    layout.addWidget(overlay._sep(host))
+
+    btn_reset_adv = QPushButton("Reset Advanced to Defaults", host)
+    btn_reset_adv.setObjectName("menuBtn")
+    btn_reset_adv.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
+    layout.addWidget(btn_reset_adv)
+
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
 
 
 class SettingsOverlay(QDialog):
@@ -137,10 +567,10 @@ class SettingsOverlay(QDialog):
         panel_layout.addWidget(self._sidebar, stretch=2)
         panel_layout.addWidget(self._content, stretch=8)
 
-        build_video_tab(self)
-        build_controls_tab(self)
-        build_audio_tab(self)
-        build_game_tab(self)
+        _build_video_tab(self)
+        _build_controls_tab(self)
+        _build_audio_tab(self)
+        _build_game_tab(self)
         self._set_tab(0)
 
         if bool(self._as_window):
@@ -270,7 +700,7 @@ class SettingsOverlay(QDialog):
         self._tab_game.setChecked(selected_index == 3)
 
     def sync_values(self, **kwargs) -> None:
-        sync_overlay_values(self, **kwargs)
+        _sync_overlay_values(self, **kwargs)
 
     def _on_fov(self, value: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(value)}")
