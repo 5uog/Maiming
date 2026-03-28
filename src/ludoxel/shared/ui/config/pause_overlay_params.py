@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ....application.runtime.state.runtime_preferences import RuntimePreferences
 from ....application.runtime.state.session_settings import SessionSettings
 from ...world.config.render_distance import RENDER_DISTANCE_MAX_CHUNKS, RENDER_DISTANCE_MIN_CHUNKS
 
@@ -19,6 +20,26 @@ class PauseOverlayParams:
 
     sens_min: float = float(SessionSettings.SENS_MIN)
     sens_max: float = float(SessionSettings.SENS_MAX)
+
+    block_break_repeat_interval_milli_min: int = int(RuntimePreferences.BLOCK_BREAK_REPEAT_INTERVAL_MIN * 1000.0)
+    block_break_repeat_interval_milli_max: int = int(RuntimePreferences.BLOCK_BREAK_REPEAT_INTERVAL_MAX * 1000.0)
+    block_break_repeat_interval_scale: float = 1000.0
+    block_break_repeat_interval_decimals: int = 3
+
+    block_place_repeat_interval_milli_min: int = int(RuntimePreferences.BLOCK_PLACE_REPEAT_INTERVAL_MIN * 1000.0)
+    block_place_repeat_interval_milli_max: int = int(RuntimePreferences.BLOCK_PLACE_REPEAT_INTERVAL_MAX * 1000.0)
+    block_place_repeat_interval_scale: float = 1000.0
+    block_place_repeat_interval_decimals: int = 3
+
+    block_break_particle_spawn_rate_milli_min: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MIN * 1000.0)
+    block_break_particle_spawn_rate_milli_max: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPAWN_RATE_MAX * 1000.0)
+    block_break_particle_spawn_rate_scale: float = 1000.0
+    block_break_particle_spawn_rate_decimals: int = 3
+
+    block_break_particle_speed_milli_min: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MIN * 1000.0)
+    block_break_particle_speed_milli_max: int = int(RuntimePreferences.BLOCK_BREAK_PARTICLE_SPEED_SCALE_MAX * 1000.0)
+    block_break_particle_speed_scale: float = 1000.0
+    block_break_particle_speed_decimals: int = 3
 
     sun_az_min: int = 0
     sun_az_max: int = 360

@@ -30,6 +30,7 @@ from ...math.view_angles import forward_from_yaw_pitch_deg
 
 from ...opengl.runtime.gl_renderer import GLRenderer
 from ...opengl.runtime.world_upload_tracker import WorldUploadTracker
+from ...rendering.block_break_particles import advance_block_break_particles, render_samples_from_block_break_particles
 from ...rendering.third_person_camera import resolve_camera
 from ...rendering.first_person_motion import FirstPersonMotionController
 from ...rendering.player_skin import PLAYER_SKIN_KIND_ALEX, load_player_skin_image
@@ -116,6 +117,12 @@ class GLViewportWidget(QOpenGLWidget):
         self._player_skin_image = QImage()
         self._pause_preview_cache_key: tuple[object, ...] | None = None
         self._pause_preview_frame = QImage()
+        self._block_break_particles = ()
+        self._left_mouse_held: bool = False
+        self._right_mouse_held: bool = False
+        self._left_mouse_repeat_due_s: float = 0.0
+        self._right_mouse_repeat_due_s: float = 0.0
+        self._right_mouse_repeat_enabled: bool = False
         app = QGuiApplication.instance()
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
@@ -239,6 +246,8 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _begin_loading(self, text: str) -> None:
         became_active = self._frame_sync.loading.begin()
+        self._reset_held_mouse_actions()
+        self._clear_block_break_particles()
         self._set_loading_status(text)
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
@@ -336,6 +345,7 @@ class GLViewportWidget(QOpenGLWidget):
         was_active = bool(self._application_active)
         self._application_active = bool(state == Qt.ApplicationState.ApplicationActive)
         if not bool(self._application_active):
+            self._reset_held_mouse_actions()
             self._inp.reset()
             try:
                 self._inp.set_mouse_capture(False)
@@ -361,6 +371,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         self._runtime_active = bool(next_active)
         if not bool(next_active):
+            self._reset_held_mouse_actions()
             try:
                 self._sim_timer.stop()
             except Exception:
@@ -464,7 +475,38 @@ class GLViewportWidget(QOpenGLWidget):
         return bool(self._state.fullscreen)
 
     def _make_render_snapshot(self):
-        return self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), is_first_person_view=bool(self._state.is_first_person_view()))
+        snapshot = self._session.make_snapshot(enable_view_bobbing=bool(self._state.view_bobbing_enabled), enable_camera_shake=bool(self._state.camera_shake_enabled), view_bobbing_strength=float(self._state.view_bobbing_strength), camera_shake_strength=float(self._state.camera_shake_strength), is_first_person_view=bool(self._state.is_first_person_view()))
+        return replace(snapshot, block_break_particles=render_samples_from_block_break_particles(self._block_break_particles))
+
+    def _reset_held_mouse_actions(self) -> None:
+        self._left_mouse_held = False
+        self._right_mouse_held = False
+        self._left_mouse_repeat_due_s = 0.0
+        self._right_mouse_repeat_due_s = 0.0
+        self._right_mouse_repeat_enabled = False
+
+    def _arm_left_mouse_repeat(self, *, now_s: float) -> None:
+        self._left_mouse_held = True
+        self._left_mouse_repeat_due_s = float(now_s) + float(self._state.block_break_repeat_interval_s)
+
+    def _arm_right_mouse_repeat(self, *, now_s: float) -> None:
+        self._right_mouse_held = True
+        self._right_mouse_repeat_due_s = float(now_s) + float(self._state.block_place_repeat_interval_s)
+        self._right_mouse_repeat_enabled = True
+
+    def _disable_right_mouse_repeat(self) -> None:
+        self._right_mouse_repeat_enabled = False
+
+    def _clear_block_break_particles(self) -> None:
+        self._block_break_particles = ()
+
+    def _append_block_break_particles(self, particles) -> None:
+        if not particles:
+            return
+        self._block_break_particles = tuple(self._block_break_particles) + tuple(particles)
+
+    def _update_block_break_particles(self, dt: float) -> None:
+        self._block_break_particles = advance_block_break_particles(tuple(self._block_break_particles), float(dt))
 
     def _effective_camera_from_snapshot(self, snapshot) -> tuple[Vec3, float, float, float, Vec3]:
         cam = snapshot.camera
@@ -514,11 +556,15 @@ class GLViewportWidget(QOpenGLWidget):
         self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
 
     def _set_dead_overlay(self, on: bool) -> None:
+        if bool(on):
+            self._reset_held_mouse_actions()
         self._overlays.set_dead(bool(on))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
 
     def _set_paused_overlay(self, on: bool) -> None:
+        if bool(on):
+            self._reset_held_mouse_actions()
         self._overlays.set_paused(bool(on))
         self._invalidate_pause_preview_cache()
         if not bool(on):
@@ -528,6 +574,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_settings_overlay(self, on: bool) -> None:
         if bool(on):
+            self._reset_held_mouse_actions()
             self._position_settings_window()
         self._overlays.set_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
@@ -535,6 +582,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _set_othello_settings_overlay(self, on: bool) -> None:
         if bool(on):
+            self._reset_held_mouse_actions()
             self._position_othello_settings_window()
         self._overlays.set_othello_settings_open(bool(on))
         self._sync_gameplay_hud_visibility()
@@ -543,6 +591,8 @@ class GLViewportWidget(QOpenGLWidget):
     def _set_inventory_overlay(self, on: bool) -> None:
         if bool(on) and not settings_controller.inventory_available(self):
             return
+        if bool(on):
+            self._reset_held_mouse_actions()
         self._overlays.set_inventory_open(bool(on))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
@@ -701,7 +751,7 @@ class GLViewportWidget(QOpenGLWidget):
 
         player_state = compose_player_render_state(snapshot=snap, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
 
-        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snap.falling_blocks))
+        self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(cam.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snap.falling_blocks), block_break_particles=tuple(snap.block_break_particles))
         self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 
@@ -712,6 +762,7 @@ class GLViewportWidget(QOpenGLWidget):
 
     def _on_step(self, dt: float) -> None:
         othello_controller.consume_pending_ai_result(self)
+        self._update_block_break_particles(float(dt))
 
         self._inp.poll_relative_mouse_delta()
         fr, md = self._inp.consume(invert_x=self._state.invert_x, invert_y=self._state.invert_y)
@@ -753,6 +804,8 @@ class GLViewportWidget(QOpenGLWidget):
             self._set_dead_overlay(True)
             return
 
+        interaction_controller.handle_held_mouse_buttons(self)
+
         if not self._hud_ctl.should_emit() or not bool(self._debug_hud_active()):
             return
 
@@ -792,6 +845,13 @@ class GLViewportWidget(QOpenGLWidget):
             return
         interaction_controller.handle_mouse_press(self, e)
         super().mousePressEvent(e)
+
+    def mouseReleaseEvent(self, e: QMouseEvent) -> None:
+        if bool(self.loading_active()):
+            e.accept()
+            return
+        interaction_controller.handle_mouse_release(self, e)
+        super().mouseReleaseEvent(e)
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
         if bool(self.loading_active()) or (self._overlays.paused() or self._overlays.inventory_open() or self._overlays.dead() or self._overlays.settings_open() or self._overlays.othello_settings_open() or (not self._inp.captured())):

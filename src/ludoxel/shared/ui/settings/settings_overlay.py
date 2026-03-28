@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFrame, QHBoxLayout, 
 
 from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS, action_display_name
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_FIRST_PERSON, CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
+from ....application.runtime.state.runtime_preferences import RuntimePreferences
 from ..config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ...math.scalars import clampf, clampi, round_clampi
 from ...opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
@@ -90,6 +91,8 @@ def _sync_overlay_values(overlay, **values) -> None:
     _sync_toggle(overlay._tg_outline_sel, bool(values["outline_selection"]))
     _sync_toggle(overlay._tg_world_wire, bool(values["world_wire"]))
     _sync_toggle(overlay._tg_shadow_enabled, bool(values["shadow_enabled"]))
+    overlay._ctl_block_break_particle_spawn_rate.set_value(float(values["block_break_particle_spawn_rate"]))
+    overlay._ctl_block_break_particle_speed_scale.set_value(float(values["block_break_particle_speed_scale"]))
     _sync_toggle(overlay._tg_clouds_enabled, bool(values["clouds_enabled"]))
     _sync_toggle(overlay._tg_cloud_wire, bool(values["cloud_wire"]))
 
@@ -113,6 +116,8 @@ def _sync_overlay_values(overlay, **values) -> None:
 
     _sync_toggle(overlay._tg_auto_jump, bool(values["auto_jump_enabled"]))
     _sync_toggle(overlay._tg_auto_sprint, bool(values["auto_sprint_enabled"]))
+    overlay._ctl_block_break_repeat_interval.set_value(float(values["block_break_repeat_interval_s"]))
+    overlay._ctl_block_place_repeat_interval.set_value(float(values["block_place_repeat_interval_s"]))
 
     overlay._ctl_gravity.set_value(float(values["gravity"]))
     overlay._ctl_walk_speed.set_value(float(values["walk_speed"]))
@@ -232,6 +237,17 @@ def _build_video_tab(overlay) -> None:
     overlay._tg_outline_sel = overlay._add_toggle(layout, host, "Outline selection", overlay.outline_selection_changed.emit)
     overlay._tg_world_wire = overlay._add_toggle(layout, host, "World wireframe", overlay.world_wireframe_changed.emit)
     overlay._tg_shadow_enabled = overlay._add_toggle(layout, host, "Shadow map", overlay.shadow_enabled_changed.emit)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Particles"))
+
+    overlay._ctl_block_break_particle_spawn_rate = AdvancedScalarControl(title="Break particle spawn rate", min_value=float(overlay._params.block_break_particle_spawn_rate_milli_min) / float(overlay._params.block_break_particle_spawn_rate_scale), max_value=float(overlay._params.block_break_particle_spawn_rate_milli_max) / float(overlay._params.block_break_particle_spawn_rate_scale), slider_scale=float(overlay._params.block_break_particle_spawn_rate_scale), decimals=int(overlay._params.block_break_particle_spawn_rate_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPAWN_RATE), parent=host)
+    overlay._ctl_block_break_particle_spawn_rate.value_changed.connect(overlay.block_break_particle_spawn_rate_changed.emit)
+    layout.addWidget(overlay._ctl_block_break_particle_spawn_rate)
+
+    overlay._ctl_block_break_particle_speed_scale = AdvancedScalarControl(title="Break particle speed", min_value=float(overlay._params.block_break_particle_speed_milli_min) / float(overlay._params.block_break_particle_speed_scale), max_value=float(overlay._params.block_break_particle_speed_milli_max) / float(overlay._params.block_break_particle_speed_scale), slider_scale=float(overlay._params.block_break_particle_speed_scale), decimals=int(overlay._params.block_break_particle_speed_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_BREAK_PARTICLE_SPEED_SCALE), parent=host)
+    overlay._ctl_block_break_particle_speed_scale.value_changed.connect(overlay.block_break_particle_speed_scale_changed.emit)
+    layout.addWidget(overlay._ctl_block_break_particle_speed_scale)
 
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Clouds"))
@@ -397,6 +413,17 @@ def _build_game_tab(overlay) -> None:
     overlay._tg_auto_sprint = overlay._add_toggle(layout, host, "Auto-Sprint", overlay.auto_sprint_changed.emit)
 
     layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Interaction Parameters"))
+
+    overlay._ctl_block_break_repeat_interval = AdvancedScalarControl(title="Break repeat interval", min_value=float(overlay._params.block_break_repeat_interval_milli_min) / float(overlay._params.block_break_repeat_interval_scale), max_value=float(overlay._params.block_break_repeat_interval_milli_max) / float(overlay._params.block_break_repeat_interval_scale), slider_scale=float(overlay._params.block_break_repeat_interval_scale), decimals=int(overlay._params.block_break_repeat_interval_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S), parent=host)
+    overlay._ctl_block_break_repeat_interval.value_changed.connect(overlay.block_break_repeat_interval_changed.emit)
+    layout.addWidget(overlay._ctl_block_break_repeat_interval)
+
+    overlay._ctl_block_place_repeat_interval = AdvancedScalarControl(title="Place repeat interval", min_value=float(overlay._params.block_place_repeat_interval_milli_min) / float(overlay._params.block_place_repeat_interval_scale), max_value=float(overlay._params.block_place_repeat_interval_milli_max) / float(overlay._params.block_place_repeat_interval_scale), slider_scale=float(overlay._params.block_place_repeat_interval_scale), decimals=int(overlay._params.block_place_repeat_interval_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_PLACE_REPEAT_INTERVAL_S), parent=host)
+    overlay._ctl_block_place_repeat_interval.value_changed.connect(overlay.block_place_repeat_interval_changed.emit)
+    layout.addWidget(overlay._ctl_block_place_repeat_interval)
+
+    layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Movement Parameters"))
 
     overlay._ctl_gravity = AdvancedScalarControl(title="Gravity", min_value=float(overlay._params.gravity_milli_min) / float(overlay._params.gravity_scale), max_value=float(overlay._params.gravity_milli_max) / float(overlay._params.gravity_scale), slider_scale=float(overlay._params.gravity_scale), decimals=int(overlay._params.gravity_decimals), default_value=float(DEFAULT_MOVEMENT_PARAMS.gravity), parent=host)
@@ -475,6 +502,10 @@ class SettingsOverlay(QDialog):
     creative_mode_changed = pyqtSignal(bool)
     auto_jump_changed = pyqtSignal(bool)
     auto_sprint_changed = pyqtSignal(bool)
+    block_break_repeat_interval_changed = pyqtSignal(float)
+    block_place_repeat_interval_changed = pyqtSignal(float)
+    block_break_particle_spawn_rate_changed = pyqtSignal(float)
+    block_break_particle_speed_scale_changed = pyqtSignal(float)
     gravity_changed = pyqtSignal(float)
     walk_speed_changed = pyqtSignal(float)
     sprint_speed_changed = pyqtSignal(float)

@@ -2,9 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
+from ....shared.blocks.models.api import collision_aabbs_for_block
+from ....shared.blocks.state.state_codec import parse_state
+from ....shared.blocks.state.state_values import prop_as_bool
+from ....shared.blocks.structure.structural_rules import is_fence_gate
 from ....shared.math.vec3 import Vec3
+from ....shared.systems.gravity_system import GRAVITY_AFFECTED_TAG
 from ....features.othello.domain.game.board import OTHELLO_BOARD_SURFACE_Y, ensure_othello_board_layout, is_othello_board_footprint
 from ....features.othello.domain.game.types import OthelloGameState
 from ....shared.world.play_space import normalize_play_space_id
@@ -52,6 +58,56 @@ def _lift_player_above_othello_board_if_needed(session: SessionManager) -> None:
     player.auto_jump_start_y = float(player.position.y)
 
 
+def _restore_player_overlap_exemptions(session: SessionManager) -> None:
+    player = session.player
+    world = session.world
+    player_aabb = player.aabb_at(player.position)
+    x0 = int(math.floor(float(player_aabb.mn.x))) - 1
+    x1 = int(math.ceil(float(player_aabb.mx.x))) + 1
+    y0 = int(math.floor(float(player_aabb.mn.y))) - 1
+    y1 = int(math.ceil(float(player_aabb.mx.y))) + 1
+    z0 = int(math.floor(float(player_aabb.mn.z))) - 1
+    z1 = int(math.ceil(float(player_aabb.mx.z))) + 1
+
+    fence_gate_cells: list[tuple[int, int, int]] = []
+    gravity_cells: set[tuple[int, int, int]] = set()
+
+    def get_state(x: int, y: int, z: int) -> str | None:
+        return world.blocks.get((int(x), int(y), int(z)))
+
+    for x in range(int(x0), int(x1) + 1):
+        for y in range(int(y0), int(y1) + 1):
+            for z in range(int(z0), int(z1) + 1):
+                state_str = world.blocks.get((int(x), int(y), int(z)))
+                if state_str is None:
+                    continue
+                base_id, props = parse_state(str(state_str))
+                block_def = session.block_registry.get(str(base_id))
+                if block_def is None:
+                    continue
+
+                closed_fence_gate = bool(is_fence_gate(block_def) and (not prop_as_bool(props, "open", False)))
+                gravity_affected = bool(block_def.has_tag(GRAVITY_AFFECTED_TAG))
+                if (not bool(closed_fence_gate)) and (not bool(gravity_affected)):
+                    continue
+
+                intersects = False
+                for aabb in collision_aabbs_for_block(str(state_str), get_state, session.block_registry.get, int(x), int(y), int(z)):
+                    if player_aabb.intersects(aabb):
+                        intersects = True
+                        break
+                if not bool(intersects):
+                    continue
+
+                if bool(closed_fence_gate):
+                    fence_gate_cells.append((int(x), int(y), int(z)))
+                if bool(gravity_affected):
+                    gravity_cells.add((int(x), int(y), int(z)))
+
+    player.fence_gate_overlap_exemption = None if not fence_gate_cells else tuple(sorted(fence_gate_cells))[0]
+    player.gravity_block_overlap_exemptions = tuple(sorted(gravity_cells))
+
+
 def _persisted_player_from_session(session: SessionManager, *, allow_flying: bool) -> PersistedPlayer:
     player = session.player
     return PersistedPlayer(pos_x=float(player.position.x), pos_y=float(player.position.y), pos_z=float(player.position.z), vel_x=float(player.velocity.x), vel_y=float(player.velocity.y), vel_z=float(player.velocity.z), yaw_deg=float(player.yaw_deg), pitch_deg=float(player.pitch_deg), on_ground=bool(player.on_ground), flying=bool(player.flying and allow_flying), auto_jump_cooldown_s=float(max(0.0, float(player.auto_jump_cooldown_s))), crouch_eye_offset=float(max(0.0, min(float(player.crouch_eye_drop), float(player.crouch_eye_offset)))))
@@ -77,11 +133,13 @@ def apply_persisted_state_if_present(*, project_root: Path, sessions: PlaySpaceC
 
         _load_player_into_session(session=sessions.my_world, player=state.my_world.player, allow_flying=bool(runtime.creative_mode))
         _maybe_replace_world(sessions.my_world, state.my_world.world)
+        _restore_player_overlap_exemptions(sessions.my_world)
 
         _load_player_into_session(session=sessions.othello, player=state.othello_space.player, allow_flying=False)
         _maybe_replace_world(sessions.othello, state.othello_space.world)
         ensure_othello_board_layout(sessions.othello.world)
         _lift_player_above_othello_board_if_needed(sessions.othello)
+        _restore_player_overlap_exemptions(sessions.othello)
         othello_game_state = state.othello_space.othello_game_state.normalized()
 
     runtime.normalize()

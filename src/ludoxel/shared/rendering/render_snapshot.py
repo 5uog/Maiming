@@ -50,8 +50,21 @@ class FallingBlockRenderSampleDTO:
 
 
 @dataclass(frozen=True)
+class BlockBreakParticleRenderSampleDTO:
+    x: float
+    y: float
+    z: float
+    size: float
+    u0: float
+    v0: float
+    u1: float
+    v1: float
+
+
+@dataclass(frozen=True)
 class RenderSnapshotDTO:
     world_revision: int
     camera: CameraDTO
     player_model: PlayerModelSnapshotDTO
     falling_blocks: tuple[FallingBlockRenderSampleDTO, ...] = ()
+    block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...] = ()

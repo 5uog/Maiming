@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import time
+
 from PyQt6.QtCore import QTimer, Qt
 
 from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
+from ludoxel.shared.rendering.block_break_particles import spawn_block_break_particles
+from ludoxel.shared.systems.interaction_service import INTERACTION_ACTION_INTERACT
 from ludoxel.shared.world.play_space import PLAY_SPACE_MY_WORLD, PLAY_SPACE_OTHELLO, is_my_world_space, normalize_play_space_id
 from ludoxel.shared.ui.common import hotbar_index_from_key
 import ludoxel.features.othello.ui.viewport.othello_controller as othello_controller
@@ -33,6 +37,7 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
 
 
 def respawn(viewport: "GLViewportWidget") -> None:
+    viewport._reset_held_mouse_actions()
     viewport._session.respawn()
     viewport._invalidate_selection_target()
     viewport._renderer.clear_selection()
@@ -69,6 +74,8 @@ def switch_play_space(viewport: "GLViewportWidget", space_id: str, *, resume: bo
         return
 
     target_label = "Loading My World..." if normalized == PLAY_SPACE_MY_WORLD else "Loading Play Othello..."
+    viewport._reset_held_mouse_actions()
+    viewport._clear_block_break_particles()
     othello_controller.clear_state_for_space_switch(viewport)
     viewport._state.current_space_id = normalized
     viewport._state.normalize()
@@ -217,32 +224,90 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
         viewport._inp.set_mouse_capture(True)
         return False
 
-    snapshot = viewport._make_render_snapshot()
-    interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
-
     if viewport._state.is_othello_space():
+        snapshot = viewport._make_render_snapshot()
+        interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
         if e.button() == Qt.MouseButton.LeftButton:
             othello_controller.handle_left_click(viewport, interaction_eye, interaction_direction)
         elif e.button() == Qt.MouseButton.RightButton:
             othello_controller.handle_right_click(viewport)
         return True
 
+    now_s = time.perf_counter()
     if e.button() == Qt.MouseButton.LeftButton:
-        break_outcome = None
-        if bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id):
-            break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
-        viewport._first_person_motion.trigger_left_swing()
-        if break_outcome is not None and bool(break_outcome.success):
-            viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
-            viewport._invalidate_selection_target()
+        viewport._arm_left_mouse_repeat(now_s=float(now_s))
+        _perform_left_click(viewport)
         return True
 
     if e.button() == Qt.MouseButton.RightButton:
-        outcome = viewport._session.place_block(block_id=settings_controller.current_block_id(viewport), reach=float(viewport._state.reach), crouching=bool(viewport._inp.crouch_held()), origin=interaction_eye, direction=interaction_direction)
-        viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
-        if bool(outcome.success):
-            viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
-            viewport._invalidate_selection_target()
+        viewport._arm_right_mouse_repeat(now_s=float(now_s))
+        outcome = _perform_right_click(viewport)
+        if outcome is not None and bool(outcome.success) and str(outcome.action) == INTERACTION_ACTION_INTERACT:
+            viewport._disable_right_mouse_repeat()
         return True
 
     return False
+
+
+def handle_mouse_release(viewport: "GLViewportWidget", e: "QMouseEvent") -> None:
+    if e.button() == Qt.MouseButton.LeftButton:
+        viewport._left_mouse_held = False
+        viewport._left_mouse_repeat_due_s = 0.0
+    elif e.button() == Qt.MouseButton.RightButton:
+        viewport._right_mouse_held = False
+        viewport._right_mouse_repeat_due_s = 0.0
+        viewport._right_mouse_repeat_enabled = False
+
+
+def handle_held_mouse_buttons(viewport: "GLViewportWidget") -> None:
+    if (viewport._overlays.paused() or viewport._overlays.inventory_open() or viewport._overlays.dead() or viewport._overlays.settings_open() or viewport._overlays.othello_settings_open() or (not viewport._inp.captured()) or viewport._state.is_othello_space()):
+        return
+
+    now_s = time.perf_counter()
+
+    if bool(viewport._left_mouse_held) and bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._left_mouse_repeat_due_s):
+        _perform_left_click(viewport)
+        viewport._left_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_break_repeat_interval_s)
+
+    if bool(viewport._right_mouse_held) and bool(viewport._right_mouse_repeat_enabled) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s):
+        outcome = _perform_right_click(viewport)
+        if outcome is not None and bool(outcome.success) and str(outcome.action) == INTERACTION_ACTION_INTERACT:
+            viewport._disable_right_mouse_repeat()
+        else:
+            viewport._right_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_place_repeat_interval_s)
+
+
+def _perform_left_click(viewport: "GLViewportWidget"):
+    snapshot = viewport._make_render_snapshot()
+    interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
+    break_outcome = None
+    if bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id):
+        break_outcome = viewport._session.break_block(reach=float(viewport._state.reach), origin=interaction_eye, direction=interaction_direction)
+    viewport._first_person_motion.trigger_left_swing()
+    if break_outcome is not None and bool(break_outcome.success):
+        _spawn_break_particles(viewport, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
+        viewport._audio.play_interaction(action=break_outcome.action, block_state=break_outcome.target_block_state, position=break_outcome.target_position)
+        viewport._invalidate_selection_target()
+    return break_outcome
+
+
+def _perform_right_click(viewport: "GLViewportWidget"):
+    snapshot = viewport._make_render_snapshot()
+    interaction_eye, _yaw, _pitch, interaction_direction = viewport._interaction_pose_from_snapshot(snapshot)
+    outcome = viewport._session.place_block(block_id=settings_controller.current_block_id(viewport), reach=float(viewport._state.reach), crouching=bool(viewport._inp.crouch_held()), origin=interaction_eye, direction=interaction_direction)
+    viewport._first_person_motion.trigger_right_swing(success=bool(outcome.success))
+    if bool(outcome.success):
+        viewport._audio.play_interaction(action=outcome.action, block_state=outcome.target_block_state, position=outcome.target_position)
+        viewport._invalidate_selection_target()
+    return outcome
+
+
+def _spawn_break_particles(viewport: "GLViewportWidget", *, block_state: str | None, position: tuple[int, int, int] | None) -> None:
+    if block_state is None or position is None:
+        return
+    tools = viewport._renderer.world_build_tools()
+    if tools is None:
+        return
+    uv_lookup, def_lookup = tools
+    particles = spawn_block_break_particles(state_str=str(block_state), cell=(int(position[0]), int(position[1]), int(position[2])), uv_lookup=uv_lookup, def_lookup=def_lookup, spawn_rate=float(viewport._state.block_break_particle_spawn_rate), speed_scale=float(viewport._state.block_break_particle_speed_scale))
+    viewport._append_block_break_particles(particles)

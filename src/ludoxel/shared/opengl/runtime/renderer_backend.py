@@ -10,7 +10,7 @@ import numpy as np
 from PyQt6.QtGui import QImage
 from OpenGL.GL import glBindFramebuffer, glBindRenderbuffer, glBindTexture, glCheckFramebufferStatus, glClear, glClearColor, glDeleteFramebuffers, glDeleteRenderbuffers, glDeleteTextures, glDepthFunc, glDisable, glEnable, glFramebufferRenderbuffer, glFramebufferTexture2D, glGenFramebuffers, glGenRenderbuffers, glGenTextures, glReadPixels, glRenderbufferStorage, glTexImage2D, glTexParameteri, glViewport, GL_BLEND, GL_CLAMP_TO_EDGE, GL_COLOR_ATTACHMENT0, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_ATTACHMENT, GL_DEPTH_BUFFER_BIT, GL_DEPTH_COMPONENT24, GL_DEPTH_TEST, GL_FRAMEBUFFER, GL_FRAMEBUFFER_COMPLETE, GL_LESS, GL_LINEAR, GL_RENDERBUFFER, GL_RGBA, GL_RGBA8, GL_SCISSOR_TEST, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_UNSIGNED_BYTE
 
-from ...rendering.render_snapshot import FallingBlockRenderSampleDTO
+from ...rendering.render_snapshot import BlockBreakParticleRenderSampleDTO, FallingBlockRenderSampleDTO
 from ...math import mat4
 from ...math.vec3 import Vec3
 from ...blocks.registry.block_registry import BlockRegistry
@@ -18,6 +18,7 @@ from ...blocks.state.state_codec import parse_state
 from ...math.chunking.chunk_grid import ChunkKey
 from ..gl.gl_state_guard import GLStateGuard
 from ..compute.chunk_face_payload_builder import ChunkFacePayloadBuilder
+from ..passes.block_break_particle_pass import BlockBreakParticlePass
 from ..passes.cloud_pass import CloudPass
 from ..passes.falling_block_pass import FallingBlockPass
 from ..passes.first_person_arm_pass import FirstPersonArmPass
@@ -80,6 +81,7 @@ class RendererBackend:
         self._shadow = ShadowMapPass(self._cfg.shadow)
         self._world = WorldPass()
         self._falling_blocks = FallingBlockPass()
+        self._block_break_particles = BlockBreakParticlePass()
         self._player = PlayerModelPass()
         self._first_person_arm = FirstPersonArmPass()
         self._held_block = HeldBlockPass()
@@ -118,6 +120,7 @@ class RendererBackend:
         self._shadow.initialize(self._res.shadow_prog, int(self._cfg.shadow.size))
         self._world.initialize(shadowed_prog=self._res.world_prog, no_shadow_prog=self._res.world_no_shadow_prog, atlas=self._res.atlas)
         self._falling_blocks.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
+        self._block_break_particles.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas)
         self._player.initialize(face_prog=self._res.first_person_face_prog, shadow_prog=self._res.player_model_shadow_prog, atlas=self._res.atlas, skin_texture=self._res.skin_texture, uv_lookup=self._visuals.atlas_uv_face)
         self._first_person_arm.initialize(prog=self._res.first_person_face_prog, skin_texture=self._res.skin_texture)
         self._held_block.initialize(prog=self._res.first_person_face_prog, atlas=self._res.atlas, uv_lookup=self._visuals.atlas_uv_face, def_lookup=self._visuals.def_lookup)
@@ -129,7 +132,7 @@ class RendererBackend:
         self._gpu_payload_builder.initialize(self._res.chunk_face_payload_prog)
 
         self._selection = SelectionController(outline_pass=self._selection_pass, outline_builder=SelectionOutlineBuilder(def_lookup=self._visuals.def_lookup), outline_enabled=bool(self._state.outline_selection_enabled))
-        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, falling_block_pass=self._falling_blocks, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, special_item_pass=self._special_item, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
+        self._pipeline = FramePipeline(cfg=self._cfg, state=self._state, shadow_pass=self._shadow, world_pass=self._world, falling_block_pass=self._falling_blocks, block_break_particle_pass=self._block_break_particles, player_pass=self._player, first_person_arm_pass=self._first_person_arm, held_block_pass=self._held_block, special_item_pass=self._special_item, sun_pass=self._sun, cloud_pass=self._cloud, othello_pass=self._othello, selection=self._selection, sel_tint_strength=float(self._sel_tint_strength))
         self._texture_animations = TextureAnimationController(block_dir=Path(assets_dir) / "minecraft" / "textures" / "block", atlas=self._res.atlas)
 
         self.apply_runtime_state()
@@ -139,6 +142,7 @@ class RendererBackend:
         self._shadow.destroy()
         self._world.destroy()
         self._falling_blocks.destroy()
+        self._block_break_particles.destroy()
         self._player.destroy()
         self._first_person_arm.destroy()
         self._held_block.destroy()
@@ -245,14 +249,14 @@ class RendererBackend:
         self._world.upload_chunk(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_world_faces)
         self._shadow.set_chunk_faces(chunk_key=chunk_key, world_revision=int(world_revision), faces=authoritative_shadow_faces)
 
-    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...]=()) -> None:
+    def render(self, *, w: int, h: int, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float=0.0, fov_deg: float, render_distance_chunks: int, player_state: PlayerRenderState | None=None, othello_state: OthelloRenderState | None=None, falling_blocks: tuple[FallingBlockRenderSampleDTO, ...]=(), block_break_particles: tuple[BlockBreakParticleRenderSampleDTO, ...]=()) -> None:
         if self._pipeline is None:
             self._last_frame_metrics = RendererFrameMetrics()
             return
         if self._texture_animations is not None:
             self._texture_animations.update(time.perf_counter())
 
-        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state, falling_blocks=falling_blocks)
+        self._last_frame_metrics = self._pipeline.render(w=int(w), h=int(h), eye=eye, yaw_deg=float(yaw_deg), pitch_deg=float(pitch_deg), roll_deg=float(roll_deg), fov_deg=float(fov_deg), render_distance_chunks=int(render_distance_chunks), player_state=player_state, othello_state=othello_state, falling_blocks=falling_blocks, block_break_particles=block_break_particles)
 
     def set_player_skin_image(self, image: QImage) -> None:
         if self._res is None:
