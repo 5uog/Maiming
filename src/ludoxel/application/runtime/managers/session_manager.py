@@ -11,7 +11,7 @@ from ....shared.math.scalars import clampf
 from ....shared.blocks.registry.block_registry import BlockRegistry
 from ....shared.world.entities.player_entity import PlayerEntity
 from ....shared.systems.collision_system import SupportBlockContact, can_auto_jump_one_block, integrate_with_collisions, support_block_beneath
-from ....shared.systems.gravity_system import GravitySystem
+from ....shared.systems.gravity_system import GravityBrokenBlock, GravitySystem
 from ....shared.systems.movement_system import MoveInput, step_bedrock, step_flying, wish_dir_from_input
 from ....shared.world.world_state import WorldState
 from ....shared.rendering.render_snapshot import CameraDTO, FallingBlockRenderSampleDTO, PlayerModelSnapshotDTO, RenderSnapshotDTO
@@ -32,6 +32,7 @@ class SessionStepResult:
     support_block_state: str | None
     support_position: tuple[int, int, int] | None
     fall_distance_blocks: float | None
+    gravity_broken_blocks: tuple[GravityBrokenBlock, ...] = ()
 
 
 @dataclass
@@ -196,7 +197,7 @@ class SessionManager:
 
     def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool) -> SessionStepResult:
         self._sim_time_s += float(dt)
-        self.gravity.step(self.world, float(dt), player=self.player)
+        gravity_result = self.gravity.step(self.world, float(dt), player=self.player)
 
         prev_on_ground = bool(self.player.on_ground)
         prev_vy = float(self.player.velocity.y)
@@ -224,7 +225,7 @@ class SessionManager:
             self._update_step_eye(float(dt))
             self._update_player_walk_phase(float(dt))
             support_state, support_position = self._support_contact()
-            return SessionStepResult(jump_started=False, landed=False, footstep_triggered=False, support_block_state=support_state, support_position=support_position, fall_distance_blocks=None)
+            return SessionStepResult(jump_started=False, landed=False, footstep_triggered=False, support_block_state=support_state, support_position=support_position, fall_distance_blocks=None, gravity_broken_blocks=tuple(gravity_result.broken_blocks))
 
         jump_pulse = False
 
@@ -291,7 +292,7 @@ class SessionManager:
         self._update_step_eye(float(dt))
         footstep_triggered = self._update_player_walk_phase(float(dt))
         support_state, support_position = self._support_contact()
-        return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position, fall_distance_blocks=fall_distance_blocks)
+        return SessionStepResult(jump_started=bool(jump_pulse), landed=bool(landed_now), footstep_triggered=bool(footstep_triggered), support_block_state=support_state, support_position=support_position, fall_distance_blocks=fall_distance_blocks, gravity_broken_blocks=tuple(gravity_result.broken_blocks))
 
     def make_snapshot(self, *, enable_view_bobbing: bool=True, enable_camera_shake: bool=True, view_bobbing_strength: float=0.35, camera_shake_strength: float=0.20, is_first_person_view: bool=True) -> RenderSnapshotDTO:
         eye = self.player.eye_pos()

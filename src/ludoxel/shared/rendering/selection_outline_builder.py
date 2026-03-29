@@ -66,21 +66,21 @@ class SelectionOutlineBuilder:
         fv1 = float(v1) / 16.0
         if int(face_idx) == 0:
             px = float(plane) + float(eps)
-            return ((px, fu0, fv0), (px, fu1, fv1))
+            return ((px, fu0, fv0),(px, fu1, fv1))
         if int(face_idx) == 1:
             px = float(plane) - float(eps)
-            return ((px, fu0, fv0), (px, fu1, fv1))
+            return ((px, fu0, fv0),(px, fu1, fv1))
         if int(face_idx) == 2:
             py = float(plane) + float(eps)
-            return ((fu0, py, fv0), (fu1, py, fv1))
+            return ((fu0, py, fv0),(fu1, py, fv1))
         if int(face_idx) == 3:
             py = float(plane) - float(eps)
-            return ((fu0, py, fv0), (fu1, py, fv1))
+            return ((fu0, py, fv0),(fu1, py, fv1))
         if int(face_idx) == 4:
             pz = float(plane) + float(eps)
-            return ((fu0, fv0, pz), (fu1, fv1, pz))
+            return ((fu0, fv0, pz),(fu1, fv1, pz))
         pz = float(plane) - float(eps)
-        return ((fu0, fv0, pz), (fu1, fv1, pz))
+        return ((fu0, fv0, pz),(fu1, fv1, pz))
 
     def build(self, *, x: int, y: int, z: int, state_str: str, get_state: GetState) -> np.ndarray:
         """I define O(x,y,z,state) as the concatenated world-space segment list extracted from every externally visible face cell of the block model. I compute O by discretizing visible face rectangles onto a sixteenth-grid, emitting only boundary edges, and deduplicating coincident segments under a quantized key."""

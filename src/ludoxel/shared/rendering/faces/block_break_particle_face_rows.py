@@ -46,6 +46,6 @@ def build_block_break_particle_face_rows(*, samples: tuple[BlockBreakParticleRen
 
     for sample in samples:
         model = compose_matrices(translate_matrix(float(sample.x), float(sample.y), float(sample.z)), rotation, scale_matrix(float(sample.size), float(sample.size), 1.0), translate_matrix(0.0, 0.0, -0.5))
-        append_face_instance(buffers, 4, model, (float(sample.u0), float(sample.v0), float(sample.u1), float(sample.v1)))
+        append_face_instance(buffers, 4, model,(float(sample.u0), float(sample.v0), float(sample.u1), float(sample.v1)))
 
     return face_rows_from_buffers(buffers)

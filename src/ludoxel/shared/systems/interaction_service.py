@@ -177,6 +177,9 @@ class InteractionService:
             if merge_hit_state is not None:
                 return self._apply_place_state(cell=hit_cell, place_state=str(merge_hit_state))
 
+        if hit_state is None:
+            return InteractionOutcome(success=False)
+
         if hit.place is None:
             return InteractionOutcome(success=False)
 

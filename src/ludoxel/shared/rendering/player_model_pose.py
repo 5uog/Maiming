@@ -228,7 +228,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
             if not bool(state.is_first_person):
                 buffers: list[list[list[float]]] = [[] for _ in range(6)]
                 special_model = model_matrix_for_local_box(special_parent, _WORLD_SPECIAL_ITEM_BOX)
-                append_face_instance(buffers, int(FACE_POS_Z), special_model, (0.0, 0.0, 1.0, 1.0))
+                append_face_instance(buffers, int(FACE_POS_Z), special_model,(0.0, 0.0, 1.0, 1.0))
                 special_item_face_rows = face_rows_from_buffers(buffers)
                 visible_special_item_icon = str(first_person.visible_special_item_icon)
 

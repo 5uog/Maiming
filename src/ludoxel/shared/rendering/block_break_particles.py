@@ -106,7 +106,7 @@ def spawn_block_break_particles(*, state_str: str, cell: tuple[int, int, int], u
             texture_uv = uv_lookup(str(state_str), int(face_idx))
             px0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
             py0 = random.uniform(float(_PARTICLE_MIN_SUBPIXEL_ORIGIN_PX), float(_PARTICLE_MAX_SUBPIXEL_ORIGIN_PX))
-            uv_rect = uv_rect_from_pixels(texture_uv, (float(px0), float(py0), float(px0) + float(_PARTICLE_FRAGMENT_SIZE_PX), float(py0) + float(_PARTICLE_FRAGMENT_SIZE_PX)))
+            uv_rect = uv_rect_from_pixels(texture_uv,(float(px0), float(py0), float(px0) + float(_PARTICLE_FRAGMENT_SIZE_PX), float(py0) + float(_PARTICLE_FRAGMENT_SIZE_PX)))
             jitter = Vec3(random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)), random.uniform(float(_PARTICLE_VERTICAL_JITTER_MIN), float(_PARTICLE_VERTICAL_JITTER_MAX)), random.uniform(-float(_PARTICLE_HORIZONTAL_JITTER), float(_PARTICLE_HORIZONTAL_JITTER)))
             vertical_bias = random.uniform(float(_PARTICLE_VERTICAL_BIAS_MIN), float(_PARTICLE_VERTICAL_BIAS_MAX))
             velocity = Vec3((float(offset.x) * float(_PARTICLE_BASE_SPEED) + float(jitter.x)) * float(speed_multiplier),(float(offset.y) * float(_PARTICLE_BASE_SPEED) + float(vertical_bias) + float(jitter.y)) * float(speed_multiplier),(float(offset.z) * float(_PARTICLE_BASE_SPEED) + float(jitter.z)) * float(speed_multiplier))
@@ -125,7 +125,7 @@ def advance_block_break_particles(particles: tuple[BlockBreakParticleState, ...]
         next_age = float(particle.age_s) + float(step_dt)
         if next_age >= float(particle.lifetime_s):
             continue
-        velocity = Vec3(float(particle.velocity.x) * float(_PARTICLE_DRAG), (float(particle.velocity.y) - float(_PARTICLE_GRAVITY) * float(step_dt)) * float(_PARTICLE_DRAG), float(particle.velocity.z) * float(_PARTICLE_DRAG))
+        velocity = Vec3(float(particle.velocity.x) * float(_PARTICLE_DRAG),(float(particle.velocity.y) - float(_PARTICLE_GRAVITY) * float(step_dt)) * float(_PARTICLE_DRAG), float(particle.velocity.z) * float(_PARTICLE_DRAG))
         position = particle.position + velocity * float(step_dt)
         out.append(replace(particle, position=position, velocity=velocity, age_s=float(next_age)))
     return tuple(out)

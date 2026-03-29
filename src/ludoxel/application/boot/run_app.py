@@ -44,7 +44,7 @@ def _ensure_python_314(project_root: Path) -> None:
     if not main_py.is_file():
         return
 
-    os.execv(str(candidate), [str(candidate), str(main_py), *sys.argv[1:]])
+    os.execv(str(candidate),[str(candidate), str(main_py), *sys.argv[1:]])
 
 
 def run_app() -> None:

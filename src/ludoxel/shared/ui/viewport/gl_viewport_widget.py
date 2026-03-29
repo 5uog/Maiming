@@ -137,6 +137,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_plane_point: tuple[float, float, float] | None = None
         self._right_mouse_repeat_line_min_progress: int = 0
         self._right_mouse_repeat_line_max_progress: int = 0
+        self._right_mouse_repeat_line_start_cell_materialized: bool = True
+        self._right_mouse_repeat_line_pending_support_cell: tuple[int, int, int] | None = None
+        self._right_mouse_repeat_line_pending_support_face: int | None = None
+        self._right_mouse_repeat_line_pending_support_hit_point: tuple[float, float, float] | None = None
         self._right_mouse_repeat_support_face_mode: bool = False
         self._right_mouse_repeat_visible_face_chain_mode: bool = False
         self._right_mouse_repeat_origin_player_y: float = 0.0
@@ -543,11 +547,15 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_plane_point = None
         self._right_mouse_repeat_line_min_progress = 0
         self._right_mouse_repeat_line_max_progress = 0
+        self._right_mouse_repeat_line_start_cell_materialized = True
+        self._right_mouse_repeat_line_pending_support_cell = None
+        self._right_mouse_repeat_line_pending_support_face = None
+        self._right_mouse_repeat_line_pending_support_hit_point = None
         self._right_mouse_repeat_support_face_mode = False
         self._right_mouse_repeat_visible_face_chain_mode = False
         self._right_mouse_repeat_due_s = float(now_s) + float(self._state.block_interact_repeat_interval_s)
 
-    def _enable_right_mouse_place_repeat(self, *, now_s: float, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, plane_normal: tuple[int, int, int], plane_point: tuple[float, float, float], min_progress: int, max_progress: int, support_face_mode: bool, visible_face_chain_mode: bool) -> None:
+    def _enable_right_mouse_place_repeat(self, *, now_s: float, start_cell: tuple[int, int, int], step: tuple[int, int, int], face: int, plane_normal: tuple[int, int, int], plane_point: tuple[float, float, float], min_progress: int, max_progress: int, support_face_mode: bool, visible_face_chain_mode: bool, start_cell_materialized: bool, pending_support_cell: tuple[int, int, int] | None, pending_support_face: int | None, pending_support_hit_point: tuple[float, float, float] | None) -> None:
         self._right_mouse_repeat_enabled = True
         self._right_mouse_repeat_mode = "place"
         self._right_mouse_repeat_target_cell = None
@@ -558,6 +566,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_plane_point = (float(plane_point[0]), float(plane_point[1]), float(plane_point[2]))
         self._right_mouse_repeat_line_min_progress = int(min_progress)
         self._right_mouse_repeat_line_max_progress = int(max_progress)
+        self._right_mouse_repeat_line_start_cell_materialized = bool(start_cell_materialized)
+        self._right_mouse_repeat_line_pending_support_cell = None if pending_support_cell is None else (int(pending_support_cell[0]), int(pending_support_cell[1]), int(pending_support_cell[2]))
+        self._right_mouse_repeat_line_pending_support_face = None if pending_support_face is None else int(pending_support_face)
+        self._right_mouse_repeat_line_pending_support_hit_point = None if pending_support_hit_point is None else (float(pending_support_hit_point[0]), float(pending_support_hit_point[1]), float(pending_support_hit_point[2]))
         self._right_mouse_repeat_support_face_mode = bool(support_face_mode)
         self._right_mouse_repeat_visible_face_chain_mode = bool(visible_face_chain_mode)
         self._right_mouse_repeat_origin_player_y = float(self._session.player.position.y)
@@ -576,6 +588,10 @@ class GLViewportWidget(QOpenGLWidget):
         self._right_mouse_repeat_line_plane_point = None
         self._right_mouse_repeat_line_min_progress = 0
         self._right_mouse_repeat_line_max_progress = 0
+        self._right_mouse_repeat_line_start_cell_materialized = True
+        self._right_mouse_repeat_line_pending_support_cell = None
+        self._right_mouse_repeat_line_pending_support_face = None
+        self._right_mouse_repeat_line_pending_support_hit_point = None
         self._right_mouse_repeat_support_face_mode = False
         self._right_mouse_repeat_visible_face_chain_mode = False
         self._right_mouse_repeat_origin_player_y = 0.0
@@ -895,6 +911,10 @@ class GLViewportWidget(QOpenGLWidget):
         settings_controller.sync_first_person_target(self)
         self._first_person_motion.update(float(dt))
         self._hud_ctl.on_sim_step(dt=float(dt), player=self._session.player, jump_started=bool(step_result.jump_started))
+
+        for break_event in tuple(step_result.gravity_broken_blocks):
+            interaction_controller._spawn_break_particles(self, block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
+            self._audio.play_interaction(action="break", block_state=str(break_event.state_str), position=tuple(int(value) for value in break_event.cell))
 
         if bool(step_result.footstep_triggered):
             self._audio.play_surface_event(event_name=PLAYER_EVENT_STEP, support_block_state=step_result.support_block_state, position=step_result.support_position)
