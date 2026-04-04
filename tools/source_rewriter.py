@@ -32,7 +32,6 @@ DEFAULT_INDENT = "    "
 DEFAULT_PACKAGE_ROOT = "ludoxel"
 DEFAULT_IMPORT_ROOT_PREFIX = "src"
 
-
 @dataclass
 class GroupNode:
     kind: str
@@ -42,12 +41,10 @@ class GroupNode:
     start_offset: int = 0
     end_offset: int = 0
 
-
 @dataclass
 class TopLevelSequenceAnalysis:
     comma_indices: list[int] = field(default_factory=list)
     blocked: bool = False
-
 
 @dataclass
 class OutputBuffer:
@@ -69,20 +66,17 @@ class OutputBuffer:
     def leading_whitespace(self) -> str:
         return leading_whitespace(self.current_line)
 
-
 @dataclass(frozen=True)
 class Replacement:
     start: int
     end: int
     text: str
 
-
 @dataclass(frozen=True)
 class ImportRewriteContext:
     root: Path
     src_root: Path
     import_root_parts: tuple[str, ...]
-
 
 @dataclass(frozen=True)
 class ModuleLocation:
@@ -91,12 +85,10 @@ class ModuleLocation:
     module_parts: tuple[str, ...]
     is_package_init: bool
 
-
 @dataclass(frozen=True)
 class RelativeModuleSpec:
     level: int
     module: str | None
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -193,12 +185,10 @@ def parse_args() -> argparse.Namespace:
         args.brackets = TRANSFORM_EXPAND
     return args
 
-
 def detect_encoding(path: Path) -> str:
     with path.open("rb") as fh:
         encoding, _ = tokenize.detect_encoding(fh.readline)
     return encoding
-
 
 def read_python_text(path: Path) -> tuple[str, str]:
     encoding = detect_encoding(path)
@@ -206,11 +196,9 @@ def read_python_text(path: Path) -> tuple[str, str]:
         text = fh.read()
     return text, encoding
 
-
 def write_python_text(path: Path, text: str, encoding: str) -> None:
     with path.open("w", encoding=encoding, newline="") as fh:
         fh.write(text)
-
 
 def offset_table(text: str) -> list[int]:
     offsets = [0]
@@ -220,14 +208,11 @@ def offset_table(text: str) -> list[int]:
         offsets.append(total)
     return offsets
 
-
 def to_offset(offsets: list[int], row: int, col: int) -> int:
     return offsets[row - 1] + col
 
-
 def tokenize_text(text: str) -> list[tokenize.TokenInfo]:
     return list(tokenize.generate_tokens(io.StringIO(text).readline))
-
 
 def build_group_tree(tokens: list[tokenize.TokenInfo]) -> list[GroupNode]:
     roots: list[GroupNode] = []
@@ -256,7 +241,6 @@ def build_group_tree(tokens: list[tokenize.TokenInfo]) -> list[GroupNode]:
 
     return roots
 
-
 def annotate_group_offsets(
     nodes: list[GroupNode],
     tokens: list[tokenize.TokenInfo],
@@ -271,7 +255,6 @@ def annotate_group_offsets(
         node.start_offset = to_offset(offsets, open_tok.start[0], open_tok.start[1])
         node.end_offset = to_offset(offsets, close_tok.end[0], close_tok.end[1])
 
-
 def contains_comment_or_multiline_string(
     token_slice: list[tokenize.TokenInfo],
 ) -> bool:
@@ -282,7 +265,6 @@ def contains_comment_or_multiline_string(
             return True
     return False
 
-
 def token_slice_for_node(
     node: GroupNode,
     tokens: list[tokenize.TokenInfo],
@@ -291,7 +273,6 @@ def token_slice_for_node(
         return []
     return tokens[node.open_index : node.close_index + 1]
 
-
 def node_spans_multiple_lines(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bool:
     if node.close_index is None:
         return False
@@ -299,14 +280,12 @@ def node_spans_multiple_lines(node: GroupNode, tokens: list[tokenize.TokenInfo])
     close_tok = tokens[node.close_index]
     return open_tok.start[0] != close_tok.end[0]
 
-
 def joiner(prev: tokenize.TokenInfo, curr: tokenize.TokenInfo) -> str:
     if prev.string in {"(", "[", "{", "."}:
         return ""
     if curr.string in {".", ",", ")", "]", "}", "(", "[", "{"}:
         return ""
     return " "
-
 
 def compact_significant_tokens(
     significant: list[tokenize.TokenInfo],
@@ -327,7 +306,6 @@ def compact_significant_tokens(
         parts.append(curr.string)
     return "".join(parts)
 
-
 def compact_token_slice(
     token_slice: list[tokenize.TokenInfo],
     original: str,
@@ -335,7 +313,6 @@ def compact_token_slice(
 ) -> str:
     significant = [tok for tok in token_slice if tok.type not in SKIP_TOKEN_TYPES]
     return compact_significant_tokens(significant, original, offsets)
-
 
 def analyze_top_level_sequence(
     node: GroupNode,
@@ -372,7 +349,6 @@ def analyze_top_level_sequence(
         return TopLevelSequenceAnalysis(blocked=True)
     return TopLevelSequenceAnalysis(comma_indices=commas, blocked=False)
 
-
 def is_compressible_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bool:
     token_slice = token_slice_for_node(node, tokens)
     if not token_slice:
@@ -380,7 +356,6 @@ def is_compressible_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> 
     if contains_comment_or_multiline_string(token_slice):
         return False
     return node_spans_multiple_lines(node, tokens)
-
 
 def is_expandable_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bool:
     token_slice = token_slice_for_node(node, tokens)
@@ -393,7 +368,6 @@ def is_expandable_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bo
         return False
     return bool(analysis.comma_indices)
 
-
 def child_nodes_in_range(
     children: list[GroupNode],
     start_offset: int,
@@ -405,13 +379,11 @@ def child_nodes_in_range(
         if child.start_offset >= start_offset and child.end_offset <= end_offset
     ]
 
-
 def leading_whitespace(text: str) -> str:
     index = 0
     while index < len(text) and text[index] in {" ", "\t"}:
         index += 1
     return text[:index]
-
 
 def previous_significant_token(
     index: int,
@@ -424,7 +396,6 @@ def previous_significant_token(
         return tok
     return None
 
-
 def is_optional_from_import_group(node: GroupNode, tokens: list[tokenize.TokenInfo]) -> bool:
     if node.kind != "(" or node.close_index is None:
         return False
@@ -432,7 +403,6 @@ def is_optional_from_import_group(node: GroupNode, tokens: list[tokenize.TokenIn
     if prev is None:
         return False
     return prev.type == tokenize.NAME and prev.string == "import"
-
 
 def compact_optional_from_import_group(
     node: GroupNode,
@@ -450,7 +420,6 @@ def compact_optional_from_import_group(
     if significant and significant[-1].type == tokenize.OP and significant[-1].string == ",":
         significant = significant[:-1]
     return compact_significant_tokens(significant, original, offsets)
-
 
 def render_region_compress(
     original: str,
@@ -492,7 +461,6 @@ def render_region_compress(
     parts.append(original[cursor:end_offset])
     return "".join(parts)
 
-
 def render_region_expand_to_buffer(
     original: str,
     start_offset: int,
@@ -532,7 +500,6 @@ def render_region_expand_to_buffer(
         cursor = node.end_offset
     buffer.append(original[cursor:end_offset])
 
-
 def render_region_expand_to_string(
     original: str,
     start_offset: int,
@@ -555,7 +522,6 @@ def render_region_expand_to_string(
         buffer=buffer,
     )
     return buffer.render()
-
 
 def render_expanded_node(
     node: GroupNode,
@@ -618,14 +584,12 @@ def render_expanded_node(
     parts.append(OPEN_TO_CLOSE[node.kind])
     return "".join(parts)
 
-
 def ast_signature(text: str) -> str | None:
     try:
         tree = ast.parse(text, type_comments=True)
     except SyntaxError:
         return None
     return ast.dump(tree, annotate_fields=True, include_attributes=False)
-
 
 def ast_equivalent(text_a: str, text_b: str) -> bool:
     sig_a = ast_signature(text_a)
@@ -635,7 +599,6 @@ def ast_equivalent(text_a: str, text_b: str) -> bool:
     if sig_b is None:
         return False
     return sig_a == sig_b
-
 
 def last_significant_token_before_close(
     node: GroupNode,
@@ -649,7 +612,6 @@ def last_significant_token_before_close(
             continue
         return tok
     return None
-
 
 def trailing_comma_candidate_ranges(text: str) -> list[tuple[int, int]]:
     try:
@@ -681,7 +643,6 @@ def trailing_comma_candidate_ranges(text: str) -> list[tuple[int, int]]:
     visit(roots)
     return candidates
 
-
 def drop_safe_trailing_commas(text: str) -> str:
     if ast_signature(text) is None:
         return text
@@ -695,16 +656,13 @@ def drop_safe_trailing_commas(text: str) -> str:
             current = candidate
     return current
 
-
 def split_dotted_name(name: str | None) -> tuple[str, ...]:
     if not name:
         return ()
     return tuple(part for part in name.split(".") if part)
 
-
 def has_prefix(parts: tuple[str, ...], prefix: tuple[str, ...]) -> bool:
     return len(parts) >= len(prefix) and parts[: len(prefix)] == prefix
-
 
 def resolve_module_location(path: Path, context: ImportRewriteContext) -> ModuleLocation | None:
     try:
@@ -732,14 +690,12 @@ def resolve_module_location(path: Path, context: ImportRewriteContext) -> Module
         is_package_init=is_init,
     )
 
-
 def common_prefix_len(a: tuple[str, ...], b: tuple[str, ...]) -> int:
     size = min(len(a), len(b))
     index = 0
     while index < size and a[index] == b[index]:
         index += 1
     return index
-
 
 def resolve_absolute_module_from_importfrom(
     node: ast.ImportFrom,
@@ -756,7 +712,6 @@ def resolve_absolute_module_from_importfrom(
     target = base + split_dotted_name(node.module)
     return target or None
 
-
 def compute_relative_module_spec(
     current_package: tuple[str, ...],
     target_module: tuple[str, ...],
@@ -770,11 +725,9 @@ def compute_relative_module_spec(
     tail = target_module[prefix_len:]
     return RelativeModuleSpec(level=level, module=".".join(tail) or None)
 
-
 def format_relative_module(spec: RelativeModuleSpec) -> str:
     dots = "." * spec.level
     return dots if spec.module is None else f"{dots}{spec.module}"
-
 
 def render_aliases(names: list[ast.alias]) -> str:
     parts: list[str] = []
@@ -784,7 +737,6 @@ def render_aliases(names: list[ast.alias]) -> str:
         else:
             parts.append(alias.name)
     return ", ".join(parts)
-
 
 def importfrom_to_relative_text(
     node: ast.ImportFrom,
@@ -800,7 +752,6 @@ def importfrom_to_relative_text(
         return None
     return f"from {format_relative_module(spec)} import {render_aliases(node.names)}"
 
-
 def importfrom_to_absolute_text(
     node: ast.ImportFrom,
     module_location: ModuleLocation,
@@ -812,7 +763,6 @@ def importfrom_to_absolute_text(
         return None
     module_name = ".".join(absolute_module)
     return f"from {module_name} import {render_aliases(node.names)}"
-
 
 def import_to_relative_lines(
     node: ast.Import,
@@ -845,12 +795,10 @@ def import_to_relative_lines(
 
     return lines
 
-
 def import_to_absolute_lines(node: ast.Import) -> list[str] | None:
     if not node.names:
         return None
     return [f"import {render_aliases(node.names)}"]
-
 
 def node_offsets(node: ast.AST, offsets: list[int]) -> tuple[int, int] | None:
     lineno = getattr(node, "lineno", None)
@@ -864,21 +812,17 @@ def node_offsets(node: ast.AST, offsets: list[int]) -> tuple[int, int] | None:
         to_offset(offsets, end_lineno, end_col_offset),
     )
 
-
 def line_start_offset(text: str, offset: int) -> int:
     index = text.rfind("\n", 0, offset)
     return 0 if index < 0 else index + 1
-
 
 def line_end_offset(text: str, offset: int) -> int:
     index = text.find("\n", offset)
     return len(text) if index < 0 else index + 1
 
-
 def statement_indentation(text: str, start: int) -> str:
     line_start = line_start_offset(text, start)
     return leading_whitespace(text[line_start:start])
-
 
 def segment_has_comment(text: str, start: int, end: int) -> bool:
     segment = text[start:end]
@@ -890,7 +834,6 @@ def segment_has_comment(text: str, start: int, end: int) -> bool:
         if prefix.count('"') % 2 == 0 and prefix.count("'") % 2 == 0:
             return True
     return False
-
 
 def build_import_replacements(
     text: str,
@@ -960,7 +903,6 @@ def build_import_replacements(
         last_end = repl.end
     return filtered
 
-
 def apply_replacements(text: str, replacements: list[Replacement]) -> str:
     if not replacements:
         return text
@@ -973,7 +915,6 @@ def apply_replacements(text: str, replacements: list[Replacement]) -> str:
     parts.append(text[cursor:])
     return "".join(parts)
 
-
 def rewrite_imports(text: str, path: Path, context: ImportRewriteContext, mode: str) -> str:
     replacements = build_import_replacements(text, path, context, mode)
     if not replacements:
@@ -982,7 +923,6 @@ def rewrite_imports(text: str, path: Path, context: ImportRewriteContext, mode: 
     if ast_signature(candidate) is None:
         return text
     return candidate
-
 
 def rewrite_imports_pipeline(
     text: str,
@@ -998,7 +938,6 @@ def rewrite_imports_pipeline(
         canonical = rewrite_imports(text, path, context, IMPORTS_ABSOLUTE)
         return rewrite_imports(canonical, path, context, IMPORTS_RELATIVE)
     raise ValueError(f"unsupported import mode: {mode}")
-
 
 def transform_source(
     text: str,
@@ -1048,10 +987,8 @@ def transform_source(
 
     raise ValueError(f"unsupported bracket mode: {bracket_mode}")
 
-
 def iter_python_files(src_root: Path) -> list[Path]:
     return sorted(path for path in src_root.rglob("*.py") if path.is_file())
-
 
 def process_file(
     path: Path,
@@ -1087,13 +1024,11 @@ def process_file(
 
     return True, None
 
-
 def display_path(path: Path, root: Path) -> str:
     try:
         return str(path.relative_to(root))
     except ValueError:
         return str(path)
-
 
 def main() -> int:
     args = parse_args()
@@ -1152,7 +1087,6 @@ def main() -> int:
     if args.check and changed_count:
         return 1
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
