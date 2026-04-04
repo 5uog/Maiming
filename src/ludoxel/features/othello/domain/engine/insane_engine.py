@@ -26,6 +26,7 @@ _BOUND_LOWER = 1
 _BOUND_UPPER = -1
 
 _POSITION_SQUARE_MASKS: tuple[int, ...] = tuple(1 << index for index in range(BOARD_CELL_COUNT))
+_EMPTY_OPENING_BOOK = OpeningBook(moves_by_key={})
 
 
 def _shift_east(bits: int) -> int:
@@ -277,9 +278,22 @@ class InsaneSearchCache:
     project_root_key: str = ""
     transposition: dict[tuple[int, int], _TranspositionEntry] = field(default_factory=dict)
     exact_transposition: dict[tuple[int, int, int], int] = field(default_factory=dict)
-    opening_book: OpeningBook = field(default_factory=load_opening_book)
+    opening_book: OpeningBook = field(default_factory=lambda: _EMPTY_OPENING_BOOK)
+    opening_book_project_root_key: str = ""
     exact_threshold: int = 14
     transposition_soft_limit: int = 1 << 15
+
+    def ensure_opening_book(self, project_root=None) -> None:
+        raw_project_root = project_root
+        if raw_project_root is None and not str(self.project_root_key).strip():
+            raw_project_root = None
+        elif raw_project_root is None:
+            raw_project_root = str(self.project_root_key)
+        normalized_project_root_key = str(normalize_project_root(raw_project_root))
+        if normalized_project_root_key == str(self.opening_book_project_root_key):
+            return
+        self.opening_book = load_opening_book(normalized_project_root_key)
+        self.opening_book_project_root_key = str(normalized_project_root_key)
 
     def prepare(self, generation: int, *, project_root=None, hash_level: int=DEFAULT_OTHELLO_HASH_LEVEL, sacrifice_level: int=DEFAULT_OTHELLO_SACRIFICE_LEVEL) -> None:
         normalized_generation = int(max(0, int(generation)))
@@ -294,7 +308,7 @@ class InsaneSearchCache:
         self.project_root_key = str(normalized_project_root_key)
         self.exact_threshold = 14
         self.transposition_soft_limit = 0 if int(self.hash_level) <= 0 else int(1 << min(21, 11 + int(self.hash_level) * 2))
-        self.opening_book = load_opening_book(self.project_root_key)
+        self.ensure_opening_book(self.project_root_key)
 
         if bool(changed):
             self.transposition.clear()
@@ -303,6 +317,7 @@ class InsaneSearchCache:
 
 def opening_book_moves(cache: InsaneSearchCache | None, board: tuple[int, ...] | list[int], side: int) -> tuple[int, ...]:
     active_cache = cache or InsaneSearchCache()
+    active_cache.ensure_opening_book()
     materialized = coerce_board(board)
     normalized_side = normalize_side(side, default=SIDE_BLACK)
     if normalized_side not in (SIDE_BLACK, SIDE_WHITE):

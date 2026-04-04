@@ -4,18 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QVBoxLayout
 
 from ....application.runtime.keybinds import CONTROL_SECTION_GAMEPLAY, CONTROL_SECTION_MOVEMENT, HOTBAR_ACTIONS
 from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_LABELS, CAMERA_PERSPECTIVE_ORDER
 from ....application.runtime.state.runtime_preferences import RuntimePreferences
+from ..common.status_overlay import status_overlay_title_image_path
 from ...world.config.movement_params import DEFAULT_MOVEMENT_PARAMS
 from .cloud_flow_options import CLOUD_FLOW_OPTIONS
 from .widgets.advanced_scalar_control import AdvancedScalarControl
 from .widgets.crosshair_widgets import CrosshairPixelEditor, CrosshairPreviewWidget
 
 if TYPE_CHECKING:
-                                                                from .settings_overlay import SettingsOverlay
+    from .settings_overlay import SettingsOverlay
 
 
 def build_video_tab(overlay: "SettingsOverlay") -> None:
@@ -65,6 +68,21 @@ def build_video_tab(overlay: "SettingsOverlay") -> None:
     camera_row.addWidget(overlay._cmb_camera_perspective)
     camera_row.addStretch(1)
     layout.addLayout(camera_row)
+
+    layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Player Model"))
+
+    overlay._ctl_arm_rotation_limit_min = AdvancedScalarControl(title="Arm rotation minimum", min_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), max_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MIN_DEG), parent=host)
+    overlay._ctl_arm_rotation_limit_min.value_changed.connect(overlay.arm_rotation_limit_min_changed.emit)
+    layout.addWidget(overlay._ctl_arm_rotation_limit_min)
+
+    overlay._ctl_arm_rotation_limit_max = AdvancedScalarControl(title="Arm rotation maximum", min_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MIN_DEG), max_value=float(RuntimePreferences.ARM_ROTATION_LIMIT_ALLOWED_MAX_DEG), slider_scale=1.0, decimals=0, default_value=float(RuntimePreferences.DEFAULT_ARM_ROTATION_LIMIT_MAX_DEG), parent=host)
+    overlay._ctl_arm_rotation_limit_max.value_changed.connect(overlay.arm_rotation_limit_max_changed.emit)
+    layout.addWidget(overlay._ctl_arm_rotation_limit_max)
+
+    overlay._ctl_arm_swing_duration = AdvancedScalarControl(title="Arm swing duration", min_value=float(RuntimePreferences.ARM_SWING_DURATION_MIN_S), max_value=float(RuntimePreferences.ARM_SWING_DURATION_MAX_S), slider_scale=100.0, decimals=2, default_value=float(RuntimePreferences.DEFAULT_ARM_SWING_DURATION_S), parent=host)
+    overlay._ctl_arm_swing_duration.value_changed.connect(overlay.arm_swing_duration_changed.emit)
+    layout.addWidget(overlay._ctl_arm_swing_duration)
 
     layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Crosshair"))
@@ -284,6 +302,19 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
     overlay._tg_auto_sprint = overlay._add_toggle(layout, host, "Auto-Sprint", overlay.auto_sprint_changed.emit)
 
     layout.addWidget(overlay._sep(host))
+    layout.addWidget(overlay._section(host, "Player Identity"))
+
+    overlay._name_edit = QLineEdit(host)
+    overlay._name_edit.setPlaceholderText("Leave blank for a random name each launch")
+    overlay._name_edit.editingFinished.connect(overlay._on_player_name_edited)
+    layout.addWidget(overlay._name_edit)
+
+    overlay._player_name_hint = QLabel("", host)
+    overlay._player_name_hint.setObjectName("subtitle")
+    overlay._player_name_hint.setWordWrap(True)
+    layout.addWidget(overlay._player_name_hint)
+
+    layout.addWidget(overlay._sep(host))
     layout.addWidget(overlay._section(host, "Interaction Parameters"))
 
     overlay._ctl_block_break_repeat_interval = AdvancedScalarControl(title="Break repeat interval", min_value=float(overlay._params.block_break_repeat_interval_milli_min) / float(overlay._params.block_break_repeat_interval_scale), max_value=float(overlay._params.block_break_repeat_interval_milli_max) / float(overlay._params.block_break_repeat_interval_scale), slider_scale=float(overlay._params.block_break_repeat_interval_scale), decimals=int(overlay._params.block_break_repeat_interval_decimals), default_value=float(RuntimePreferences.DEFAULT_BLOCK_BREAK_REPEAT_INTERVAL_S), parent=host)
@@ -343,5 +374,66 @@ def build_game_tab(overlay: "SettingsOverlay") -> None:
     btn_reset_adv.clicked.connect(overlay.advanced_reset_requested.emit)
     layout.addWidget(btn_reset_adv)
 
+    layout.addStretch(1)
+    overlay._stack.addWidget(scroll)
+
+
+def build_about_tab(overlay: "SettingsOverlay") -> None:
+    scroll, host, layout = overlay._make_scroll_page()
+
+    image_label = QLabel(host)
+    image_label.setObjectName("aboutImage")
+    image_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+    image_label.setVisible(False)
+    if overlay._resource_root is not None:
+        image_path = status_overlay_title_image_path(overlay._resource_root)
+        pixmap = QPixmap() if image_path is None else QPixmap(str(image_path))
+        if not pixmap.isNull():
+            image_label.setPixmap(pixmap.scaled(420, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            image_label.setVisible(True)
+    layout.addWidget(image_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+    author_card = QFrame(host)
+    author_card.setObjectName("aboutCard")
+    author_layout = QVBoxLayout(author_card)
+    author_layout.setContentsMargins(18, 18, 18, 18)
+    author_layout.setSpacing(10)
+
+    author_title = QLabel("Creator", author_card)
+    author_title.setObjectName("sectionTitle")
+    author_layout.addWidget(author_title)
+
+    author_name = QLabel("5uog", author_card)
+    author_name.setObjectName("aboutLead")
+    author_layout.addWidget(author_name)
+
+    author_summary = QLabel("Ludoxel is authored as a focused desktop sandbox for voxel rendering, interaction experiments, and an integrated Othello subsystem inside one persistent PyQt6 shell.", author_card)
+    author_summary.setObjectName("subtitle")
+    author_summary.setWordWrap(True)
+    author_layout.addWidget(author_summary)
+
+    layout.addWidget(author_card)
+
+    details_card = QFrame(host)
+    details_card.setObjectName("aboutCard")
+    details_layout = QVBoxLayout(details_card)
+    details_layout.setContentsMargins(18, 18, 18, 18)
+    details_layout.setSpacing(10)
+
+    details_title = QLabel("Project Overview", details_card)
+    details_title.setObjectName("sectionTitle")
+    details_layout.addWidget(details_title)
+
+    details_body = QLabel("The current application combines a persistent voxel play space, an OpenGL 4.3 Core Profile renderer, and a separate Othello mode that shares the same runtime shell. The project emphasizes deterministic state persistence, inspectable rendering behavior, and feature work that stays close to implemented mechanics rather than mock interfaces.", details_card)
+    details_body.setObjectName("subtitle")
+    details_body.setWordWrap(True)
+    details_layout.addWidget(details_body)
+
+    details_body_2 = QLabel("The About page uses the bundled Ludoxel mark because the present repository does not ship a dedicated creator portrait asset. The surrounding application identity, packaging metadata, and in-app documentation are kept aligned with the live code path.", details_card)
+    details_body_2.setObjectName("subtitle")
+    details_body_2.setWordWrap(True)
+    details_layout.addWidget(details_body_2)
+
+    layout.addWidget(details_card)
     layout.addStretch(1)
     overlay._stack.addWidget(scroll)

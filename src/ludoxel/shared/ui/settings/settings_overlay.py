@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QLabel, QWidget, QVBoxLayout
 
@@ -10,7 +12,7 @@ from ....application.runtime.state.camera_perspective import CAMERA_PERSPECTIVE_
 from ..common.sidebar_dialog import SidebarDialogBase
 from ..config.pause_overlay_params import DEFAULT_PAUSE_OVERLAY_PARAMS, PauseOverlayParams
 from ...opengl.runtime.cloud_flow_direction import DEFAULT_CLOUD_FLOW_DIRECTION
-from .settings_overlay_pages import build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
+from .settings_overlay_pages import build_about_tab, build_audio_tab, build_controls_tab, build_game_tab, build_video_tab
 from .settings_overlay_sync import sync_overlay_values
 from .widgets.controls import BedrockToggleRow, KeybindRow, WheelPassthroughSlider
 
@@ -33,6 +35,9 @@ class SettingsOverlay(SidebarDialogBase):
     camera_shake_strength_changed = pyqtSignal(float)
     animated_textures_changed = pyqtSignal(bool)
     outline_selection_changed = pyqtSignal(bool)
+    arm_rotation_limit_min_changed = pyqtSignal(float)
+    arm_rotation_limit_max_changed = pyqtSignal(float)
+    arm_swing_duration_changed = pyqtSignal(float)
     cloud_wireframe_changed = pyqtSignal(bool)
     clouds_enabled_changed = pyqtSignal(bool)
     cloud_density_changed = pyqtSignal(int)
@@ -66,26 +71,31 @@ class SettingsOverlay(SidebarDialogBase):
     ambient_volume_changed = pyqtSignal(float)
     block_volume_changed = pyqtSignal(float)
     player_volume_changed = pyqtSignal(float)
+    player_name_changed = pyqtSignal(str)
 
-    def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, as_window: bool = False) -> None:
+    def __init__(self, parent: QWidget | None = None, params: PauseOverlayParams = DEFAULT_PAUSE_OVERLAY_PARAMS, *, resource_root: Path | None = None, as_window: bool = False) -> None:
         super().__init__(parent, as_window=as_window, root_object_name="settingsRoot", window_title="Settings", window_size=(1120, 780), minimum_window_size=(1000, 720), panel_minimum_size=(960, 620), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
         self._params = params
+        self._resource_root = None if resource_root is None else Path(resource_root)
         self._keybind_rows: dict[str, KeybindRow] = {}
 
         self._tab_video = self._make_tab_button("Video", 0, self._set_tab)
         self._tab_controls = self._make_tab_button("Controls", 1, self._set_tab)
         self._tab_audio = self._make_tab_button("Audio", 2, self._set_tab)
         self._tab_game = self._make_tab_button("Game Player", 3, self._set_tab)
+        self._tab_about = self._make_tab_button("About", 4, self._set_tab)
         self._sidebar_layout.addWidget(self._tab_video)
         self._sidebar_layout.addWidget(self._tab_controls)
         self._sidebar_layout.addWidget(self._tab_audio)
         self._sidebar_layout.addWidget(self._tab_game)
         self._sidebar_layout.addStretch(1)
+        self._sidebar_layout.addWidget(self._tab_about)
 
         build_video_tab(self)
         build_controls_tab(self)
         build_audio_tab(self)
         build_game_tab(self)
+        build_about_tab(self)
         self._set_tab(0)
 
     @staticmethod
@@ -136,10 +146,13 @@ class SettingsOverlay(SidebarDialogBase):
         self.creative_mode_changed.emit(bool(checked))
 
     def _set_tab(self, index: int) -> None:
-        self._set_stack_page(index=index, max_index=3, tab_buttons=(self._tab_video, self._tab_controls, self._tab_audio, self._tab_game))
+        self._set_stack_page(index=index, max_index=4, tab_buttons=(self._tab_video, self._tab_controls, self._tab_audio, self._tab_game, self._tab_about))
 
     def sync_values(self, **kwargs) -> None:
         sync_overlay_values(self, **kwargs)
+
+    def _on_player_name_edited(self) -> None:
+        self.player_name_changed.emit(str(self._name_edit.text()))
 
     def _on_fov(self, value: int) -> None:
         self._lbl_fov.setText(f"FOV: {int(value)}")

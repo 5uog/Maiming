@@ -11,7 +11,7 @@ import time
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QGuiApplication
 
-from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_INVENTORY, action_for_key
+from ludoxel.application.runtime.keybinds import ACTION_CLEAR_SELECTED_SLOT, ACTION_CYCLE_CAMERA_PERSPECTIVE, ACTION_TOGGLE_CREATIVE_MODE, ACTION_TOGGLE_DEBUG_HUD, ACTION_TOGGLE_DEBUG_SHADOW, ACTION_TOGGLE_GAMEPLAY_HUD, ACTION_TOGGLE_INVENTORY, action_for_key
 from ludoxel.shared.blocks.models.api import has_full_top_support_for_block
 from ludoxel.shared.blocks.state.state_codec import parse_state
 from ludoxel.shared.blocks.state.state_values import slab_type_value
@@ -73,6 +73,7 @@ def bind_overlay_actions(viewport: "GLViewportWidget") -> None:
     viewport._overlay.settings_requested.connect(lambda: open_settings_from_pause(viewport))
     viewport._overlay.play_my_world_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_MY_WORLD, resume=True))
     viewport._overlay.play_othello_requested.connect(lambda: switch_play_space(viewport, PLAY_SPACE_OTHELLO, resume=True))
+    viewport._overlay.save_quit_requested.connect(lambda: save_and_quit(viewport))
     viewport._overlay.change_skin_requested.connect(lambda: settings_controller.change_player_skin(viewport))
     viewport._overlay.reset_skin_requested.connect(lambda: settings_controller.reset_player_skin(viewport))
     viewport._death.respawn_requested.connect(lambda: respawn(viewport))
@@ -183,6 +184,17 @@ def on_inventory_closed(viewport: "GLViewportWidget") -> None:
     viewport.arm_resume_refresh()
 
 
+def save_and_quit(viewport: "GLViewportWidget") -> None:
+    viewport._reset_held_mouse_actions()
+    try:
+        viewport.save_state()
+    except Exception:
+        pass
+    host = viewport.window()
+    if host is not None:
+        host.close()
+
+
 def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     bound_action = action_for_key(int(e.key()), viewport._state.keybinds)
     hotbar_idx = hotbar_index_from_key(int(e.key()), viewport._state.keybinds)
@@ -200,6 +212,11 @@ def handle_key_press(viewport: "GLViewportWidget", e: "QKeyEvent") -> bool:
     if bound_action == ACTION_TOGGLE_DEBUG_HUD:
         viewport._state.hud_visible = not bool(viewport._state.hud_visible)
         viewport._sync_gameplay_hud_visibility()
+        return True
+
+    if bound_action == ACTION_TOGGLE_GAMEPLAY_HUD:
+        settings_controller.set_hide_hud(viewport, not bool(viewport._state.hide_hud))
+        settings_controller.sync_settings_values(viewport)
         return True
 
     if bound_action == ACTION_CYCLE_CAMERA_PERSPECTIVE and not viewport._overlays.paused() and not viewport._overlays.dead() and not viewport._overlays.settings_open() and not viewport._overlays.othello_settings_open() and not viewport._overlays.inventory_open():
@@ -280,8 +297,12 @@ def handle_mouse_press(viewport: "GLViewportWidget", e: "QMouseEvent") -> bool:
 
     now_s = time.perf_counter()
     if e.button() == Qt.MouseButton.LeftButton:
-        viewport._arm_left_mouse_repeat(now_s=float(now_s))
-        _perform_left_click(viewport)
+        outcome = _perform_left_click(viewport)
+        if outcome is not None and bool(outcome.success):
+            viewport._arm_left_mouse_repeat(now_s=float(now_s))
+        else:
+            viewport._left_mouse_held = True
+            viewport._left_mouse_repeat_due_s = 0.0
         return True
 
     if e.button() == Qt.MouseButton.RightButton:
@@ -380,9 +401,12 @@ def handle_held_mouse_buttons(viewport: "GLViewportWidget") -> None:
 
     now_s = time.perf_counter()
 
-    if bool(viewport._left_mouse_held) and bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._left_mouse_repeat_due_s):
-        _perform_left_click(viewport)
-        viewport._left_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_break_repeat_interval_s)
+    if bool(viewport._left_mouse_held) and bool(viewport._state.creative_mode) and is_my_world_space(viewport._state.current_space_id) and float(viewport._left_mouse_repeat_due_s) > 0.0 and float(now_s) + 1e-9 >= float(viewport._left_mouse_repeat_due_s):
+        outcome = _perform_left_click(viewport)
+        if outcome is not None and bool(outcome.success):
+            viewport._left_mouse_repeat_due_s = float(now_s) + float(viewport._state.block_break_repeat_interval_s)
+        else:
+            viewport._left_mouse_repeat_due_s = 0.0
 
     if bool(viewport._right_mouse_held) and bool(viewport._right_mouse_repeat_enabled) and is_my_world_space(viewport._state.current_space_id) and float(now_s) + 1e-9 >= float(viewport._right_mouse_repeat_due_s):
         if str(viewport._right_mouse_repeat_mode) == INTERACTION_ACTION_INTERACT:

@@ -81,6 +81,7 @@ _ARM_BASE_BOX_SLIM = LocalBox(-1.5 * _PX, -12.0 * _PX, -2.0 * _PX, 1.5 * _PX, 0.
 _ARM_SLEEVE_BOX_SLIM = LocalBox(-(1.5 + 0.25) * _PX, -(12.0 + 0.25) * _PX, -(2.0 + 0.25) * _PX,(1.5 + 0.25) * _PX, 0.25 * _PX,(2.0 + 0.25) * _PX)
 _SPECIAL_ITEM_ICON_BOX = LocalBox(0.0, 0.0, 7.5 * _PX, 16.0 * _PX, 16.0 * _PX, 8.5 * _PX)
 _SPECIAL_ITEM_RENDER_SCALE = 1.55
+_SPECIAL_ITEM_ROTATE_Z_DEG = 180.0
 
 
 def _arm_swing_terms(first_person: FirstPersonRenderState) -> tuple[float, float, float, float]:
@@ -119,7 +120,8 @@ def build_first_person_arm_camera_transform(first_person: FirstPersonRenderState
     """I define M_arm as the ordered product of bob transform, swing-dependent offsets, arm anchor translation, preswing yaw, swing rotations, prerotation offsets, fixed arm rotations, postrotation offset, and final uniform scale. I use this transform to reproduce the authored first-person slim-arm pose with a single matrix product."""
     root, squared, full, twice = _arm_swing_terms(first_person)
     arm_scale = float(_ARM_FIRSTPERSON_SCALE) * float(render_scale_multiplier)
-    return compose_matrices(_view_bob_transform(first_person), translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)), rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)), rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)), translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX), rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)), rotate_x_deg_matrix(float(_ARM_ROT_X_DEG)), rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)), translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0), scale_matrix(arm_scale, arm_scale, arm_scale))
+    arm_rot_x_deg = clampf(float(_ARM_ROT_X_DEG), float(first_person.arm_rotation_limit_min_deg), float(first_person.arm_rotation_limit_max_deg))
+    return compose_matrices(_view_bob_transform(first_person), translate_matrix(float(_ARM_SWING_X_POS_SCALE) * float(root), float(_ARM_SWING_Y_POS_SCALE) * float(twice), float(_ARM_SWING_Z_POS_SCALE) * float(full)), translate_matrix(float(_ARM_POS_X), float(_ARM_POS_Y), float(_ARM_POS_Z)), rotate_y_deg_matrix(float(_ARM_PRESWING_ROT_Y_DEG)), rotate_y_deg_matrix(float(_ARM_SWING_Y_ROT_AMOUNT_DEG) * float(root)), rotate_z_deg_matrix(float(_ARM_SWING_Z_ROT_AMOUNT_DEG) * float(squared)), translate_matrix(float(_ARM_PREROTATION_X_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Y_OFFSET_PX) * _PX, float(_ARM_PREROTATION_Z_OFFSET_PX) * _PX), rotate_z_deg_matrix(float(_ARM_ROT_Z_DEG)), rotate_x_deg_matrix(float(arm_rot_x_deg)), rotate_y_deg_matrix(float(_ARM_ROT_Y_DEG)), translate_matrix(float(_ARM_POSTROTATION_X_OFFSET_PX) * _PX, 0.0, 0.0), scale_matrix(arm_scale, arm_scale, arm_scale))
 
 
 def _box_corner_rows(box: LocalBox) -> np.ndarray:
@@ -317,7 +319,7 @@ def build_first_person_special_item_face_rows(first_person: FirstPersonRenderSta
 
     boxes = (_SPECIAL_ITEM_ICON_BOX,)
     base_parent_transform = _fitted_first_person_parent_transform(boxes=boxes, projection=projection, safe_frame=_ITEM_SAFE_FRAME, transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(first_person, render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))), projection_scale_exponent=float(_ITEM_PROJECTION_SCALE_EXPONENT), x_anchor_mode=_RIGHT_EDGE_ANCHOR, y_anchor_mode=_BOTTOM_EDGE_ANCHOR, reference_transform_builder=(lambda scale_multiplier: build_first_person_item_camera_transform(_neutral_swing_state(first_person), render_scale_multiplier=float(scale_multiplier) * float(_SPECIAL_ITEM_RENDER_SCALE))))
-    parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform)
+    parent_transform = compose_matrices(_equip_hide_transform(first_person, hide_distance=float(_ITEM_EQUIP_HIDE_DISTANCE)), base_parent_transform, translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX), rotate_z_deg_matrix(float(_SPECIAL_ITEM_ROTATE_Z_DEG)), translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX))
     model = model_matrix_for_local_box(parent_transform, _SPECIAL_ITEM_ICON_BOX)
     buffers: list[list[list[float]]] = [[] for _ in range(6)]
     append_face_instance(buffers, int(FACE_POS_Z), model,(0.0, 0.0, 1.0, 1.0))

@@ -5,13 +5,26 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import QWidget
 
+from ....math import mat4
+from ....math.scalars import clampf
+from ....math.transform_matrices import rotate_z_deg_matrix
+from ....math.vec3 import Vec3
+from ....math.view_angles import forward_from_yaw_pitch_deg
 from ..controllers import settings_controller
 
 if TYPE_CHECKING:
-                                                                from ..gl_viewport_widget import GLViewportWidget
+    from ..gl_viewport_widget import GLViewportWidget
+
+_PLAYER_NAME_VERTICAL_OFFSET = 0.24
+_PLAYER_NAME_CROUCH_OFFSET = 0.12
+_PLAYER_NAME_OCCLUDED_OPACITY = 0.45
+_PLAYER_NAME_CROUCH_OPACITY = 0.45
+_PLAYER_NAME_SCREEN_MARGIN_PX = 8
 
 
 class ViewportOverlayMixin:
@@ -34,6 +47,7 @@ class ViewportOverlayMixin:
             return
         self._invalidate_pause_preview_cache()
         self._overlay.set_player_preview_frame(QImage())
+        self._overlay.set_player_preview_name_tag("", visible=False)
 
     def _position_detached_overlay_window(self: "GLViewportWidget", overlay: QWidget | None) -> None:
         if overlay is None:
@@ -72,6 +86,7 @@ class ViewportOverlayMixin:
         if not bool(self._overlays.paused()) or bool(self.loading_active()):
             self._clear_pause_preview_frame()
             return
+        self._sync_player_name_overlays()
         preview_widget = self._overlay._skin_preview
         if int(preview_widget.width()) <= 1 or int(preview_widget.height()) <= 1:
             self._clear_pause_preview_frame()
@@ -97,6 +112,7 @@ class ViewportOverlayMixin:
         self._hotbar.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._inventory.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
         self._death.setGeometry(0, 0, max(1, int(width)), max(1, int(height)))
+        self._sync_player_name_overlays()
 
     def _restore_overlay_stack_after_resize(self: "GLViewportWidget") -> None:
         if self._overlays.dead():
@@ -144,6 +160,7 @@ class ViewportOverlayMixin:
         if bool(show_othello_hud):
             self._othello_hud.raise_()
         self._audio.set_ambient_active(current_space_id=self._state.current_space_id, enabled=bool(show_gameplay_hud))
+        self._sync_player_name_overlays()
 
     def _set_dead_overlay(self: "GLViewportWidget", on: bool) -> None:
         if bool(on):
@@ -194,3 +211,91 @@ class ViewportOverlayMixin:
         self._overlays.set_inventory_open(bool(on))
         self._sync_gameplay_hud_visibility()
         settings_controller.sync_cloud_motion_pause(self)
+
+    def _hide_world_player_name_tag(self: "GLViewportWidget") -> None:
+        self._player_name_tag.setVisible(False)
+
+    def _set_world_player_name_tag(self: "GLViewportWidget", *, text: str, center_x: float, bottom_y: float, opacity: float) -> None:
+        body = str(text).strip()
+        if not body:
+            self._hide_world_player_name_tag()
+            return
+        self._player_name_tag.setText(body)
+        self._player_name_tag.adjustSize()
+        label_w = int(max(1, self._player_name_tag.width()))
+        label_h = int(max(1, self._player_name_tag.height()))
+        margin = int(max(0, _PLAYER_NAME_SCREEN_MARGIN_PX))
+        x = int(round(float(center_x) - float(label_w) * 0.5))
+        y = int(round(float(bottom_y) - float(label_h)))
+        x = max(int(margin), min(max(int(margin), int(self.width()) - label_w - int(margin)), int(x)))
+        y = max(int(margin), min(max(int(margin), int(self.height()) - label_h - int(margin)), int(y)))
+        self._player_name_tag_effect.setOpacity(float(clampf(float(opacity), 0.0, 1.0)))
+        self._player_name_tag.setGeometry(int(x), int(y), int(label_w), int(label_h))
+        self._player_name_tag.setVisible(True)
+        self._player_name_tag.raise_()
+
+    def _world_player_name_visible(self: "GLViewportWidget") -> bool:
+        return bool((not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and (not self._overlays.dead()) and (not self._overlays.paused()) and (not self._overlays.settings_open()) and (not self._overlays.othello_settings_open()) and (not self._overlays.inventory_open()) and (not bool(self._state.is_first_person_view())))
+
+    def _sync_player_name_overlays(self: "GLViewportWidget") -> None:
+        text = str(self._state.resolved_player_name).strip()
+        preview_visible = bool(self._overlays.paused()) and (not bool(self.loading_active())) and (not bool(self._state.hide_hud)) and bool(text)
+        self._overlay.set_player_preview_name_tag(text, visible=bool(preview_visible), opacity=1.0)
+        if not bool(self._world_player_name_visible()) or not bool(text):
+            self._hide_world_player_name_tag()
+
+    def _player_name_anchor_world_pos(self: "GLViewportWidget", *, snapshot) -> Vec3:
+        player = self._session.player
+        crouch_amount = clampf(float(snapshot.player_model.crouch_amount), 0.0, 1.0)
+        y = float(snapshot.player_model.base_y) + float(player.height) + float(_PLAYER_NAME_VERTICAL_OFFSET) - float(_PLAYER_NAME_CROUCH_OFFSET) * float(crouch_amount)
+        return Vec3(float(snapshot.player_model.base_x), float(y), float(snapshot.player_model.base_z))
+
+    def _player_name_occluded(self: "GLViewportWidget", *, eye: Vec3, target: Vec3, distance: float) -> bool:
+        if float(distance) <= 1e-4:
+            return False
+        direction = (target - eye).normalized()
+        hit = self._session.pick_block(reach=float(distance) + 0.05, origin=eye, direction=direction)
+        if hit is None:
+            return False
+        return bool(float(hit.t) + 1e-4 < float(distance) - 0.02)
+
+    def _update_world_player_name_tag(self: "GLViewportWidget", *, snapshot, eye: Vec3, yaw_deg: float, pitch_deg: float, roll_deg: float) -> None:
+        text = str(self._state.resolved_player_name).strip()
+        if not bool(text) or not bool(self._world_player_name_visible()) or int(self.width()) <= 1 or int(self.height()) <= 1:
+            self._hide_world_player_name_tag()
+            return
+
+        anchor = self._player_name_anchor_world_pos(snapshot=snapshot)
+        to_anchor = anchor - eye
+        distance = float(to_anchor.length())
+        if float(distance) <= 1e-4:
+            self._hide_world_player_name_tag()
+            return
+
+        forward = forward_from_yaw_pitch_deg(float(yaw_deg), float(pitch_deg))
+        view = mat4.look_dir(eye, forward)
+        if abs(float(roll_deg)) > 1e-6:
+            view = mat4.mul(rotate_z_deg_matrix(float(roll_deg)), view)
+        proj = mat4.perspective(float(snapshot.camera.fov_deg), float(self.width()) / max(float(self.height()), 1.0), 0.01, float(self._renderer._cfg.camera.z_far))
+        clip = mat4.mul(proj, view) @ np.asarray([float(anchor.x), float(anchor.y), float(anchor.z), 1.0], dtype=np.float32)
+        if float(clip[3]) <= 1e-6:
+            self._hide_world_player_name_tag()
+            return
+
+        ndc_x = float(clip[0]) / float(clip[3])
+        ndc_y = float(clip[1]) / float(clip[3])
+        ndc_z = float(clip[2]) / float(clip[3])
+        if float(ndc_x) < -1.1 or float(ndc_x) > 1.1 or float(ndc_y) < -1.1 or float(ndc_y) > 1.1 or float(ndc_z) < -1.1 or float(ndc_z) > 1.1:
+            self._hide_world_player_name_tag()
+            return
+
+        center_x = (float(ndc_x) * 0.5 + 0.5) * float(self.width())
+        bottom_y = (1.0 - (float(ndc_y) * 0.5 + 0.5)) * float(self.height())
+
+        opacity = 1.0
+        if bool(getattr(self, "_recent_crouch_held", False)):
+            opacity *= float(_PLAYER_NAME_CROUCH_OPACITY)
+        if self._player_name_occluded(eye=eye, target=anchor, distance=float(distance)):
+            opacity *= float(_PLAYER_NAME_OCCLUDED_OPACITY)
+
+        self._set_world_player_name_tag(text=text, center_x=float(center_x), bottom_y=float(bottom_y), opacity=float(opacity))

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 DEFAULT_EXCLUDE_PARTS: tuple[str, ...] = ("__pycache__", ".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "venv", "build", "dist")
-DEFAULT_ROOT_FILES: tuple[str, ...] = ("main.py", "MANIFEST.in", "pyproject.toml", "README.md", "setup.py")
+DEFAULT_ROOT_FILES: tuple[str, ...] = ("MANIFEST.in", "pyproject.toml", "README.md", "NOTICE")
 
 
 def _project_root_from_script() -> Path:

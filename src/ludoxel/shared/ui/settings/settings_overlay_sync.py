@@ -9,12 +9,18 @@ from .cloud_flow_options import cloud_flow_index_for_value
 from ...math.scalars import clampf, clampi, round_clampi
 
 if TYPE_CHECKING:
-                                                                from .settings_overlay import SettingsOverlay
+    from .settings_overlay import SettingsOverlay
 
 
 def _block_signals_set_value(widget, value) -> None:
     widget.blockSignals(True)
     widget.setValue(value)
+    widget.blockSignals(False)
+
+
+def _block_signals_set_text(widget, text: str) -> None:
+    widget.blockSignals(True)
+    widget.setText(str(text))
     widget.blockSignals(False)
 
 
@@ -54,6 +60,9 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
     _sync_toggle(overlay._tg_fullscreen, bool(values["fullscreen"]))
     _sync_toggle(overlay._tg_hide_hud, bool(values["hide_hud"]))
     _sync_toggle(overlay._tg_hide_hand, bool(values["hide_hand"]))
+    overlay._ctl_arm_rotation_limit_min.set_value(float(values["arm_rotation_limit_min_deg"]))
+    overlay._ctl_arm_rotation_limit_max.set_value(float(values["arm_rotation_limit_max_deg"]))
+    overlay._ctl_arm_swing_duration.set_value(float(values["arm_swing_duration_s"]))
     overlay._crosshair_editor.set_pixels(values["crosshair_pixels"])
     overlay._crosshair_preview.set_pattern(mode=values["crosshair_mode"], custom_pixels=values["crosshair_pixels"])
 
@@ -109,6 +118,15 @@ def sync_overlay_values(overlay: "SettingsOverlay", **values) -> None:
 
     _sync_toggle(overlay._tg_auto_jump, bool(values["auto_jump_enabled"]))
     _sync_toggle(overlay._tg_auto_sprint, bool(values["auto_sprint_enabled"]))
+    _block_signals_set_text(overlay._name_edit, str(values["player_name"]))
+    resolved_name = str(values["resolved_player_name"]).strip()
+    explicit_name = str(values["player_name"]).strip()
+    if explicit_name:
+        overlay._player_name_hint.setText(f"Current session name: {resolved_name}")
+    elif resolved_name:
+        overlay._player_name_hint.setText(f"Current session name: {resolved_name} (randomized each launch while the field remains blank)")
+    else:
+        overlay._player_name_hint.setText("Leave the field blank to use a random session name each launch.")
     overlay._ctl_block_break_repeat_interval.set_value(float(values["block_break_repeat_interval_s"]))
     overlay._ctl_block_place_repeat_interval.set_value(float(values["block_place_repeat_interval_s"]))
     overlay._ctl_block_interact_repeat_interval.set_value(float(values["block_interact_repeat_interval_s"]))

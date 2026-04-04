@@ -7,6 +7,7 @@ from functools import lru_cache
 from importlib.resources import files
 from pathlib import Path
 
+import hashlib
 import json
 
 from .....shared.project_paths import default_project_root
@@ -169,6 +170,11 @@ def user_opening_book_file_path(project_root: str | Path | None = None) -> Path:
     return normalize_project_root(project_root) / "configs" / "othello_opening_book.json"
 
 
+def _compiled_opening_book_cache_file_path(project_root: str | Path | None = None) -> Path:
+    """I define P_c(root) = root/configs/othello_opening_book_cache.json. I use this cache artifact to persist the compiled position-indexed map so that repeated process startups do not pay the full deterministic recompilation cost of the line corpus."""
+    return normalize_project_root(project_root) / "configs" / "othello_opening_book_cache.json"
+
+
 def _normalize_line(raw_line: object) -> tuple[int, ...]:
     """I define N_l(line) as the total validator for one opening line, with codomain tuple([0,63]^n). I reject the entire line if any move lies outside the board index domain because partial repair would silently alter the intended move sequence."""
     if not isinstance(raw_line,(list, tuple)):
@@ -240,30 +246,106 @@ def _merge_lines(*sources: tuple[tuple[int, ...], ...]) -> tuple[tuple[int, ...]
     return tuple(merged)
 
 
-def _record_line(mapping: dict[str, set[int]], line: tuple[int, ...]) -> None:
-    """I define R_line(M, line) as the forward projection of one legal move sequence into the canonical map M. At each ply j, I store the canonical image of line_j under the current board symmetry representative so that the loaded book is indexed by positions rather than by full prefixes only."""
-    if not line:
+def _opening_book_lines_fingerprint(lines: tuple[tuple[int, ...], ...]) -> str:
+    """I define H(lines) as a SHA-256 digest over the normalized opening-line corpus. I use this digest as the cache-validity witness for the compiled opening-book artifact so that any mutation of bundled or user lines invalidates the compiled map exactly when the semantic corpus changes."""
+    digest = hashlib.sha256()
+    for line in tuple(lines):
+        digest.update(b"[")
+        for move_index in tuple(line):
+            digest.update(str(int(move_index)).encode("ascii"))
+            digest.update(b",")
+        digest.update(b"]")
+    return str(digest.hexdigest())
+
+
+def _read_compiled_opening_book_cache(path: Path, *, fingerprint: str) -> OpeningBook | None:
+    """I define C_read(path, h) as total cache decode for the compiled opening-book artifact under fingerprint h. I accept the cache iff the stored digest matches h and every move bucket normalizes onto legal board indices; otherwise I reject it and force deterministic recompilation."""
+    if not path.exists():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    if str(raw.get("fingerprint", "")) != str(fingerprint):
+        return None
+    raw_map = raw.get("moves_by_key", {})
+    if not isinstance(raw_map, dict):
+        return None
+    normalized_map: dict[str, tuple[int, ...]] = {}
+    for key, raw_moves in raw_map.items():
+        if not isinstance(key, str) or not isinstance(raw_moves, list):
+            return None
+        normalized_moves: list[int] = []
+        for value in raw_moves:
+            try:
+                move_index = int(value)
+            except Exception:
+                return None
+            if move_index < 0 or move_index >= BOARD_CELL_COUNT:
+                return None
+            normalized_moves.append(int(move_index))
+        normalized_map[str(key)] = tuple(normalized_moves)
+    return OpeningBook(moves_by_key=normalized_map)
+
+
+def _write_compiled_opening_book_cache(path: Path, *, fingerprint: str, book: OpeningBook) -> None:
+    """I define C_write(path, h, B) as deterministic serialization of the compiled position-indexed opening book under fingerprint h. I keep the cache transport in JSON so that the artifact remains debuggable and platform-neutral while still eliminating repeated recomputation."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"version": 1, "fingerprint": str(fingerprint), "moves_by_key": {str(key): [int(move) for move in tuple(moves)] for key, moves in book.moves_by_key.items()}}
+    path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")), encoding="utf-8")
+
+
+def _build_line_tree(lines: tuple[tuple[int, ...], ...]) -> dict[int, dict]:
+    """I define T(lines) as the prefix trie induced by the normalized opening-line corpus. I use this structure to evaluate each distinct board prefix exactly once instead of replaying the same prefix independently for every line that shares it."""
+    root: dict[int, dict] = {}
+    for line in tuple(lines):
+        if not line:
+            continue
+        node = root
+        for move_index in tuple(line):
+            move = int(move_index)
+            child = node.get(move)
+            if child is None:
+                child = {}
+                node[move] = child
+            node = child
+    return root
+
+
+def _record_line_tree(mapping: dict[str, set[int]], tree: dict[int, dict], *, board: tuple[int, ...], side_to_move: int) -> None:
+    """I define R_tree(M, T, board, side) as trie-driven projection of all admissible child moves of one reachable board state into the canonical map M. I compile every distinct prefix once, and I therefore eliminate the redundant repeated replay cost that arises when many lines share long common openings."""
+    if not tree:
         return
 
-    board = create_initial_board()
-    side_to_move = SIDE_BLACK
+    legal_moves = tuple(int(index) for index in find_legal_moves(board, side_to_move))
+    if not legal_moves:
+        return
 
-    for move_index in line:
-        legal_moves = tuple(int(index) for index in find_legal_moves(board, side_to_move))
-        if int(move_index) not in set(legal_moves):
-            return
+    legal_moves_set = set(legal_moves)
+    key, transform_id = canonical_position_key(board, side_to_move)
+    bucket = mapping.setdefault(str(key), set())
+    valid_children: list[tuple[int, dict]] = []
 
-        key, transform_id = canonical_position_key(board, side_to_move)
-        bucket = mapping.setdefault(str(key), set())
-        bucket.add(int(transform_index(int(move_index), int(transform_id))))
+    for move_index, child in tree.items():
+        move = int(move_index)
+        if move not in legal_moves_set:
+            continue
+        bucket.add(int(transform_index(move, int(transform_id))))
+        valid_children.append((move, child))
 
-        board, _flipped = apply_move(board, side=side_to_move, index=int(move_index))
-        side_to_move = other_side(side_to_move)
-
-        if not find_legal_moves(board, side_to_move):
-            other = other_side(side_to_move)
-            if find_legal_moves(board, other):
-                side_to_move = other
+    for move_index, child in valid_children:
+        next_board, _flipped = apply_move(board, side=side_to_move, index=int(move_index))
+        next_side = other_side(side_to_move)
+        next_legal_moves = tuple(int(index) for index in find_legal_moves(next_board, next_side))
+        if not next_legal_moves:
+            other = other_side(next_side)
+            other_legal_moves = tuple(int(index) for index in find_legal_moves(next_board, other))
+            if not other_legal_moves:
+                continue
+            next_side = other
+        _record_line_tree(mapping, child, board=next_board, side_to_move=int(next_side))
 
 
 def load_bundled_opening_book_lines() -> tuple[tuple[int, ...], ...]:
@@ -338,16 +420,23 @@ def export_opening_book_file(export_path: str | Path, *, project_root: str | Pat
 
 
 def clear_opening_book_cache(_project_root: str | Path | None = None) -> None:
-    """I invalidate every memoized projection derived from the user and effective opening-book corpora. The root argument is presently ignored because invalidation is global across all cached project keys."""
+    """I invalidate the in-memory projections derived from the opening-book corpora, and I additionally discard the on-disk compiled cache for the supplied project root when that root is explicit. I preserve global in-memory invalidation because cache keys are process-wide, while the filesystem cache remains workspace-scoped."""
     _load_user_opening_book_lines_cached.cache_clear()
     _load_opening_book_cached.cache_clear()
+    if _project_root is None:
+        return
+    cache_path = _compiled_opening_book_cache_file_path(_project_root)
+    try:
+        cache_path.unlink()
+    except OSError:
+        pass
 
 
 def _load_opening_book_from_lines(lines: tuple[tuple[int, ...], ...]) -> OpeningBook:
     """I define M(lines) by replaying every legal line prefix into the canonical move map. This compilation step converts prefix lists into a position-indexed opening book that the engine can query in O(1) expected time per position."""
     mapping: dict[str, set[int]] = {}
-    for item in tuple(lines):
-        _record_line(mapping, item)
+    line_tree = _build_line_tree(tuple(lines))
+    _record_line_tree(mapping, line_tree, board=create_initial_board(), side_to_move=SIDE_BLACK)
     frozen = {str(key): tuple(sorted(int(move) for move in moves)) for key, moves in mapping.items() if moves}
     return OpeningBook(moves_by_key=frozen)
 
@@ -360,4 +449,15 @@ def load_opening_book(project_root: str | Path | None = None) -> OpeningBook:
 @lru_cache(maxsize=8)
 def _load_opening_book_cached(project_root_key: str) -> OpeningBook:
     """I memoize B(root) by normalized project-root key because opening-book compilation is deterministic and potentially reused by repeated search requests. I clear this cache explicitly after every mutation of user book state."""
-    return _load_opening_book_from_lines(load_opening_book_lines(project_root_key))
+    lines = load_opening_book_lines(project_root_key)
+    fingerprint = _opening_book_lines_fingerprint(lines)
+    cache_path = _compiled_opening_book_cache_file_path(project_root_key)
+    cached = _read_compiled_opening_book_cache(cache_path, fingerprint=str(fingerprint))
+    if cached is not None:
+        return cached
+    compiled = _load_opening_book_from_lines(lines)
+    try:
+        _write_compiled_opening_book_cache(cache_path, fingerprint=str(fingerprint), book=compiled)
+    except OSError:
+        pass
+    return compiled

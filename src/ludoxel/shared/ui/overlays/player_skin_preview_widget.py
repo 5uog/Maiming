@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QPainter
-from PyQt6.QtWidgets import QSizePolicy, QWidget
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel, QSizePolicy, QWidget
 
 from ...math.scalars import clampf
 
@@ -24,12 +24,26 @@ class PlayerSkinPreviewWidget(QWidget):
         self._head_pitch_deg = 0.0
         self._dragging = False
         self._drag_last_x = 0.0
+        self._name_tag_text = ""
+        self._name_tag_visible = False
+        self._name_tag_center_x: float | None = None
+        self._name_tag_bottom_y: float | None = None
         self.setObjectName("playerSkinPreview")
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.setMouseTracking(True)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setMinimumSize(280, 372)
         self.setMaximumSize(320, 432)
+
+        self._name_tag = QLabel(self)
+        self._name_tag.setObjectName("playerNameTag")
+        self._name_tag.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._name_tag.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self._name_tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._name_tag.setVisible(False)
+        self._name_tag_effect = QGraphicsOpacityEffect(self._name_tag)
+        self._name_tag_effect.setOpacity(1.0)
+        self._name_tag.setGraphicsEffect(self._name_tag_effect)
 
     def sizeHint(self) -> QSize:
         return QSize(300, 412)
@@ -86,6 +100,7 @@ class PlayerSkinPreviewWidget(QWidget):
         self._emit_view_changed()
 
     def resizeEvent(self, event) -> None:
+        self._layout_name_tag()
         self.view_changed.emit()
         super().resizeEvent(event)
 
@@ -114,3 +129,29 @@ class PlayerSkinPreviewWidget(QWidget):
     def _emit_view_changed(self) -> None:
         self.view_changed.emit()
         self.update()
+
+    def set_name_tag(self, text: str, *, visible: bool, opacity: float = 1.0, center_x: float | None = None, bottom_y: float | None = None) -> None:
+        self._name_tag_text = str(text).strip()
+        self._name_tag_visible = bool(visible) and bool(self._name_tag_text)
+        self._name_tag_center_x = None if center_x is None else float(center_x)
+        self._name_tag_bottom_y = None if bottom_y is None else float(bottom_y)
+        self._name_tag_effect.setOpacity(float(clampf(float(opacity), 0.0, 1.0)))
+        self._layout_name_tag()
+
+    def _layout_name_tag(self) -> None:
+        if not bool(self._name_tag_visible):
+            self._name_tag.setVisible(False)
+            return
+        self._name_tag.setText(str(self._name_tag_text))
+        self._name_tag.adjustSize()
+        label_w = int(max(1, self._name_tag.width()))
+        label_h = int(max(1, self._name_tag.height()))
+        center_x = float(self.width()) * 0.5 if self._name_tag_center_x is None else float(self._name_tag_center_x)
+        bottom_y = float(self.height()) * 0.12 if self._name_tag_bottom_y is None else float(self._name_tag_bottom_y)
+        x = int(round(float(center_x) - float(label_w) * 0.5))
+        y = int(round(float(bottom_y) - float(label_h)))
+        x = max(0, min(max(0, int(self.width()) - label_w), int(x)))
+        y = max(0, min(max(0, int(self.height()) - label_h), int(y)))
+        self._name_tag.setGeometry(int(x), int(y), int(label_w), int(label_h))
+        self._name_tag.setVisible(True)
+        self._name_tag.raise_()

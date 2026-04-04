@@ -4,6 +4,16 @@
  */
 QMainWindow { background: #121212; }
 QLabel#hud { color: rgba(255,255,255,240); background: rgba(16,16,16,150); border: 2px solid rgba(0,0,0,185); padding: 8px; }
+QLabel#playerNameTag { color: rgba(255,255,255,240); background: rgba(16,16,16,150); border: none; padding: 8px; }
+QDialog#playerNameDialog { background: rgba(0,0,0,150); }
+QDialog#playerNameDialog QFrame#playerNamePanel { background: rgba(34,34,34,245); border: 3px solid #0b0b0b; }
+QDialog#playerNameDialog QLabel { color: #ffffff; }
+QDialog#playerNameDialog QLabel#playerNameTitle { color: #ffffff; font-size: 24px; font-weight: 700; }
+QDialog#playerNameDialog QLabel#playerNameSubtitle { color: rgba(255,255,255,215); font-size: 13px; }
+QDialog#playerNameDialog QLineEdit#playerNameEdit { color: #ffffff; background: #3c3c3c; border-top: 2px solid #6a6a6a; border-left: 2px solid #6a6a6a; border-right: 2px solid #1f1f1f; border-bottom: 2px solid #1f1f1f; padding: 8px 10px; min-height: 24px; selection-background-color: #6aa038; }
+QDialog#playerNameDialog QPushButton#playerNameContinue { color: #ffffff; background: #6f6f6f; border-top: 2px solid #9a9a9a; border-left: 2px solid #9a9a9a; border-right: 2px solid #2e2e2e; border-bottom: 2px solid #2e2e2e; padding: 10px 18px; min-height: 20px; min-width: 140px; }
+QDialog#playerNameDialog QPushButton#playerNameContinue:hover { background: #7e7e7e; }
+QDialog#playerNameDialog QPushButton#playerNameContinue:pressed { background: #5c5c5c; border-top: 2px solid #2e2e2e; border-left: 2px solid #2e2e2e; border-right: 2px solid #9a9a9a; border-bottom: 2px solid #9a9a9a; padding-top: 12px; padding-left: 20px; padding-right: 16px; padding-bottom: 8px; }
 QWidget#pauseRoot, QWidget#inventoryRoot, QWidget#deathRoot { background: rgba(0,0,0,150); }
 QWidget#settingsRoot[detachedWindow="false"], QWidget#othelloSettingsRoot[detachedWindow="false"] { background: rgba(0,0,0,150); }
 QWidget#settingsRoot[detachedWindow="true"], QWidget#othelloSettingsRoot[detachedWindow="true"] { background: #202020; }
@@ -35,6 +45,7 @@ QWidget#settingsRoot QCheckBox::indicator { width: 18px; height: 18px; border: 2
 QWidget#settingsRoot QCheckBox::indicator:checked { background: #6aa038; }
 QWidget#settingsRoot QScrollArea, QWidget#othelloSettingsRoot QScrollArea, QWidget#inventoryRoot QScrollArea { border: none; background: transparent; }
 QWidget#settingsRoot QWidget#settingsPage, QWidget#othelloSettingsRoot QWidget#settingsPage { background: #202020; }
+QWidget#settingsRoot QLineEdit { color: #ffffff; background: #3c3c3c; border-top: 2px solid #6a6a6a; border-left: 2px solid #6a6a6a; border-right: 2px solid #1f1f1f; border-bottom: 2px solid #1f1f1f; padding: 6px 10px; min-height: 22px; selection-background-color: #6aa038; }
 QWidget#settingsRoot QComboBox { color: #ffffff; background: #3c3c3c; border-top: 2px solid #6a6a6a; border-left: 2px solid #6a6a6a; border-right: 2px solid #1f1f1f; border-bottom: 2px solid #1f1f1f; padding: 6px 10px; min-height: 20px; }
 QWidget#settingsRoot QComboBox:hover { background: #4a4a4a; }
 QWidget#settingsRoot QComboBox::drop-down { width: 24px; border-left: 2px solid #1f1f1f; background: #5f5f5f; }
@@ -63,6 +74,9 @@ QWidget#hotbarRoot QFrame#hotbarPanel { background: transparent; border: none; }
 QWidget#deathRoot QLabel#title { color: #ff7373; }
 QLabel#othelloHud { color: rgba(255,255,255,240); background: rgba(16,16,16,172); border: 2px solid rgba(0,0,0,185); padding: 8px; }
 QLabel#othelloTitle { color: rgba(255,255,255,248); background: rgba(8,8,8,176); border: 2px solid rgba(0,0,0,200); padding: 10px 18px; font-size: 24px; font-weight: 700; }
+QWidget#settingsRoot QFrame#aboutCard { background: rgba(24,24,24,192); border: 2px solid rgba(0,0,0,185); }
+QWidget#settingsRoot QLabel#aboutLead { color: #ffffff; font-size: 18px; font-weight: 700; }
+QWidget#othelloGraph { border: 2px solid rgba(0,0,0,185); }
 QWidget#othelloSettingsRoot QComboBox { color: #ffffff; background: #3c3c3c; border-top: 2px solid #6a6a6a; border-left: 2px solid #6a6a6a; border-right: 2px solid #1f1f1f; border-bottom: 2px solid #1f1f1f; padding: 6px 10px; min-height: 20px; }
 QWidget#othelloSettingsRoot QComboBox:hover { background: #4a4a4a; }
 QWidget#othelloSettingsRoot QComboBox::drop-down { width: 24px; border-left: 2px solid #1f1f1f; background: #5f5f5f; }

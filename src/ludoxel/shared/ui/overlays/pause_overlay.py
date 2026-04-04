@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from pathlib import Path
+
 from PyQt6.QtCore import QEvent, Qt, pyqtSignal
-from PyQt6.QtGui import QCursor, QImage
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtGui import QCursor, QImage, QPixmap
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from ...world.play_space import PLAY_SPACE_MY_WORLD, is_othello_space, is_my_world_space, normalize_play_space_id
 from .player_skin_preview_widget import PlayerSkinPreviewWidget
@@ -15,6 +17,7 @@ class PauseOverlay(QWidget):
     settings_requested = pyqtSignal()
     play_my_world_requested = pyqtSignal()
     play_othello_requested = pyqtSignal()
+    save_quit_requested = pyqtSignal()
     change_skin_requested = pyqtSignal()
     reset_skin_requested = pyqtSignal()
     preview_changed = pyqtSignal()
@@ -36,6 +39,16 @@ class PauseOverlay(QWidget):
         left_column.setContentsMargins(0, 0, 0, 0)
         left_column.setSpacing(0)
         left_column.addStretch(1)
+
+        left_content = QWidget(self)
+        left_content_layout = QVBoxLayout(left_content)
+        left_content_layout.setContentsMargins(0, 0, 0, 0)
+        left_content_layout.setSpacing(18)
+
+        self._title_mark = QLabel(left_content)
+        self._title_mark.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        self._title_mark.setVisible(False)
+        left_content_layout.addWidget(self._title_mark, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         panel = QFrame(self)
         panel.setObjectName("panel")
@@ -66,7 +79,13 @@ class PauseOverlay(QWidget):
         self._btn_othello.clicked.connect(self.play_othello_requested.emit)
         panel_layout.addWidget(self._btn_othello)
 
-        left_column.addWidget(panel, alignment=Qt.AlignmentFlag.AlignCenter)
+        btn_save_quit = QPushButton("Save && Quit", panel)
+        btn_save_quit.setObjectName("menuBtn")
+        btn_save_quit.clicked.connect(self.save_quit_requested.emit)
+        panel_layout.addWidget(btn_save_quit)
+
+        left_content_layout.addWidget(panel, alignment=Qt.AlignmentFlag.AlignCenter)
+        left_column.addWidget(left_content, alignment=Qt.AlignmentFlag.AlignCenter)
         left_column.addStretch(1)
 
         self._right_column = QVBoxLayout()
@@ -123,6 +142,9 @@ class PauseOverlay(QWidget):
     def set_player_preview_frame(self, image: QImage) -> None:
         self._skin_preview.set_frame_image(image)
 
+    def set_player_preview_name_tag(self, text: str, *, visible: bool, opacity: float = 1.0) -> None:
+        self._skin_preview.set_name_tag(text, visible=bool(visible), opacity=float(opacity))
+
     def player_preview_angles(self) -> tuple[float, float, float]:
         return self._skin_preview.preview_angles()
 
@@ -178,3 +200,15 @@ class PauseOverlay(QWidget):
         if not isinstance(watched, QWidget) or not hasattr(event, "position"):
             return None
         return watched.mapTo(self, event.position().toPoint())
+
+    def set_title_image_path(self, path: Path | None) -> None:
+        pixmap = QPixmap()
+        if path is not None:
+            pixmap = QPixmap(str(Path(path).resolve()))
+        if pixmap.isNull():
+            self._title_mark.clear()
+            self._title_mark.setVisible(False)
+            return
+        scaled = pixmap.scaled(420, 160, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self._title_mark.setPixmap(scaled)
+        self._title_mark.setVisible(True)

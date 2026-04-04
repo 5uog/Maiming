@@ -48,6 +48,7 @@ class FirstPersonMotionController:
         self.show_arm: bool = True
         self.show_view_model: bool = True
         self.slim_arm: bool = bool(slim_arm)
+        self.swing_duration_s: float = float(_SWING_DURATION_S)
 
         self._equip_lowering: bool = False
         self._equip_raising: bool = False
@@ -81,6 +82,10 @@ class FirstPersonMotionController:
     def set_view_model_visible(self, visible: bool) -> None:
         """I define show_view_model := bool(visible). I keep this assignment separate from item targeting because view-model suppression is an orthogonal presentation policy rather than an inventory transition."""
         self.show_view_model = bool(visible)
+
+    def set_swing_duration_s(self, duration_s: float) -> None:
+        """I define tau := max(duration_s, 1e-6). I store this bounded duration as the global cap on swing animation speed so that later update steps can remain numerically well-defined under every user-selected value."""
+        self.swing_duration_s = max(1e-6, float(duration_s))
 
     def trigger_left_swing(self) -> None:
         """I define the left-hand trigger as the canonical swing activation event. I route it through the shared swing starter so that all attack-entry paths reset the same temporal channels."""
@@ -129,7 +134,7 @@ class FirstPersonMotionController:
             self.equip_progress = 1.0
 
         if self._swing_active:
-            duration = max(1e-6, float(_SWING_DURATION_S))
+            duration = max(1e-6, float(self.swing_duration_s))
             self.swing_progress = min(1.0, float(self.swing_progress) + step / duration)
             if float(self.swing_progress) >= 1.0:
                 self.swing_progress = 0.0

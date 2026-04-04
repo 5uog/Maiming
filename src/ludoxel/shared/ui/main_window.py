@@ -7,10 +7,14 @@ import sys
 
 from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtGui import QIcon, QScreen
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 from ...application.boot.meta import __version__
+from ...application.runtime.persistence.app_state_store import AppStateStore
+from ...application.runtime.player_name import normalize_player_name
 from .common.status_overlay import StatusOverlayFrame, status_overlay_title_image_path
+from .common.player_name_dialog import PlayerNameDialog
+from .common.single_instance import SingleInstanceRelay
 from .config.gl_surface_format import install_default_gl_surface_format
 from .game_screen import GameScreen
 from .theme.fonts import install_minecraft_fonts, apply_application_font
@@ -44,6 +48,23 @@ def _set_windows_application_id() -> None:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("KentoKonishi.Ludoxel")
     except Exception:
         pass
+
+
+def _request_widget_activation(widget: QWidget | None) -> None:
+    if widget is None:
+        return
+    if hasattr(widget, "request_activation"):
+        widget.request_activation()
+        return
+    if widget.isMinimized():
+        widget.showNormal()
+    else:
+        widget.show()
+    widget.raise_()
+    widget.activateWindow()
+    handle = widget.windowHandle()
+    if handle is not None:
+        handle.requestActivate()
 
 
 def _screen_for_restore(app: QApplication, *, screen_name: str, left: int | None, top: int | None, width: int, height: int) -> QScreen | None:
@@ -86,11 +107,11 @@ def _restored_window_geometry(screen: QScreen | None, *, left: int | None, top: 
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, project_root: Path, resource_root: Path) -> None:
+    def __init__(self, project_root: Path, resource_root: Path, *, launch_player_name: str | None = None) -> None:
         super().__init__()
         self._project_root = Path(project_root)
         self._resource_root = Path(resource_root)
-        self._screen = GameScreen(project_root=self._project_root, resource_root=self._resource_root)
+        self._screen = GameScreen(project_root=self._project_root, resource_root=self._resource_root, launch_player_name=launch_player_name)
         self.setCentralWidget(self._screen)
         self.setMinimumSize(_MIN_WINDOW_WIDTH, _MIN_WINDOW_HEIGHT)
         self._screen.viewport.fullscreen_changed.connect(self._apply_fullscreen)
@@ -100,6 +121,23 @@ class MainWindow(QMainWindow):
 
     def runtime_preferences(self):
         return self._screen.viewport._state
+
+    def request_activation(self) -> None:
+        if self.isMinimized():
+            self.showNormal()
+        elif bool(self.wants_fullscreen()):
+            self.showFullScreen()
+        else:
+            self.show()
+        self.raise_()
+        self.activateWindow()
+        handle = self.windowHandle()
+        if handle is not None:
+            handle.requestActivate()
+        for overlay in (self._screen.viewport._settings, self._screen.viewport._othello_settings):
+            if overlay is not None and overlay.isVisible():
+                _request_widget_activation(overlay)
+        self._screen.viewport.arm_resume_refresh()
 
     def _persist_window_geometry(self) -> None:
         geometry = self.normalGeometry() if self.isFullScreen() and self.normalGeometry().isValid() else self.geometry()
@@ -158,7 +196,7 @@ def run_app(*, project_root: Path, resource_root: Path) -> None:
 
     fonts = install_minecraft_fonts(font_dir=(bundled_root / "assets" / "fonts"))
     if bool(fonts.ok):
-        apply_application_font(app=app, family=str(fonts.family), point_size=12)
+        apply_application_font(app=app, family=str(fonts.family), point_size=12, fallback_families=tuple(fonts.fallback_families))
 
     qss = Path(__file__).resolve().parent / "theme" / "main.qss"
     if qss.exists():
@@ -169,7 +207,41 @@ def run_app(*, project_root: Path, resource_root: Path) -> None:
         qss_text = qss_text.replace("__ARROW_DOWN__", str(arrow_down))
         app.setStyleSheet(qss_text)
 
-    w = MainWindow(project_root=root, resource_root=bundled_root)
+    relay = SingleInstanceRelay(root, app)
+    if relay.activate_existing_instance():
+        return
+    relay.listen()
+    app.aboutToQuit.connect(relay.close)
+    activation_handler: dict[str, object] = {"callback": None}
+
+    def _set_activation_callback(callback) -> None:
+        activation_handler["callback"] = callback
+
+    def _handle_activation_request() -> None:
+        callback = activation_handler.get("callback")
+        if callable(callback):
+            callback()
+
+    relay.activation_requested.connect(_handle_activation_request)
+
+    persisted_state = AppStateStore(project_root=root).load()
+    explicit_player_name = ""
+    if persisted_state is not None:
+        explicit_player_name = normalize_player_name(persisted_state.settings.player_name)
+
+    splash_title_image_path = status_overlay_title_image_path(bundled_root)
+    launch_player_name = explicit_player_name
+    if not launch_player_name:
+        dialog = PlayerNameDialog(title_image_path=splash_title_image_path, initial_name=explicit_player_name)
+        if app_icon is not None:
+            dialog.setWindowIcon(app_icon)
+        _set_activation_callback(lambda current=dialog: _request_widget_activation(current))
+        if not bool(dialog.exec()):
+            return
+        launch_player_name = dialog.selected_player_name()
+
+    w = MainWindow(project_root=root, resource_root=bundled_root, launch_player_name=launch_player_name)
+    _set_activation_callback(w.request_activation)
     if app_icon is not None:
         w.setWindowIcon(app_icon)
     w.setWindowTitle(f"Ludoxel v{__version__}")
@@ -183,11 +255,11 @@ def run_app(*, project_root: Path, resource_root: Path) -> None:
         splash_geometry = restore_geometry
         w.setGeometry(restore_geometry)
 
-    splash_title_image_path = status_overlay_title_image_path(bundled_root)
     splash = StatusOverlayFrame(title_text="Ludoxel", status_text="Preparing viewport...", object_name="startupSplash", title_object_name="startupTitle", status_object_name="startupStatus", title_image_path=splash_title_image_path, flags=Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SplashScreen)
     if app_icon is not None:
         splash.setWindowIcon(app_icon)
     splash.setGeometry(splash_geometry)
+    _set_activation_callback(lambda main_window=w, splash_widget=splash: (_request_widget_activation(main_window), _request_widget_activation(splash_widget)))
     splash.show()
     splash.raise_()
     app.processEvents()
@@ -195,6 +267,7 @@ def run_app(*, project_root: Path, resource_root: Path) -> None:
     viewport = w._screen.viewport
     viewport.loading_status_changed.connect(splash.set_status_text)
     viewport.loading_finished.connect(splash.close)
+    viewport.loading_finished.connect(lambda: _set_activation_callback(w.request_activation))
     splash.set_status_text(viewport.loading_status_text())
     if bool(w.wants_fullscreen()):
         w.showFullScreen()

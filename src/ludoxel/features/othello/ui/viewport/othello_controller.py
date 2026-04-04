@@ -36,6 +36,11 @@ def bind_othello_controls(viewport: "GLViewportWidget") -> None:
     viewport._othello_settings.book_learning_cancel_requested.connect(lambda: cancel_book_learning(viewport))
     viewport._othello_settings.book_import_requested.connect(lambda: import_book(viewport))
     viewport._othello_settings.book_export_requested.connect(lambda: export_book(viewport))
+
+
+def _ensure_book_summary_loaded(viewport: "GLViewportWidget") -> None:
+    if str(viewport._othello_book_summary_text).strip():
+        return
     _refresh_book_summary(viewport)
 
 
@@ -50,8 +55,9 @@ def _format_best_line(best_line: tuple[int, ...], *, limit: int = 8) -> str:
     if not best_line:
         return "-"
     shown = [square_index_to_name(int(move_index)) for move_index in tuple(best_line)[:max(1, int(limit))]]
-    if len(tuple(best_line)) > len(shown):
-        shown.append("...")
+    hidden = max(0, len(tuple(best_line)) - len(shown))
+    if int(hidden) > 0:
+        shown.append(f"(+{int(hidden)})")
     return " ".join(shown)
 
 
@@ -59,26 +65,6 @@ def _format_best_move(best_move_index: int | None) -> str:
     if best_move_index is None:
         return "-"
     return square_index_to_name(int(best_move_index))
-
-
-def _graph_bar(score: float, *, max_abs: float, span: int = 8) -> str:
-    if float(max_abs) <= 1e-6:
-        return " " * int(span) + "|" + " " * int(span)
-    units = int(round(min(1.0, abs(float(score)) / float(max_abs)) * float(span)))
-    if float(score) >= 0.0:
-        return " " * int(span) + "|" + "+" * int(units) + " " * max(0, int(span) - int(units))
-    return " " * max(0, int(span) - int(units)) + "-" * int(units) + "|" + " " * int(span)
-
-
-def _depth_graph_lines(analysis: OthelloAnalysis) -> tuple[str, ...]:
-    samples = tuple(analysis.depth_samples)
-    if not samples:
-        return ("Read graph: unavailable",)
-    max_abs = max(abs(float(sample.score)) for sample in samples)
-    out = ["Read graph"]
-    for sample in samples[-8:]:
-        out.append(f"d{int(sample.depth):02d} {float(sample.score):+7.1f} {_graph_bar(float(sample.score), max_abs=float(max_abs))}")
-    return tuple(out)
 
 
 def _analysis_player_edge(viewport: "GLViewportWidget") -> float | None:
@@ -90,6 +76,15 @@ def _analysis_player_edge(viewport: "GLViewportWidget") -> float | None:
     if int(analysis.side_to_move) != int(state.player_side):
         perspective_score = -float(perspective_score)
     return float(perspective_score)
+
+
+def _analysis_graph_samples(viewport: "GLViewportWidget") -> tuple[tuple[int, float, bool], ...]:
+    analysis = viewport._othello_analysis.normalized()
+    state = viewport._othello_match.game_state()
+    if not analysis.depth_samples:
+        return ()
+    sign = 1.0 if int(analysis.side_to_move) == int(state.player_side) else -1.0
+    return tuple((int(sample.depth), float(sample.score) * float(sign), bool(sample.solved)) for sample in tuple(analysis.depth_samples)[-12:])
 
 
 def _book_learning_progress(viewport: "GLViewportWidget") -> dict[str, object] | None:
@@ -156,11 +151,13 @@ def _banner_text(viewport: "GLViewportWidget", *, black_count: int, white_count:
 def sync_hud_text(viewport: "GLViewportWidget") -> None:
     if not viewport._state.is_othello_space():
         viewport._othello_hud_signature = None
-        viewport._othello_hud.set_texts(left_text="", right_text="", title_text="")
+        viewport._othello_hud.set_texts(left_text="", right_text="", title_text="", graph_samples=(), graph_current_edge=None)
         viewport._last_othello_message = ""
         clear_title_flash(viewport)
         viewport._othello_analysis = OthelloAnalysis().normalized()
         return
+
+    _ensure_book_summary_loaded(viewport)
 
     state = viewport._othello_match.game_state()
     analysis = viewport._othello_analysis.normalized()
@@ -194,7 +191,7 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
             hover_text += " legal"
     if learning_progress is not None:
         line = tuple(int(move) for move in tuple(learning_progress.get("line",())))
-        learning_line_text = _format_best_line(line, limit=12)
+        learning_line_text = _format_best_line(line, limit=6)
         learning_side = learning_progress.get("side_to_move", None)
         learning_side_text = "Black" if int(learning_side or SIDE_BLACK) == int(SIDE_BLACK) else "White"
         explored_positions = int(learning_progress.get("explored_positions", 0))
@@ -205,8 +202,9 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
         explored_positions = 0
         remaining_depth = 0
     player_edge = _analysis_player_edge(viewport)
+    graph_samples = _analysis_graph_samples(viewport)
     best_move_text = _format_best_move(analysis.best_move_index)
-    best_line_text = _format_best_line(tuple(analysis.best_line))
+    best_line_text = _format_best_line(tuple(analysis.best_line), limit=6)
 
     left_lines: list[str] = []
     left_lines.append(f"Turn: {turn_text}")
@@ -216,7 +214,7 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
     left_lines.append(f"Best line: {best_line_text}")
     if learning_progress is not None:
         left_lines.append(f"Learning line: {learning_line_text}")
-        left_lines.append(f"Learning side: {learning_side_text} | Explored {explored_positions} | Remaining depth {remaining_depth}")
+        left_lines.append(f"Learning side: {learning_side_text} | Explored {explored_positions} | Depth {remaining_depth}")
     if player_edge is None:
         left_lines.append("Advantage: unavailable")
     else:
@@ -225,13 +223,12 @@ def sync_hud_text(viewport: "GLViewportWidget") -> None:
     left_lines.append(str(state.message))
 
     right_lines = [f"AI {difficulty} | You {player_color} | AI {ai_color}", f"Black clock: {black_clock}", f"White clock: {white_clock}", f"Sacrifice {int(state.settings.sacrifice_level)} | Threads {int(state.settings.thread_count)} | Hash {int(state.settings.hash_level)}", str(viewport._othello_book_summary_text)]
-    right_lines.extend(_depth_graph_lines(analysis))
 
-    signature = (tuple(left_lines), tuple(right_lines), str(banner))
+    signature = (tuple(left_lines), tuple(right_lines), str(banner), tuple(graph_samples), (None if player_edge is None else round(float(player_edge), 4)))
     if viewport._othello_hud_signature == signature:
         return
     viewport._othello_hud_signature = signature
-    viewport._othello_hud.set_texts(left_text="\n".join(left_lines), right_text="\n".join(right_lines), title_text=str(banner))
+    viewport._othello_hud.set_texts(left_text="\n".join(left_lines), right_text="\n".join(right_lines), title_text=str(banner), graph_samples=tuple(graph_samples), graph_current_edge=player_edge)
 
 
 def build_render_state(viewport: "GLViewportWidget") -> OthelloRenderState | None:
@@ -278,7 +275,8 @@ def refresh_hover_square(viewport: "GLViewportWidget", snapshot) -> None:
 
 
 def sync_settings_values(viewport: "GLViewportWidget") -> None:
-    _refresh_book_summary(viewport)
+    if viewport._state.is_othello_space() or viewport._overlays.othello_settings_open():
+        _ensure_book_summary_loaded(viewport)
     viewport._othello_settings.sync_values(viewport._state.othello_settings)
     viewport._othello_settings.set_book_summary_text(str(viewport._othello_book_summary_text))
     viewport._othello_settings.set_learning_running(bool(viewport._othello_book_learning_running), status_text=str(viewport._othello_book_learning_status_text))
@@ -305,8 +303,14 @@ def apply_settings(viewport: "GLViewportWidget", settings) -> None:
 
 def request_book_learning(viewport: "GLViewportWidget", settings) -> None:
     normalized = settings.normalized()
+    viewport._othello_match.reset_to_idle()
+    viewport._pending_othello_ai_result = None
+    viewport._othello_ai_request_armed = False
+    viewport._othello_hover_square = None
+    viewport._othello_analysis = OthelloAnalysis().normalized()
+    viewport._othello_analysis_request_signature = None
     viewport._othello_book_learning_running = True
-    viewport._othello_book_learning_status_text = "Learning the opening book with the current depth and error thresholds."
+    viewport._othello_book_learning_status_text = "Book learning started."
     viewport._othello_book_learning_progress = None
     viewport._othello_settings.set_learning_running(True, status_text=str(viewport._othello_book_learning_status_text))
     sync_hud_text(viewport)
@@ -365,9 +369,9 @@ def on_book_learning_progress(viewport: "GLViewportWidget", payload: object) -> 
     explored_positions = int(payload.get("explored_positions", 0))
     remaining_depth = int(payload.get("remaining_depth", 0))
     if line:
-        viewport._othello_book_learning_status_text = f"Learning opening book | Explored {explored_positions} | Remaining depth {remaining_depth} | Line {_format_best_line(line, limit=12)}"
+        viewport._othello_book_learning_status_text = f"Book learning | Explored {explored_positions} | Depth {remaining_depth} | PV {_format_best_line(line, limit=6)}"
     else:
-        viewport._othello_book_learning_status_text = f"Learning opening book | Explored {explored_positions} | Remaining depth {remaining_depth}"
+        viewport._othello_book_learning_status_text = f"Book learning | Explored {explored_positions} | Depth {remaining_depth}"
     viewport._othello_settings.set_learning_running(True, status_text=str(viewport._othello_book_learning_status_text))
     viewport._othello_render_state_cache_key = None
     viewport._othello_render_state_cache = None

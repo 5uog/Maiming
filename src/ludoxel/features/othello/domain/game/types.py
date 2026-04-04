@@ -57,15 +57,26 @@ OTHELLO_AI_HASH_LEVEL_MIN: int = 0
 OTHELLO_AI_HASH_LEVEL_MAX: int = 6
 OTHELLO_AI_SACRIFICE_LEVEL_MIN: int = 0
 OTHELLO_AI_SACRIFICE_LEVEL_MAX: int = 4
-OTHELLO_BOOK_LEARNING_DEPTH_MIN: int = 1
-OTHELLO_BOOK_LEARNING_DEPTH_MAX: int = 24
+OTHELLO_BOOK_LEARNING_DEPTH_MIN: int = 0
+OTHELLO_BOOK_LEARNING_DEPTH_MAX: int = 60
 DEFAULT_OTHELLO_THREAD_COUNT: int = 1
 DEFAULT_OTHELLO_HASH_LEVEL: int = 2
 DEFAULT_OTHELLO_SACRIFICE_LEVEL: int = 2
-DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH: int = 8
-DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR: float = 48.0
-DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 112.0
-DEFAULT_OTHELLO_BOOK_LEAF_ERROR: float = 24.0
+DEFAULT_OTHELLO_BOOK_LEARNING_DEPTH: int = 55
+DEFAULT_OTHELLO_BOOK_PER_MOVE_ERROR: float = 22.0
+DEFAULT_OTHELLO_BOOK_CUMULATIVE_ERROR: float = 19.0
+DEFAULT_OTHELLO_BOOK_LEAF_ERROR: float = 20.0
+OTHELLO_BOOK_ERROR_MIN: float = 0.0
+OTHELLO_BOOK_ERROR_MAX: float = 24.0
+
+
+def _default_initial_board() -> tuple[int, ...]:
+    board = [SIDE_EMPTY] * BOARD_CELL_COUNT
+    board[3 * 8 + 3] = SIDE_WHITE
+    board[3 * 8 + 4] = SIDE_BLACK
+    board[4 * 8 + 3] = SIDE_BLACK
+    board[4 * 8 + 4] = SIDE_WHITE
+    return tuple(board)
 
 
 def normalize_side(value: object, *, default: int = SIDE_EMPTY) -> int:
@@ -237,8 +248,8 @@ def normalize_book_learning_depth(value: object, *, default: int = DEFAULT_OTHEL
 
 
 def normalize_book_error(value: object, *, default: float) -> float:
-    """I define N_e(x) = clamp(float(x), 0, 100000) for error thresholds used by book learning. The lower bound enforces non-negativity, and the upper bound excludes accidental infinities caused by malformed persistence or UI input."""
-    return coerce_clampf(value, default=float(default), lo=0.0, hi=100000.0)
+    """I define N_e(x) = clamp(float(x), e_min, e_max) for error thresholds used by book learning, with e_min = 0 and e_max = 24. I impose this bounded interval because the learning UI and persistence model both operate on a deliberately calibrated finite error domain rather than on an unbounded real line."""
+    return coerce_clampf(value, default=float(default), lo=float(OTHELLO_BOOK_ERROR_MIN), hi=float(OTHELLO_BOOK_ERROR_MAX))
 
 
 def side_name(side: int) -> str:
@@ -411,7 +422,7 @@ class OthelloAnimationState:
 class OthelloGameState:
     """I model the full persistent match state as G = (status, board, settings, player_side, ai_side, turn, t_b, t_w, move_count, passes, winner, message, last_move, animations, generation, legal_moves, thinking). I keep this record immutable so that controller transitions are explicit state-to-state transforms rather than hidden mutation sequences."""
     status: str = OTHELLO_GAME_STATE_IDLE
-    board: tuple[int, ...] = field(default_factory=lambda: decode_board(""))
+    board: tuple[int, ...] = field(default_factory=_default_initial_board)
     settings: OthelloSettings = field(default_factory=OthelloSettings)
     player_side: int = SIDE_BLACK
     ai_side: int = SIDE_WHITE

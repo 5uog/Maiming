@@ -151,6 +151,8 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
     if first_person is not None:
         attack_x, attack_y, attack_z = _shadow_attack_angles(float(first_person.swing_progress))
         attack_weight = _attack_swing_weight(float(first_person.swing_progress))
+    arm_rotation_limit_min_rad = math.radians(float(-180.0 if first_person is None else first_person.arm_rotation_limit_min_deg))
+    arm_rotation_limit_max_rad = math.radians(float(180.0 if first_person is None else first_person.arm_rotation_limit_max_deg))
 
     main_hand_walk_damping = 1.0 - 0.85 * float(attack_weight)
     main_hand_sway_damping = 1.0 - 0.70 * float(attack_weight)
@@ -158,6 +160,8 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
     left_arm_rot_z = (float(arm_sway) * float(main_hand_sway_damping)) + float(_CROUCH_ARM_ROT_Z) * float(crouch) + float(attack_z)
     if float(attack_weight) > 1e-6:
         left_arm_rot_x = min(float(left_arm_rot_x), 0.08 * (1.0 - float(attack_weight)))
+    right_arm_rot_x = clampf(float(right_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
+    left_arm_rot_x = clampf(float(left_arm_rot_x), float(arm_rotation_limit_min_rad), float(arm_rotation_limit_max_rad))
 
     root = compose_matrices(translate_matrix(float(state.base_x), float(state.base_y), float(state.base_z)), rotate_y_rad_matrix(float(body_yaw)), translate_matrix(0.0, float(_MODEL_FEET_OFFSET_Y), 0.0))
     head_group_y = lerpf(float(_HEAD_GROUP_POS[1]), float(_CROUCH_HEAD_POS_Y), float(crouch))
@@ -203,7 +207,7 @@ def _build_player_model_pose_cached(state: PlayerRenderState | None) -> PlayerMo
             if not bool(state.is_first_person):
                 held_block_pose = HeldBlockPose(block_id=str(first_person.visible_block_id), block_kind=str(first_person.visible_block_kind), parent_transform=np.asarray(held_parent, dtype=np.float32))
         elif first_person.visible_special_item_icon is not None:
-            special_parent = compose_matrices(hand_anchor, build_third_person_item_hand_transform(), scale_matrix(float(_WORLD_SPECIAL_ITEM_SCALE), float(_WORLD_SPECIAL_ITEM_SCALE), 1.0))
+            special_parent = compose_matrices(hand_anchor, build_third_person_item_hand_transform(), scale_matrix(float(_WORLD_SPECIAL_ITEM_SCALE), float(_WORLD_SPECIAL_ITEM_SCALE), 1.0), translate_matrix(8.0 * _PX, 8.0 * _PX, 8.0 * _PX), rotate_z_rad_matrix(float(math.pi)), translate_matrix(-8.0 * _PX, -8.0 * _PX, -8.0 * _PX))
             special_shadow_rows = cube_rows_from_boxes((_WORLD_SPECIAL_ITEM_BOX,), special_parent)
             if special_shadow_rows.size > 0:
                 shadow_rows_list.extend([row for row in special_shadow_rows])

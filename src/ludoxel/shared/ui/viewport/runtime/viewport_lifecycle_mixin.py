@@ -21,24 +21,29 @@ class ViewportLifecycleMixin:
         was_active = bool(self._application_active)
         self._application_active = bool(state == Qt.ApplicationState.ApplicationActive)
         if not bool(self._application_active):
+            self._pause_on_application_deactivation = bool(self._inp.captured())
             self._reset_held_mouse_actions()
             self._inp.reset()
             try:
                 self._inp.set_mouse_capture(False)
             except Exception:
                 pass
-            if (not bool(self.loading_active())) and (not self._overlays.dead()):
+            if bool(self._pause_on_application_deactivation) and (not bool(self.loading_active())) and (not self._overlays.dead()):
                 self._deactivation_pause_timer.start()
         elif not bool(was_active):
             self._deactivation_pause_timer.stop()
+            self._pause_on_application_deactivation = False
             self.arm_resume_refresh()
         else:
             self._deactivation_pause_timer.stop()
+            self._pause_on_application_deactivation = False
         settings_controller.sync_cloud_motion_pause(self)
         self._sync_runtime_activity()
 
     def _pause_after_application_deactivation(self: "GLViewportWidget") -> None:
         if bool(self._application_active):
+            return
+        if not bool(self._pause_on_application_deactivation):
             return
         if bool(self.loading_active()) or self._overlays.dead():
             return

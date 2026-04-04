@@ -26,6 +26,8 @@ class FirstPersonRenderState:
     view_bob_yaw_deg: float = 0.0
     view_bob_pitch_deg: float = 0.0
     view_bob_roll_deg: float = 0.0
+    arm_rotation_limit_min_deg: float = -180.0
+    arm_rotation_limit_max_deg: float = 180.0
 
 
 @dataclass(frozen=True)

@@ -142,9 +142,10 @@ class ViewportRenderLoopMixin:
         self._refresh_selection_for_frame(snapshot=snapshot, interaction_eye=interaction_eye, interaction_yaw_deg=float(interaction_yaw_deg), interaction_pitch_deg=float(interaction_pitch_deg))
 
         fb_w, fb_h, dpr = self._framebuffer_extent()
-        player_state = compose_player_render_state(snapshot=snapshot, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry)
+        player_state = compose_player_render_state(snapshot=snapshot, motion=self._first_person_motion.sample(), block_registry=self._session.block_registry, arm_rotation_limit_min_deg=float(self._state.arm_rotation_limit_min_deg), arm_rotation_limit_max_deg=float(self._state.arm_rotation_limit_max_deg))
 
         self._renderer.render(w=fb_w, h=fb_h, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg), fov_deg=float(camera_snapshot.fov_deg), render_distance_chunks=int(self._state.render_distance_chunks), player_state=player_state, othello_state=othello_controller.build_render_state(self), falling_blocks=tuple(snapshot.falling_blocks), block_break_particles=tuple(snapshot.block_break_particles))
+        self._update_world_player_name_tag(snapshot=snapshot, eye=render_eye, yaw_deg=float(render_yaw_deg), pitch_deg=float(render_pitch_deg), roll_deg=float(render_roll_deg))
         self._update_pause_preview_frame(player_state, fb_w=int(fb_w), fb_h=int(fb_h), dpr=float(dpr))
         self._last_paint_ms = float((time.perf_counter() - paint_t0) * 1000.0)
 

@@ -40,11 +40,13 @@ def _ensure_python_314(project_root: Path) -> None:
     if candidate is None:
         return
 
-    main_py = project_root / "main.py"
-    if not main_py.is_file():
-        return
+    env = dict(os.environ)
+    src_root = project_root / "src"
+    if src_root.is_dir():
+        existing_python_path = str(env.get("PYTHONPATH", "")).strip()
+        env["PYTHONPATH"] = str(src_root) if not existing_python_path else str(src_root) + os.pathsep + str(existing_python_path)
 
-    os.execv(str(candidate),[str(candidate), str(main_py), *sys.argv[1:]])
+    os.execve(str(candidate), [str(candidate), "-m", "ludoxel", *sys.argv[1:]], env)
 
 
 def run_app() -> None:

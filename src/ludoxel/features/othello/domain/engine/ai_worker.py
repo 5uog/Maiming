@@ -13,20 +13,34 @@ from .ai import InsaneSearchCache, analyze_position, choose_ai_move
 from ..book.book_learning import BookLearningCancelled, BookLearningResult, learn_opening_book
 from ..game.types import DEFAULT_OTHELLO_HASH_LEVEL, DEFAULT_OTHELLO_SACRIFICE_LEVEL, DEFAULT_OTHELLO_THREAD_COUNT, OthelloSettings, normalize_hash_level, normalize_sacrifice_level, normalize_thread_count
 
-_PROCESS_CACHE = InsaneSearchCache()
-_FALLBACK_CACHE = InsaneSearchCache()
+_PROCESS_CACHE: InsaneSearchCache | None = None
+_FALLBACK_CACHE: InsaneSearchCache | None = None
 _ANALYSIS_STRONG_BUDGET_S = 0.28
 _ANALYSIS_INSANE_BUDGET_S = 0.45
 _SEARCH_EXECUTOR_WORKERS = 1
 _BOOK_EXECUTOR_WORKERS = 1
 
 
+def _process_cache() -> InsaneSearchCache:
+    global _PROCESS_CACHE
+    if _PROCESS_CACHE is None:
+        _PROCESS_CACHE = InsaneSearchCache()
+    return _PROCESS_CACHE
+
+
+def _fallback_cache() -> InsaneSearchCache:
+    global _FALLBACK_CACHE
+    if _FALLBACK_CACHE is None:
+        _FALLBACK_CACHE = InsaneSearchCache()
+    return _FALLBACK_CACHE
+
+
 def _compute_ai_move(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int) -> int | None:
-    return choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_PROCESS_CACHE, sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
+    return choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_process_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
 
 
 def _compute_analysis(board: tuple[int, ...], side: int, difficulty: str, seed: int, generation: int, project_root: str, sacrifice_level: int, hash_level: int):
-    return analyze_position(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S), insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S), match_generation=int(generation), insane_cache=_PROCESS_CACHE, sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
+    return analyze_position(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S), insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S), match_generation=int(generation), insane_cache=_process_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
 
 
 def _push_book_learning_progress(progress_queue, payload: dict[str, object]) -> None:
@@ -149,7 +163,7 @@ class OthelloAiWorker(QObject):
 
         def emit_result() -> None:
             try:
-                move_index = choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_FALLBACK_CACHE, sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
+                move_index = choose_ai_move(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), match_generation=int(generation), insane_cache=_fallback_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
             except Exception:
                 move_index = None
             self.move_ready.emit(int(generation), move_index)
@@ -160,7 +174,7 @@ class OthelloAiWorker(QObject):
 
         def emit_result() -> None:
             try:
-                analysis = analyze_position(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S), insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S), match_generation=int(generation), insane_cache=_FALLBACK_CACHE, sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
+                analysis = analyze_position(board, side, difficulty, random_seed=int(seed), project_root=str(project_root), strong_time_budget_s=float(_ANALYSIS_STRONG_BUDGET_S), insane_time_budget_s=float(_ANALYSIS_INSANE_BUDGET_S), match_generation=int(generation), insane_cache=_fallback_cache(), sacrifice_level=int(sacrifice_level), hash_level=int(hash_level))
             except Exception:
                 analysis = None
             self.analysis_ready.emit(int(generation), analysis)

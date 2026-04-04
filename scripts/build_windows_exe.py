@@ -92,7 +92,7 @@ def _ensure_pyinstaller() -> None:
     try:
         import PyInstaller  # noqa: F401
     except ModuleNotFoundError as exc:
-        raise RuntimeError("PyInstaller is required for the Windows executable build. Install the development dependencies with `python -m pip install -e \".[dev]\" --no-build-isolation` before rerunning this script.") from exc
+        raise RuntimeError("PyInstaller is required for the Windows executable build. Install the development dependencies with `python -m pip install -e \".[dev]\"` before rerunning this script.") from exc
 
 
 def _windows_executable_icon_path(root: Path) -> Path | None:
@@ -123,6 +123,21 @@ def _legacy_onedir_output_path(root: Path) -> Path:
 
 def _published_output_path(root: Path) -> Path:
     return root / "dist" / "windows" / "Ludoxel.exe"
+
+
+def _publish_legal_materials(root: Path, destination_dir: Path) -> None:
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("LICENSE", "NOTICE"):
+        source = root / name
+        if source.is_file():
+            shutil.copy2(str(source), str(destination_dir / name))
+
+    licenses_source = root / "licenses"
+    if licenses_source.is_dir():
+        licenses_destination = destination_dir / "licenses"
+        if licenses_destination.exists():
+            shutil.rmtree(licenses_destination)
+        shutil.copytree(str(licenses_source), str(licenses_destination))
 
 
 def _publish_staged_executable(staged_executable_path: Path, *, published_executable_path: Path) -> tuple[Path, bool]:
@@ -176,7 +191,7 @@ def build_windows_bundle(root: Path, *, keep_build_cache: bool) -> tuple[Path, b
     ]
     if executable_icon_path is not None:
         cmd.extend(["--icon", str(executable_icon_path)])
-    cmd.append(str(root / "main.py"))
+    cmd.append(str(root / "src" / "ludoxel" / "__main__.py"))
     stage_executable_path = stage_dist_path / "Ludoxel.exe"
     try:
         _run(cmd, cwd=root)
@@ -187,7 +202,10 @@ def build_windows_bundle(root: Path, *, keep_build_cache: bool) -> tuple[Path, b
     _remove_tree_best_effort(legacy_onedir_output_path)
     if not stage_executable_path.is_file():
         raise RuntimeError(f"The PyInstaller staging executable was not produced at {stage_executable_path}.")
+    _publish_legal_materials(root, stage_dist_path)
     output_path, published = _publish_staged_executable(stage_executable_path, published_executable_path=published_executable_path)
+    if bool(published):
+        _publish_legal_materials(root, published_executable_path.parent)
     if bool(published) and not bool(keep_build_cache):
         _remove_tree_best_effort(stage_dist_path)
     return (output_path, bool(published))

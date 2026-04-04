@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import multiprocessing
 
-from .application.boot import run_app
+from ludoxel.application.boot import run_app
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

@@ -11,6 +11,9 @@ import os
 import subprocess
 import sys
 
+from setuptools import Distribution, Extension
+from setuptools.command.build_ext import build_ext
+
 """
 I use this command-line module to rebuild the narrow native hot-path family of Ludoxel in place and to prove, by post-build import resolution, that the active interpreter binds those hot arithmetic kernels to compiled extension images rather than to their Python fallback sources.
 
@@ -27,9 +30,9 @@ I define the operational map
 
 where E(root) is the in-place extension build induced by
 
-    python setup.py build_ext --inplace
+    setuptools.build_ext(ext_modules(root), inplace = True)
 
-executed at the repository root, and where V(root) is the verification predicate over H given by
+executed programmatically at the repository root, and where V(root) is the verification predicate over H given by
 
     V(root) <=> for all h in H, suffix(import_path(root, h)) in EXTENSION_SUFFIXES.
 
@@ -56,6 +59,7 @@ _HOT_PATH_MODULES: tuple[str, ...] = (
     "ludoxel.shared.math.voxel.voxel_dda",
     "ludoxel.shared.math.view_angles",
 )
+_CYTHON_BUILD_DIR_NAME = "cython"
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +72,20 @@ def project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def _module_source_path(root: Path, module_name: str) -> str:
+    return str(root / "src" / Path(*str(module_name).split(".")).with_suffix(".py"))
+
+
+def _base_extensions(root: Path) -> list[Extension]:
+    return [Extension(name=str(module_name), sources=[_module_source_path(root, str(module_name))]) for module_name in _HOT_PATH_MODULES]
+
+
+def _cythonized_extensions(root: Path) -> list[Extension]:
+    from Cython.Build import cythonize
+
+    return cythonize(_base_extensions(root), build_dir=str(root / "build" / str(_CYTHON_BUILD_DIR_NAME)), compiler_directives={"language_level": 3, "boundscheck": False, "wraparound": False, "initializedcheck": False}, annotate=False, nthreads=0)
+
+
 def _ensure_build_requirements() -> None:
     missing: list[str] = []
     if find_spec("setuptools") is None:
@@ -75,7 +93,7 @@ def _ensure_build_requirements() -> None:
     if find_spec("Cython") is None:
         missing.append("Cython")
     if missing:
-        raise RuntimeError("The in-place native build requires the development dependencies. Install them with `python -m pip install -e \".[dev]\" --no-build-isolation` before rerunning this script. Missing modules: " + ", ".join(missing))
+        raise RuntimeError("The in-place native build requires the development dependencies. Install them with `python -m pip install -e \".[dev]\"` before rerunning this script. Missing modules: " + ", ".join(missing))
 
 
 def _env_with_src(root: Path) -> dict[str, str]:
@@ -114,12 +132,22 @@ def verify_extensions(root: Path) -> None:
         raise RuntimeError("The native build completed, but one or more hot-path modules still resolved to Python sources:\n" + "\n".join(failures))
 
 
+def build_extensions(root: Path) -> None:
+    distribution = Distribution({"package_dir": {"": "src"}, "ext_modules": _cythonized_extensions(root)})
+    command = build_ext(distribution)
+    command.initialize_options()
+    command.inplace = True
+    command.build_temp = str(root / "build" / "temp")
+    command.build_lib = str(root / "src")
+    command.ensure_finalized()
+    command.run()
+
+
 def main() -> int:
     args = parse_args()
     root = project_root()
     _ensure_build_requirements()
-    build_cmd = [sys.executable, str(root / "setup.py"), "build_ext", "--inplace"]
-    _run(build_cmd, cwd=root)
+    build_extensions(root)
     if not bool(args.skip_verify):
         verify_extensions(root)
     return 0

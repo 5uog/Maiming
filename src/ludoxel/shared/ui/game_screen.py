@@ -14,14 +14,14 @@ from .hud.hud_widget import HUDWidget
 
 class GameScreen(QWidget):
 
-    def __init__(self, project_root: Path, resource_root: Path, parent=None) -> None:
+    def __init__(self, project_root: Path, resource_root: Path, parent=None, launch_player_name: str | None = None) -> None:
         super().__init__(parent)
         self.project_root = project_root
         self.resource_root = resource_root
         self.setObjectName("gameScreen")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet("QWidget#gameScreen { background: #121212; }")
-        self.viewport = GLViewportWidget(project_root=self.project_root, resource_root=self.resource_root)
+        self.viewport = GLViewportWidget(project_root=self.project_root, resource_root=self.resource_root, launch_player_name=launch_player_name)
         self.hud = HUDWidget()
 
         self._layout = QVBoxLayout(self)

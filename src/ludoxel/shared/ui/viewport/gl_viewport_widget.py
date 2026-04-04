@@ -7,6 +7,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QGuiApplication, QImage, QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
+from PyQt6.QtWidgets import QGraphicsOpacityEffect, QLabel
 
 from ....application.audio import AudioManager
 from ....application.runtime.context.play_space_context import PlaySpaceContext
@@ -26,6 +27,7 @@ from ..config.gl_surface_format import build_gl_surface_format
 from ..hud.crosshair_widget import CrosshairWidget
 from ..hud.hud_controller import HudController
 from ..hud.hotbar_widget import HotbarWidget
+from ..common.status_overlay import status_overlay_title_image_path
 from ..overlays.death_overlay import DeathOverlay
 from ..overlays.inventory_overlay import InventoryOverlay
 from ..overlays.pause_overlay import PauseOverlay
@@ -44,7 +46,7 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
     loading_status_changed = pyqtSignal(str)
     loading_finished = pyqtSignal()
 
-    def __init__(self, project_root: Path, resource_root: Path, parent=None, loop_params: GameLoopParams=DEFAULT_GAME_LOOP_PARAMS) -> None:
+    def __init__(self, project_root: Path, resource_root: Path, parent=None, loop_params: GameLoopParams=DEFAULT_GAME_LOOP_PARAMS, launch_player_name: str | None = None) -> None:
         super().__init__(parent)
 
         self._project_root = Path(project_root)
@@ -63,6 +65,15 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
         self._hud = None
         self._othello_hud = OthelloHudWidget(self)
         self._othello_hud.setVisible(False)
+        self._player_name_tag = QLabel(self)
+        self._player_name_tag.setObjectName("playerNameTag")
+        self._player_name_tag.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._player_name_tag.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self._player_name_tag.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._player_name_tag.setVisible(False)
+        self._player_name_tag_effect = QGraphicsOpacityEffect(self._player_name_tag)
+        self._player_name_tag_effect.setOpacity(1.0)
+        self._player_name_tag.setGraphicsEffect(self._player_name_tag_effect)
 
         self._upload = WorldUploadTracker()
         self._hud_ctl = HudController()
@@ -133,7 +144,8 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
         self._application_active = bool(app is None or app.applicationState() == Qt.ApplicationState.ApplicationActive)
 
         self._overlay = PauseOverlay(self)
-        self._settings = SettingsOverlay(None, as_window=True)
+        self._overlay.set_title_image_path(status_overlay_title_image_path(self._resource_root))
+        self._settings = SettingsOverlay(None, resource_root=self._resource_root, as_window=True)
         self._othello_settings = OthelloSettingsOverlay(None, as_window=True)
         self._death = DeathOverlay(self)
 
@@ -173,16 +185,20 @@ class GLViewportWidget(ViewportRenderLoopMixin, ViewportStateMixin, ViewportOver
         self._deactivation_pause_timer.setSingleShot(True)
         self._deactivation_pause_timer.setInterval(int(_APPLICATION_DEACTIVATION_PAUSE_DELAY_MS))
         self._deactivation_pause_timer.timeout.connect(self._pause_after_application_deactivation)
+        self._pause_on_application_deactivation = False
 
         self.setFormat(build_gl_surface_format(vsync_on=False))
 
         self._state, persisted_othello_state = apply_persisted_state_if_present(project_root=self._project_root, sessions=self._sessions, renderer=self._renderer)
+        if launch_player_name is not None:
+            self._state.player_name = str(launch_player_name)
         self._session = self._sessions.set_active_space(self._state.current_space_id)
         self._othello_match.set_default_settings(self._state.othello_settings)
         self._othello_match.set_game_state(persisted_othello_state)
         self._overlay.set_current_space(self._state.current_space_id)
         self._audio = AudioManager(resource_root=self._resource_root, block_registry=self._session.block_registry, parent=self)
 
+        settings_controller.refresh_player_identity(self, regenerate_if_blank=True)
         settings_controller.apply_runtime_to_renderer(self)
         settings_controller.sync_input_bindings(self)
         settings_controller.sync_audio_preferences(self)
