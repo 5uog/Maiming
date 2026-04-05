@@ -165,30 +165,7 @@ class _AiPlayerRuntime:
     attack_swing_active: bool = False
 
     def to_state(self) -> AiPlayerState:
-        return AiPlayerState(
-            actor_id=str(self.actor_id),
-            mode=str(self.mode),
-            personality=str(self.personality),
-            can_place_blocks=bool(self.can_place_blocks),
-            held_item_id=None if self.held_item_id is None else str(self.held_item_id),
-            pos_x=float(self.player.position.x),
-            pos_y=float(self.player.position.y),
-            pos_z=float(self.player.position.z),
-            vel_x=float(self.player.velocity.x),
-            vel_y=float(self.player.velocity.y),
-            vel_z=float(self.player.velocity.z),
-            yaw_deg=float(self.player.yaw_deg),
-            pitch_deg=float(self.player.pitch_deg),
-            health=float(self.player.health),
-            max_health=float(self.player.max_health),
-            on_ground=bool(self.player.on_ground),
-            flying=bool(self.player.flying),
-            route_points=tuple(self.route_points),
-            route_closed=bool(self.route_closed),
-            route_run=bool(self.route_run),
-            route_style=str(self.route_style),
-            route_target_index=int(self.route_target_index),
-        ).normalized()
+        return AiPlayerState(actor_id=str(self.actor_id), mode=str(self.mode), personality=str(self.personality), can_place_blocks=bool(self.can_place_blocks), held_item_id=None if self.held_item_id is None else str(self.held_item_id), pos_x=float(self.player.position.x), pos_y=float(self.player.position.y), pos_z=float(self.player.position.z), vel_x=float(self.player.velocity.x), vel_y=float(self.player.velocity.y), vel_z=float(self.player.velocity.z), yaw_deg=float(self.player.yaw_deg), pitch_deg=float(self.player.pitch_deg), health=float(self.player.health), max_health=float(self.player.max_health), on_ground=bool(self.player.on_ground), flying=bool(self.player.flying), route_points=tuple(self.route_points), route_closed=bool(self.route_closed), route_run=bool(self.route_run), route_style=str(self.route_style), route_target_index=int(self.route_target_index)).normalized()
 
 
 def _yaw_diff_deg(current_deg: float, target_deg: float) -> float:
@@ -348,32 +325,12 @@ def _movement_inputs_toward_target(*, player: PlayerEntity, target: Vec3, yaw_de
 def _pursuit_control(*, player: PlayerEntity, target: Vec3, dt: float, sprint: bool, auto_jump_enabled: bool, jump_pressed: bool=False, crouch: bool=False) -> PlayerStepInput:
     yaw_delta_deg, pitch_delta_deg, remaining_yaw_error_deg, _distance_xz = _turn_toward_target(player=player, target=target, dt=float(dt))
     move_f, move_s = _movement_inputs_toward_target(player=player, target=target, yaw_deg=float(player.yaw_deg) + float(yaw_delta_deg), remaining_yaw_error_deg=float(remaining_yaw_error_deg))
-    return PlayerStepInput(
-        move_f=float(move_f),
-        move_s=float(move_s),
-        jump_held=bool(jump_pressed),
-        jump_pressed=bool(jump_pressed),
-        sprint=bool(sprint),
-        crouch=bool(crouch),
-        yaw_delta_deg=float(yaw_delta_deg),
-        pitch_delta_deg=float(pitch_delta_deg),
-        auto_jump_enabled=bool(auto_jump_enabled),
-    )
+    return PlayerStepInput(move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=bool(auto_jump_enabled))
 
 
 def _turn_only_control(*, player: PlayerEntity, target: Vec3, dt: float) -> PlayerStepInput:
     yaw_delta_deg, pitch_delta_deg, _remaining_yaw_error_deg, _distance_xz = _turn_toward_target(player=player, target=target, dt=float(dt))
-    return PlayerStepInput(
-        move_f=0.0,
-        move_s=0.0,
-        jump_held=False,
-        jump_pressed=False,
-        sprint=False,
-        crouch=False,
-        yaw_delta_deg=float(yaw_delta_deg),
-        pitch_delta_deg=float(pitch_delta_deg),
-        auto_jump_enabled=False,
-    )
+    return PlayerStepInput(move_f=0.0, move_s=0.0, jump_held=False, jump_pressed=False, sprint=False, crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=False)
 
 
 def _combat_control(*, actor: _AiPlayerRuntime, target: Vec3, dt: float, jump_pressed: bool=False) -> PlayerStepInput:
@@ -384,17 +341,7 @@ def _combat_control(*, actor: _AiPlayerRuntime, target: Vec3, dt: float, jump_pr
         strafe = float(_AI_COMBAT_STRAFE_MAG) * (1.0 if int(actor.combat_strafe_sign) >= 0 else -1.0)
     if float(actor.combat_w_tap_s) > 1e-6 and float(distance_xz) <= 2.85 and float(abs_error_deg) <= 18.0:
         engage_ratio = 0.0 if float(actor.combat_w_tap_s) > float(_AI_COMBAT_W_TAP_S) * 0.5 else 1.0
-        return PlayerStepInput(
-            move_f=float(engage_ratio),
-            move_s=float(strafe),
-            jump_held=bool(jump_pressed),
-            jump_pressed=bool(jump_pressed),
-            sprint=bool(engage_ratio > 0.5),
-            crouch=False,
-            yaw_delta_deg=float(yaw_delta_deg),
-            pitch_delta_deg=float(pitch_delta_deg),
-            auto_jump_enabled=True,
-        )
+        return PlayerStepInput(move_f=float(engage_ratio), move_s=float(strafe), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=bool(engage_ratio > 0.5), crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=True)
     if float(abs_error_deg) <= 12.0:
         move_f = 1.0
     elif float(abs_error_deg) <= 24.0:
@@ -403,17 +350,7 @@ def _combat_control(*, actor: _AiPlayerRuntime, target: Vec3, dt: float, jump_pr
         move_f = 0.45
     else:
         move_f = 0.0
-    return PlayerStepInput(
-        move_f=float(move_f),
-        move_s=float(strafe),
-        jump_held=bool(jump_pressed),
-        jump_pressed=bool(jump_pressed),
-        sprint=True,
-        crouch=False,
-        yaw_delta_deg=float(yaw_delta_deg),
-        pitch_delta_deg=float(pitch_delta_deg),
-        auto_jump_enabled=True,
-    )
+    return PlayerStepInput(move_f=float(move_f), move_s=float(strafe), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=True, crouch=False, yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=True)
 
 
 def _parkour_control(*, player: PlayerEntity, target: Vec3, dt: float, sprint: bool, auto_jump_enabled: bool, jump_pressed: bool=False, crouch: bool=False, commit_forward: bool=False) -> PlayerStepInput:
@@ -434,17 +371,7 @@ def _parkour_control(*, player: PlayerEntity, target: Vec3, dt: float, sprint: b
     elif bool(jump_pressed) or bool(commit_forward):
         move_f = max(float(move_f), 1.0)
         move_s = float(clampf(float(move_s), -0.20, 0.20))
-    return PlayerStepInput(
-        move_f=float(move_f),
-        move_s=float(move_s),
-        jump_held=bool(jump_pressed),
-        jump_pressed=bool(jump_pressed),
-        sprint=bool(sprint),
-        crouch=bool(crouch),
-        yaw_delta_deg=float(yaw_delta_deg),
-        pitch_delta_deg=float(pitch_delta_deg),
-        auto_jump_enabled=bool(auto_jump_enabled),
-    )
+    return PlayerStepInput(move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_pressed), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), yaw_delta_deg=float(yaw_delta_deg), pitch_delta_deg=float(pitch_delta_deg), auto_jump_enabled=bool(auto_jump_enabled))
 
 
 def _parkour_navigation_target(actor: _AiPlayerRuntime, *, current_support: tuple[int, int, int] | None) -> Vec3 | None:
@@ -518,16 +445,7 @@ class AiPlayerManager:
         return str(actor_id)
 
     def _build_player(self, *, state: AiPlayerState) -> PlayerEntity:
-        player = PlayerEntity(
-            position=Vec3(float(state.pos_x), float(state.pos_y), float(state.pos_z)),
-            velocity=Vec3(float(state.vel_x), float(state.vel_y), float(state.vel_z)),
-            yaw_deg=float(state.yaw_deg),
-            pitch_deg=float(state.pitch_deg),
-            health=float(state.health),
-            max_health=float(state.max_health),
-            on_ground=bool(state.on_ground),
-            flying=bool(state.flying),
-        )
+        player = PlayerEntity(position=Vec3(float(state.pos_x), float(state.pos_y), float(state.pos_z)), velocity=Vec3(float(state.vel_x), float(state.vel_y), float(state.vel_z)), yaw_deg=float(state.yaw_deg), pitch_deg=float(state.pitch_deg), health=float(state.health), max_health=float(state.max_health), on_ground=bool(state.on_ground), flying=bool(state.flying))
         player.clamp_pitch()
         player.clamp_health()
         player.auto_jump_start_y = float(player.position.y)
@@ -538,20 +456,7 @@ class AiPlayerManager:
         actor_id = str(normalized.actor_id) if str(normalized.actor_id) else self._allocate_actor_id()
         player = self._build_player(state=normalized)
         interaction = InteractionService.create(world=self.world, player=player, block_registry=self.block_registry)
-        actor = _AiPlayerRuntime(
-            actor_id=str(actor_id),
-            player=player,
-            interaction=interaction,
-            mode=normalize_ai_mode(normalized.mode),
-            personality=normalize_ai_personality(normalized.personality),
-            can_place_blocks=bool(normalized.can_place_blocks),
-            held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized.can_place_blocks), held_item_id=normalized.held_item_id),
-            route_points=tuple(normalized.route_points),
-            route_closed=bool(normalized.route_closed),
-            route_run=bool(normalized.route_run),
-            route_style=normalize_ai_route_style(normalized.route_style),
-            route_target_index=int(normalized.route_target_index),
-        )
+        actor = _AiPlayerRuntime(actor_id=str(actor_id), player=player, interaction=interaction, mode=normalize_ai_mode(normalized.mode), personality=normalize_ai_personality(normalized.personality), can_place_blocks=bool(normalized.can_place_blocks), held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized.can_place_blocks), held_item_id=normalized.held_item_id), route_points=tuple(normalized.route_points), route_closed=bool(normalized.route_closed), route_run=bool(normalized.route_run), route_style=normalize_ai_route_style(normalized.route_style), route_target_index=int(normalized.route_target_index))
         actor.wander_heading_deg = float(player.yaw_deg)
         actor.wander_forward = 0.0
         actor.decision_timer_s = 0.0
@@ -613,23 +518,7 @@ class AiPlayerManager:
         normalized_settings = settings.normalized()
         spawn_pos = Vec3(float(spawn_cell[0]) + 0.5, float(spawn_cell[1]), float(spawn_cell[2]) + 0.5)
         actor_id = self._allocate_actor_id()
-        state = AiPlayerState(
-            actor_id=str(actor_id),
-            mode=str(normalized_settings.mode),
-            personality=str(normalized_settings.personality),
-            can_place_blocks=bool(normalized_settings.can_place_blocks),
-            held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized_settings.can_place_blocks)),
-            pos_x=float(spawn_pos.x),
-            pos_y=float(spawn_pos.y),
-            pos_z=float(spawn_pos.z),
-            yaw_deg=0.0,
-            pitch_deg=0.0,
-            route_points=tuple(normalized_settings.route_points),
-            route_closed=bool(normalized_settings.route_closed),
-            route_run=bool(normalized_settings.route_run),
-            route_style=str(normalized_settings.route_style),
-            route_target_index=0,
-        )
+        state = AiPlayerState(actor_id=str(actor_id), mode=str(normalized_settings.mode), personality=str(normalized_settings.personality), can_place_blocks=bool(normalized_settings.can_place_blocks), held_item_id=_held_item_id_for_settings(can_place_blocks=bool(normalized_settings.can_place_blocks)), pos_x=float(spawn_pos.x), pos_y=float(spawn_pos.y), pos_z=float(spawn_pos.z), yaw_deg=0.0, pitch_deg=0.0, route_points=tuple(normalized_settings.route_points), route_closed=bool(normalized_settings.route_closed), route_run=bool(normalized_settings.route_run), route_style=str(normalized_settings.route_style), route_target_index=0)
         actor = self._state_to_runtime(state)
         if not _spawn_position_clear(player=actor.player, world=self.world, block_registry=self.block_registry):
             return None
@@ -646,15 +535,7 @@ class AiPlayerManager:
         actor = self._actors.get(str(actor_id))
         if actor is None:
             return None
-        return AiSpawnEggSettings(
-            mode=str(actor.mode),
-            personality=str(actor.personality),
-            can_place_blocks=bool(actor.can_place_blocks),
-            route_points=tuple(actor.route_points),
-            route_closed=bool(actor.route_closed),
-            route_run=bool(actor.route_run),
-            route_style=str(actor.route_style),
-        ).normalized()
+        return AiSpawnEggSettings(mode=str(actor.mode), personality=str(actor.personality), can_place_blocks=bool(actor.can_place_blocks), route_points=tuple(actor.route_points), route_closed=bool(actor.route_closed), route_run=bool(actor.route_run), route_style=str(actor.route_style)).normalized()
 
     def update_actor_settings(self, *, actor_id: str, settings: AiSpawnEggSettings) -> bool:
         actor = self._actors.get(str(actor_id))
@@ -1002,20 +883,7 @@ class AiPlayerManager:
         self._route_plan_generation += 1
         blocked_edges = tuple((tuple(int(value) for value in edge[0]), tuple(int(value) for value in edge[1])) for edge, ttl in actor.nav_blocked_edges.items() if float(ttl) > 1e-6)
         avoid_supports = tuple(tuple(int(value) for value in cell) for cell, ttl in actor.nav_avoid_support_cells.items() if float(ttl) > 1e-6)
-        return AiRoutePlanRequest(
-            generation=int(self._route_plan_generation),
-            actor_id=str(actor.actor_id),
-            world_revision=int(self.world.revision),
-            world_blocks=tuple(world_blocks),
-            settings=self.settings,
-            start_support=tuple(int(value) for value in start_support),
-            route_points=tuple(actor.route_points),
-            route_target_index=int(actor.route_target_index),
-            can_place_blocks=bool(actor.can_place_blocks),
-            blocked_edges=tuple(blocked_edges),
-            avoid_support_cells=tuple(avoid_supports),
-            search_radius=int(search_radius),
-        )
+        return AiRoutePlanRequest(generation=int(self._route_plan_generation), actor_id=str(actor.actor_id), world_revision=int(self.world.revision), world_blocks=tuple(world_blocks), settings=self.settings, start_support=tuple(int(value) for value in start_support), route_points=tuple(actor.route_points), route_target_index=int(actor.route_target_index), can_place_blocks=bool(actor.can_place_blocks), blocked_edges=tuple(blocked_edges), avoid_support_cells=tuple(avoid_supports), search_radius=int(search_radius))
 
     def _request_route_plan(self, actor: _AiPlayerRuntime, *, start_support: tuple[int, int, int]) -> bool:
         if int(self._route_requests_this_step) >= int(_AI_ROUTE_REQUESTS_PER_STEP):
@@ -1098,11 +966,7 @@ class AiPlayerManager:
         sample_count = 6 if (int(dx) != 0 and int(dz) != 0) else 4
         for sample_index in range(1, int(sample_count)):
             ratio = float(sample_index) / float(sample_count)
-            probe = Vec3(
-                float(start.x) + (float(end.x) - float(start.x)) * float(ratio),
-                float(probe_y),
-                float(start.z) + (float(end.z) - float(start.z)) * float(ratio),
-            )
+            probe = Vec3(float(start.x) + (float(end.x) - float(start.x)) * float(ratio), float(probe_y), float(start.z) + (float(end.z) - float(start.z)) * float(ratio))
             if not bool(self._player_clear_at(actor, position=probe)):
                 return False
         return True
@@ -1156,11 +1020,7 @@ class AiPlayerManager:
         for sample_index in range(1, int(sample_count) + 1):
             ratio = float(sample_index) / float(sample_count)
             lift = 0.24 * (1.0 - float(ratio))
-            probe = Vec3(
-                float(start.x) + (float(end.x) - float(start.x)) * float(ratio),
-                float(start.y) + (float(end.y) - float(start.y)) * float(ratio) + float(lift),
-                float(start.z) + (float(end.z) - float(start.z)) * float(ratio),
-            )
+            probe = Vec3(float(start.x) + (float(end.x) - float(start.x)) * float(ratio), float(start.y) + (float(end.y) - float(start.y)) * float(ratio) + float(lift), float(start.z) + (float(end.z) - float(start.z)) * float(ratio))
             if not bool(self._player_clear_at(actor, position=probe)):
                 return False
         return True
@@ -1306,11 +1166,7 @@ class AiPlayerManager:
         previous = src
         for index in range(1, int(steps) + 1):
             ratio = float(index) / float(steps)
-            cell = (
-                int(round(float(src[0]) + float(int(dst[0]) - int(src[0])) * ratio)),
-                int(src[1]),
-                int(round(float(src[2]) + float(int(dst[2]) - int(src[2])) * ratio)),
-            )
+            cell = (int(round(float(src[0]) + float(int(dst[0]) - int(src[0])) * ratio)), int(src[1]), int(round(float(src[2]) + float(int(dst[2]) - int(src[2])) * ratio)))
             if cell == previous:
                 continue
             if not bool(self._standable_support_cell(actor, cell)):
@@ -1662,17 +1518,7 @@ class AiPlayerManager:
         heading_rad = math.radians(float(actor.wander_heading_deg))
         target = Vec3(float(actor.player.position.x) - math.sin(float(heading_rad)) * 3.0, float(actor.player.position.y) + 1.0, float(actor.player.position.z) + math.cos(float(heading_rad)) * 3.0)
         control = _pursuit_control(player=actor.player, target=target, dt=float(dt), sprint=bool(actor.wander_sprint), auto_jump_enabled=True, jump_pressed=False, crouch=False)
-        return PlayerStepInput(
-            move_f=float(control.move_f) * float(actor.wander_forward),
-            move_s=float(control.move_s) * float(actor.wander_forward),
-            jump_held=bool(control.jump_held),
-            jump_pressed=bool(control.jump_pressed),
-            sprint=bool(control.sprint),
-            crouch=bool(control.crouch),
-            yaw_delta_deg=float(control.yaw_delta_deg),
-            pitch_delta_deg=float(control.pitch_delta_deg),
-            auto_jump_enabled=bool(control.auto_jump_enabled),
-        )
+        return PlayerStepInput(move_f=float(control.move_f) * float(actor.wander_forward), move_s=float(control.move_s) * float(actor.wander_forward), jump_held=bool(control.jump_held), jump_pressed=bool(control.jump_pressed), sprint=bool(control.sprint), crouch=bool(control.crouch), yaw_delta_deg=float(control.yaw_delta_deg), pitch_delta_deg=float(control.pitch_delta_deg), auto_jump_enabled=bool(control.auto_jump_enabled))
 
     def _maybe_interact_or_place(self, actor: _AiPlayerRuntime, *, target_player: PlayerEntity | None) -> None:
         actor.interact_cooldown_s = max(0.0, float(actor.interact_cooldown_s))
@@ -1796,24 +1642,6 @@ class AiPlayerManager:
         states: list[PlayerRenderState] = []
         for actor in self._actors.values():
             player_model = build_player_model_snapshot(player=actor.player, motion=actor.motion, walk_speed=float(self.settings.movement.walk_speed), is_first_person_view=False)
-            motion = FirstPersonMotionSample(
-                visible_item_id=None if actor.held_item_id is None else str(actor.held_item_id),
-                target_item_id=None if actor.held_item_id is None else str(actor.held_item_id),
-                equip_progress=1.0,
-                prev_equip_progress=1.0,
-                swing_progress=float(actor.attack_swing_progress),
-                prev_swing_progress=float(actor.attack_prev_swing_progress),
-                show_arm=bool(actor.held_item_id is None),
-                show_view_model=False,
-                slim_arm=True,
-            )
-            states.append(
-                compose_player_render_state_from_parts(
-                    player_model=player_model,
-                    motion=motion,
-                    block_registry=self.block_registry,
-                    arm_rotation_limit_min_deg=-180.0,
-                    arm_rotation_limit_max_deg=180.0,
-                )
-            )
+            motion = FirstPersonMotionSample(visible_item_id=None if actor.held_item_id is None else str(actor.held_item_id), target_item_id=None if actor.held_item_id is None else str(actor.held_item_id), equip_progress=1.0, prev_equip_progress=1.0, swing_progress=float(actor.attack_swing_progress), prev_swing_progress=float(actor.attack_prev_swing_progress), show_arm=bool(actor.held_item_id is None), show_view_model=False, slim_arm=True)
+            states.append(compose_player_render_state_from_parts(player_model=player_model, motion=motion, block_registry=self.block_registry, arm_rotation_limit_min_deg=-180.0, arm_rotation_limit_max_deg=180.0))
         return tuple(states)

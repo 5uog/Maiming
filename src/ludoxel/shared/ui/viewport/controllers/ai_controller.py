@@ -88,10 +88,7 @@ def _sync_ai_visuals(viewport: "GLViewportWidget") -> None:
 def _spawn_ai_at_hit(viewport: "GLViewportWidget", *, hit) -> bool:
     if hit is None or hit.place is None:
         return False
-    actor_id = viewport._session.spawn_ai_player(
-        spawn_cell=tuple(int(value) for value in hit.place),
-        settings=AiSpawnEggSettings(mode=AI_MODE_IDLE).normalized(),
-    )
+    actor_id = viewport._session.spawn_ai_player(spawn_cell=tuple(int(value) for value in hit.place), settings=AiSpawnEggSettings(mode=AI_MODE_IDLE).normalized())
     if actor_id is None:
         return False
     _sync_ai_visuals(viewport)
@@ -180,15 +177,7 @@ def _finish_route_edit(viewport: "GLViewportWidget", *, commit: bool, reopen_dia
             show_themed_notice(parent=viewport, title="AI Route", message="At least two route points are required.", nav_label="AI Route")
             return
         _ensure_edit_settings(viewport)
-        viewport._ai_edit_settings = AiSpawnEggSettings(
-            mode=AI_MODE_ROUTE,
-            personality=viewport._ai_edit_settings.personality,
-            can_place_blocks=bool(viewport._ai_edit_settings.can_place_blocks),
-            route_points=tuple(viewport._ai_route_edit_points),
-            route_closed=bool(viewport._ai_route_edit_closed),
-            route_run=bool(viewport._ai_edit_settings.route_run),
-            route_style=str(viewport._ai_edit_settings.route_style),
-        ).normalized()
+        viewport._ai_edit_settings = AiSpawnEggSettings(mode=AI_MODE_ROUTE, personality=viewport._ai_edit_settings.personality, can_place_blocks=bool(viewport._ai_edit_settings.can_place_blocks), route_points=tuple(viewport._ai_route_edit_points), route_closed=bool(viewport._ai_route_edit_closed), route_run=bool(viewport._ai_edit_settings.route_run), route_style=str(viewport._ai_edit_settings.route_style)).normalized()
         reopen_settings = viewport._ai_edit_settings.normalized()
         if actor_id is None or (not bool(viewport._session.update_ai_player_settings(actor_id=str(actor_id), settings=viewport._ai_edit_settings))):
             show_themed_notice(parent=viewport, title="AI Route", message="The selected AI is no longer available.", nav_label="AI Route")

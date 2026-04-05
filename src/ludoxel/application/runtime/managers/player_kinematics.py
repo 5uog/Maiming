@@ -118,16 +118,7 @@ def advance_runtime_player(*, player: PlayerEntity, world: WorldState, block_reg
         player.hold_jump_queued = False
 
     if bool(player.flying):
-        move_input = MoveInput(
-            forward=clampf(control.move_f, -1.0, 1.0),
-            strafe=clampf(control.move_s, -1.0, 1.0),
-            sprint=bool(control.sprint),
-            crouch=bool(control.crouch),
-            jump_pulse=False,
-            jump_held=bool(control.jump_held),
-            yaw_delta_deg=0.0,
-            pitch_delta_deg=0.0,
-        )
+        move_input = MoveInput(forward=clampf(control.move_f, -1.0, 1.0), strafe=clampf(control.move_s, -1.0, 1.0), sprint=bool(control.sprint), crouch=bool(control.crouch), jump_pulse=False, jump_held=bool(control.jump_held), yaw_delta_deg=0.0, pitch_delta_deg=0.0)
         step_flying(player, move_input, float(dt), params=settings.movement)
         integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=False, jump_pressed=False, flying=True)
 
@@ -164,16 +155,7 @@ def advance_runtime_player(*, player: PlayerEntity, world: WorldState, block_reg
                     player.auto_jump_pending = True
                     player.auto_jump_start_y = float(player.position.y)
 
-    move_input = MoveInput(
-        forward=clampf(control.move_f, -1.0, 1.0),
-        strafe=clampf(control.move_s, -1.0, 1.0),
-        sprint=bool(control.sprint),
-        crouch=bool(control.crouch),
-        jump_pulse=bool(jump_pulse),
-        jump_held=bool(control.jump_held),
-        yaw_delta_deg=0.0,
-        pitch_delta_deg=0.0,
-    )
+    move_input = MoveInput(forward=clampf(control.move_f, -1.0, 1.0), strafe=clampf(control.move_s, -1.0, 1.0), sprint=bool(control.sprint), crouch=bool(control.crouch), jump_pulse=bool(jump_pulse), jump_held=bool(control.jump_held), yaw_delta_deg=0.0, pitch_delta_deg=0.0)
     step_bedrock(player, move_input, float(dt), params=settings.movement)
     report = integrate_with_collisions(player, world, float(dt), block_registry=block_registry, params=settings.collision, crouch=bool(control.crouch), jump_pressed=bool(jump_pulse), flying=False)
 
@@ -239,22 +221,4 @@ def build_player_model_snapshot(*, player: PlayerEntity, motion: PlayerMotionSta
     fp_pitch_deg = float(pitch_wave * bob * 6.5)
     fp_roll_deg = float(sin_phase * bob * 4.0)
 
-    return PlayerModelSnapshotDTO(
-        base_x=float(player.position.x),
-        base_y=float(player.position.y) + float(step_eye_offset),
-        base_z=float(player.position.z),
-        body_yaw_deg=float(player.yaw_deg),
-        head_yaw_deg=0.0,
-        head_pitch_deg=float(player.pitch_deg),
-        limb_phase_rad=float(motion.walk_phase_rad),
-        limb_swing_amount=float(limb_swing_amount),
-        crouch_amount=float(crouch_amount),
-        hurt_tint_strength=float(player.hurt_flash_strength()),
-        first_person_tx=float(fp_tx),
-        first_person_ty=float(fp_ty),
-        first_person_tz=float(fp_tz),
-        first_person_yaw_deg=float(fp_yaw_deg),
-        first_person_pitch_deg=float(fp_pitch_deg),
-        first_person_roll_deg=float(fp_roll_deg),
-        is_first_person=bool(is_first_person_view),
-    )
+    return PlayerModelSnapshotDTO(base_x=float(player.position.x), base_y=float(player.position.y) + float(step_eye_offset), base_z=float(player.position.z), body_yaw_deg=float(player.yaw_deg), head_yaw_deg=0.0, head_pitch_deg=float(player.pitch_deg), limb_phase_rad=float(motion.walk_phase_rad), limb_swing_amount=float(limb_swing_amount), crouch_amount=float(crouch_amount), hurt_tint_strength=float(player.hurt_flash_strength()), first_person_tx=float(fp_tx), first_person_ty=float(fp_ty), first_person_tz=float(fp_tz), first_person_yaw_deg=float(fp_yaw_deg), first_person_pitch_deg=float(fp_pitch_deg), first_person_roll_deg=float(fp_roll_deg), is_first_person=bool(is_first_person_view))

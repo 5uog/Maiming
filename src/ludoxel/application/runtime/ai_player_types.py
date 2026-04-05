@@ -77,15 +77,7 @@ class AiSpawnEggSettings:
     route_style: str = AI_ROUTE_STYLE_STRICT
 
     def normalized(self) -> "AiSpawnEggSettings":
-        return AiSpawnEggSettings(
-            mode=normalize_ai_mode(self.mode),
-            personality=normalize_ai_personality(self.personality),
-            can_place_blocks=bool(self.can_place_blocks),
-            route_points=normalize_route_points(self.route_points),
-            route_closed=bool(self.route_closed),
-            route_run=bool(self.route_run),
-            route_style=normalize_ai_route_style(self.route_style),
-        )
+        return AiSpawnEggSettings(mode=normalize_ai_mode(self.mode), personality=normalize_ai_personality(self.personality), can_place_blocks=bool(self.can_place_blocks), route_points=normalize_route_points(self.route_points), route_closed=bool(self.route_closed), route_run=bool(self.route_run), route_style=normalize_ai_route_style(self.route_style))
 
 
 @dataclass(frozen=True)
@@ -115,27 +107,4 @@ class AiPlayerState:
 
     def normalized(self) -> "AiPlayerState":
         held_item_id = None if self.held_item_id is None else str(self.held_item_id).strip()
-        return AiPlayerState(
-            actor_id=str(self.actor_id).strip(),
-            mode=normalize_ai_mode(self.mode),
-            personality=normalize_ai_personality(self.personality),
-            can_place_blocks=bool(self.can_place_blocks),
-            held_item_id=(held_item_id if held_item_id else None),
-            pos_x=float(self.pos_x),
-            pos_y=float(self.pos_y),
-            pos_z=float(self.pos_z),
-            vel_x=float(self.vel_x),
-            vel_y=float(self.vel_y),
-            vel_z=float(self.vel_z),
-            yaw_deg=float(self.yaw_deg),
-            pitch_deg=float(self.pitch_deg),
-            health=float(self.health),
-            max_health=max(1.0, float(self.max_health)),
-            on_ground=bool(self.on_ground),
-            flying=bool(self.flying),
-            route_points=normalize_route_points(self.route_points),
-            route_closed=bool(self.route_closed),
-            route_run=bool(self.route_run),
-            route_style=normalize_ai_route_style(self.route_style),
-            route_target_index=max(0, int(self.route_target_index)),
-        )
+        return AiPlayerState(actor_id=str(self.actor_id).strip(), mode=normalize_ai_mode(self.mode), personality=normalize_ai_personality(self.personality), can_place_blocks=bool(self.can_place_blocks), held_item_id=(held_item_id if held_item_id else None), pos_x=float(self.pos_x), pos_y=float(self.pos_y), pos_z=float(self.pos_z), vel_x=float(self.vel_x), vel_y=float(self.vel_y), vel_z=float(self.vel_z), yaw_deg=float(self.yaw_deg), pitch_deg=float(self.pitch_deg), health=float(self.health), max_health=max(1.0, float(self.max_health)), on_ground=bool(self.on_ground), flying=bool(self.flying), route_points=normalize_route_points(self.route_points), route_closed=bool(self.route_closed), route_run=bool(self.route_run), route_style=normalize_ai_route_style(self.route_style), route_target_index=max(0, int(self.route_target_index)))

@@ -35,15 +35,7 @@ class _DisplaySlot(QPushButton):
 
 class _HealthStrip(QWidget):
 
-    _HEART_MASK: tuple[str, ...] = (
-        "01100110",
-        "11111111",
-        "11111111",
-        "01111110",
-        "00111100",
-        "00011000",
-        "00000000",
-    )
+    _HEART_MASK: tuple[str, ...] = ("01100110", "11111111", "11111111", "01111110", "00111100", "00011000", "00000000")
 
     def __init__(self, parent: QWidget | None=None) -> None:
         super().__init__(parent)

@@ -197,15 +197,7 @@ class AiSettingsOverlay(SidebarDialogBase):
         self.accept()
 
     def settings(self) -> AiSpawnEggSettings:
-        return AiSpawnEggSettings(
-            mode=str(self._mode_combo.currentData()),
-            personality=str(self._personality_combo.currentData()),
-            can_place_blocks=bool(self._can_place_blocks.isChecked()),
-            route_points=tuple(self._settings.route_points),
-            route_closed=bool(self._route_closed.isChecked()),
-            route_run=bool(self._route_run.isChecked()),
-            route_style=str(self._route_style_combo.currentData()),
-        ).normalized()
+        return AiSpawnEggSettings(mode=str(self._mode_combo.currentData()), personality=str(self._personality_combo.currentData()), can_place_blocks=bool(self._can_place_blocks.isChecked()), route_points=tuple(self._settings.route_points), route_closed=bool(self._route_closed.isChecked()), route_run=bool(self._route_run.isChecked()), route_style=str(self._route_style_combo.currentData())).normalized()
 
     def route_edit_requested(self) -> bool:
         return bool(self._edit_route_requested)

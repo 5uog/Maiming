@@ -149,11 +149,7 @@ def _transition_clear_between_support_cells(ctx: _PlannerContext, *, from_cell: 
     sample_count = 6 if (int(dx) != 0 and int(dz) != 0) else 4
     for sample_index in range(1, int(sample_count)):
         ratio = float(sample_index) / float(sample_count)
-        probe = Vec3(
-            float(start.x) + (float(end.x) - float(start.x)) * float(ratio),
-            float(probe_y),
-            float(start.z) + (float(end.z) - float(start.z)) * float(ratio),
-        )
+        probe = Vec3(float(start.x) + (float(end.x) - float(start.x)) * float(ratio), float(probe_y), float(start.z) + (float(end.z) - float(start.z)) * float(ratio))
         if not bool(_player_clear_at(ctx, position=probe)):
             return False
     return True
@@ -229,11 +225,7 @@ def _drop_arc_clear(ctx: _PlannerContext, *, from_cell: tuple[int, int, int], to
     for sample_index in range(1, int(sample_count) + 1):
         ratio = float(sample_index) / float(sample_count)
         lift = 0.24 * (1.0 - float(ratio))
-        probe = Vec3(
-            float(start.x) + float(delta.x) * float(ratio),
-            float(start.y) + float(delta.y) * float(ratio) + float(lift),
-            float(start.z) + float(delta.z) * float(ratio),
-        )
+        probe = Vec3(float(start.x) + float(delta.x) * float(ratio), float(start.y) + float(delta.y) * float(ratio) + float(lift), float(start.z) + float(delta.z) * float(ratio))
         if not bool(_player_clear_at(ctx, position=probe)):
             return False
     return True
@@ -403,14 +395,7 @@ def _plan_support_path(ctx: _PlannerContext, *, start_cell: tuple[int, int, int]
     steps: list[AiRoutePlanStep] = []
     for cell in path:
         normalized = tuple(int(value) for value in cell)
-        steps.append(
-            AiRoutePlanStep(
-                support_cell=normalized,
-                placement_anchor=None if placement_anchor.get(normalized) is None else tuple(int(value) for value in placement_anchor[normalized]),
-                jump_required=bool(jump_required.get(normalized, False)),
-                jump_span=max(1, int(jump_span.get(normalized, 1))),
-            )
-        )
+        steps.append(AiRoutePlanStep(support_cell=normalized, placement_anchor=None if placement_anchor.get(normalized) is None else tuple(int(value) for value in placement_anchor[normalized]), jump_required=bool(jump_required.get(normalized, False)), jump_span=max(1, int(jump_span.get(normalized, 1)))))
     return tuple(steps)
 
 
@@ -425,11 +410,7 @@ def _direct_route_clear(ctx: _PlannerContext, *, from_cell: tuple[int, int, int]
     previous = src
     for index in range(1, int(steps) + 1):
         ratio = float(index) / float(steps)
-        cell = (
-            int(round(float(src[0]) + float(int(dst[0]) - int(src[0])) * ratio)),
-            int(src[1]),
-            int(round(float(src[2]) + float(int(dst[2]) - int(src[2])) * ratio)),
-        )
+        cell = (int(round(float(src[0]) + float(int(dst[0]) - int(src[0])) * ratio)), int(src[1]), int(round(float(src[2]) + float(int(dst[2]) - int(src[2])) * ratio)))
         if cell == previous:
             continue
         if not bool(_standable_support_cell(ctx, cell)):
@@ -444,14 +425,7 @@ def compute_ai_route_plan(request: AiRoutePlanRequest) -> AiRoutePlanResult:
     world_blocks = {(int(x), int(y), int(z)): str(state_str) for x, y, z, state_str in request.world_blocks}
     world = WorldState(blocks=world_blocks, revision=int(request.world_revision))
     player = PlayerEntity(position=_support_cell_center(tuple(int(value) for value in request.start_support)), velocity=Vec3(0.0, 0.0, 0.0), yaw_deg=0.0, pitch_deg=0.0, on_ground=True)
-    ctx = _PlannerContext(
-        world=world,
-        settings=request.settings,
-        player=player,
-        can_place_blocks=bool(request.can_place_blocks),
-        blocked_edges=frozenset((tuple(int(value) for value in edge[0]), tuple(int(value) for value in edge[1])) for edge in request.blocked_edges),
-        avoid_support_cells=frozenset(tuple(int(value) for value in cell) for cell in request.avoid_support_cells),
-    )
+    ctx = _PlannerContext(world=world, settings=request.settings, player=player, can_place_blocks=bool(request.can_place_blocks), blocked_edges=frozenset((tuple(int(value) for value in edge[0]), tuple(int(value) for value in edge[1])) for edge in request.blocked_edges), avoid_support_cells=frozenset(tuple(int(value) for value in cell) for cell in request.avoid_support_cells))
     start_support = tuple(int(value) for value in request.start_support)
     route_points = tuple(request.route_points)
     point_count = len(route_points)
@@ -461,42 +435,10 @@ def compute_ai_route_plan(request: AiRoutePlanRequest) -> AiRoutePlanResult:
     route_point = route_points[int(current_index)].as_vec3()
     target_support = _nearest_standable_support_cell(ctx, _support_cell_from_point(route_point))
     if target_support is None:
-        return AiRoutePlanResult(
-            generation=int(request.generation),
-            actor_id=str(request.actor_id),
-            world_revision=int(request.world_revision),
-            start_support=start_support,
-            route_target_index=int(current_index),
-            success=False,
-            path=(),
-        )
+        return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=False, path=())
     if bool(_direct_route_clear(ctx, from_cell=start_support, to_cell=target_support)):
-        return AiRoutePlanResult(
-            generation=int(request.generation),
-            actor_id=str(request.actor_id),
-            world_revision=int(request.world_revision),
-            start_support=start_support,
-            route_target_index=int(current_index),
-            success=True,
-            path=(AiRoutePlanStep(support_cell=start_support), AiRoutePlanStep(support_cell=tuple(int(value) for value in target_support))),
-        )
+        return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=True, path=(AiRoutePlanStep(support_cell=start_support), AiRoutePlanStep(support_cell=tuple(int(value) for value in target_support))))
     path = _plan_support_path(ctx, start_cell=start_support, target_cell=target_support, search_radius=int(request.search_radius))
     if len(path) >= 2 and tuple(int(value) for value in path[-1].support_cell) == tuple(int(value) for value in target_support):
-        return AiRoutePlanResult(
-            generation=int(request.generation),
-            actor_id=str(request.actor_id),
-            world_revision=int(request.world_revision),
-            start_support=start_support,
-            route_target_index=int(current_index),
-            success=True,
-            path=tuple(path),
-        )
-    return AiRoutePlanResult(
-        generation=int(request.generation),
-        actor_id=str(request.actor_id),
-        world_revision=int(request.world_revision),
-        start_support=start_support,
-        route_target_index=int(current_index),
-        success=False,
-        path=(),
-    )
+        return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=True, path=tuple(path))
+    return AiRoutePlanResult(generation=int(request.generation), actor_id=str(request.actor_id), world_revision=int(request.world_revision), start_support=start_support, route_target_index=int(current_index), success=False, path=())

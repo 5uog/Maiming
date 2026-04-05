@@ -10,18 +10,7 @@ from .sidebar_dialog import SidebarDialogBase
 class ThemedNoticeDialog(SidebarDialogBase):
 
     def __init__(self, *, parent=None, title: str, message: str, nav_label: str="Notice", confirm_text: str="OK") -> None:
-        super().__init__(
-            parent,
-            as_window=True,
-            root_object_name="settingsRoot",
-            window_title=str(title),
-            window_size=(760, 520),
-            minimum_window_size=(640, 420),
-            panel_minimum_size=(580, 320),
-            sidebar_object_name="settingsSidebar",
-            content_object_name="settingsContent",
-            stack_object_name="settingsStack",
-        )
+        super().__init__(parent, as_window=True, root_object_name="settingsRoot", window_title=str(title), window_size=(760, 520), minimum_window_size=(640, 420), panel_minimum_size=(580, 320), sidebar_object_name="settingsSidebar", content_object_name="settingsContent", stack_object_name="settingsStack")
         self._tab_notice = self._make_tab_button(str(nav_label), 0, self._set_page)
         self._sidebar_layout.addWidget(self._tab_notice)
         self._sidebar_layout.addStretch(1)

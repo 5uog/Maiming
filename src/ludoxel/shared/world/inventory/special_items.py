@@ -7,10 +7,7 @@ from ludoxel.features.othello.domain.inventory.special_items import OTHELLO_SETT
 from .core_special_items import AI_ROUTE_CANCEL_ITEM_ID, AI_ROUTE_CONFIRM_ITEM_ID, AI_ROUTE_ERASE_ITEM_ID, AI_SPAWN_EGG_ITEM_ID, iter_core_special_item_descriptors
 from .special_item_descriptor import SpecialItemDescriptor
 
-_SPECIAL_ITEMS: dict[str, SpecialItemDescriptor] = {
-    str(descriptor.item_id).strip().lower(): descriptor
-    for descriptor in (*iter_core_special_item_descriptors(), *iter_othello_special_item_descriptors())
-}
+_SPECIAL_ITEMS: dict[str, SpecialItemDescriptor] = {str(descriptor.item_id).strip().lower(): descriptor for descriptor in (*iter_core_special_item_descriptors(), *iter_othello_special_item_descriptors())}
 
 
 def get_special_item_descriptor(item_id: object) -> SpecialItemDescriptor | None:

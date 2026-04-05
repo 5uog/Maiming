@@ -203,20 +203,7 @@ class SessionManager:
             cam_shake_pitch_deg = 0.0
             cam_shake_roll_deg = 0.0
 
-        return CameraDTO(
-            eye_x=eye.x,
-            eye_y=eye.y,
-            eye_z=eye.z,
-            yaw_deg=self.player.yaw_deg,
-            pitch_deg=self.player.pitch_deg,
-            fov_deg=self.settings.fov_deg,
-            shake_tx=float(cam_shake_tx),
-            shake_ty=float(cam_shake_ty),
-            shake_tz=0.0,
-            shake_yaw_deg=0.0,
-            shake_pitch_deg=float(cam_shake_pitch_deg),
-            shake_roll_deg=float(cam_shake_roll_deg),
-        )
+        return CameraDTO(eye_x=eye.x, eye_y=eye.y, eye_z=eye.z, yaw_deg=self.player.yaw_deg, pitch_deg=self.player.pitch_deg, fov_deg=self.settings.fov_deg, shake_tx=float(cam_shake_tx), shake_ty=float(cam_shake_ty), shake_tz=0.0, shake_yaw_deg=0.0, shake_pitch_deg=float(cam_shake_pitch_deg), shake_roll_deg=float(cam_shake_roll_deg))
 
     def step(self, dt: float, move_f: float, move_s: float, jump_held: bool, jump_pressed: bool, sprint: bool, crouch: bool, mdx: float, mdy: float, creative_mode: bool, auto_jump_enabled: bool, paused_ai_actor_ids: tuple[str, ...]=()) -> SessionStepResult:
         self._sim_time_s += float(dt)
@@ -226,25 +213,7 @@ class SessionManager:
 
         self._update_creative_flight_toggle(creative_mode=bool(creative_mode), jump_pressed=bool(jump_pressed))
 
-        step_result = advance_runtime_player(
-            player=self.player,
-            world=self.world,
-            block_registry=self.block_registry,
-            settings=self.settings,
-            motion=self._player_motion,
-            dt=float(dt),
-            control=PlayerStepInput(
-                move_f=float(move_f),
-                move_s=float(move_s),
-                jump_held=bool(jump_held),
-                jump_pressed=bool(jump_pressed),
-                sprint=bool(sprint),
-                crouch=bool(crouch),
-                yaw_delta_deg=float(yaw_delta),
-                pitch_delta_deg=float(pitch_delta),
-                auto_jump_enabled=bool(auto_jump_enabled),
-            ),
-        )
+        step_result = advance_runtime_player(player=self.player, world=self.world, block_registry=self.block_registry, settings=self.settings, motion=self._player_motion, dt=float(dt), control=PlayerStepInput(move_f=float(move_f), move_s=float(move_s), jump_held=bool(jump_held), jump_pressed=bool(jump_pressed), sprint=bool(sprint), crouch=bool(crouch), yaw_delta_deg=float(yaw_delta), pitch_delta_deg=float(pitch_delta), auto_jump_enabled=bool(auto_jump_enabled)))
 
         fall_damage = 0.0
         void_damage = 0.0
@@ -269,43 +238,13 @@ class SessionManager:
                 death_reason = "damage"
         self._death_reason = death_reason
 
-        return SessionStepResult(
-            jump_started=bool(step_result.jump_started),
-            landed=bool(step_result.landed),
-            footstep_triggered=bool(step_result.footstep_triggered),
-            support_block_state=step_result.support_block_state,
-            support_position=step_result.support_position,
-            fall_distance_blocks=step_result.fall_distance_blocks,
-            damage_taken=float(damage_taken),
-            death_reason=death_reason,
-            gravity_broken_blocks=tuple(gravity_result.broken_blocks),
-            play_damage_sound=bool(play_damage_sound),
-            ai_damage_sound_positions=tuple(ai_report.damage_sound_positions),
-        )
+        return SessionStepResult(jump_started=bool(step_result.jump_started), landed=bool(step_result.landed), footstep_triggered=bool(step_result.footstep_triggered), support_block_state=step_result.support_block_state, support_position=step_result.support_position, fall_distance_blocks=step_result.fall_distance_blocks, damage_taken=float(damage_taken), death_reason=death_reason, gravity_broken_blocks=tuple(gravity_result.broken_blocks), play_damage_sound=bool(play_damage_sound), ai_damage_sound_positions=tuple(ai_report.damage_sound_positions))
 
     def make_snapshot(self, *, enable_view_bobbing: bool=True, enable_camera_shake: bool=True, view_bobbing_strength: float=0.35, camera_shake_strength: float=0.20, is_first_person_view: bool=True) -> RenderSnapshotDTO:
         camera = self.make_camera_snapshot(enable_camera_shake=bool(enable_camera_shake), camera_shake_strength=float(camera_shake_strength))
         player_model = build_player_model_snapshot(player=self.player, motion=self._player_motion, walk_speed=float(self.settings.movement.walk_speed), is_first_person_view=bool(is_first_person_view))
         scale = 0.0 if not bool(enable_view_bobbing) else clampf(float(view_bobbing_strength), 0.0, 1.0)
-        player_model = type(player_model)(
-            base_x=float(player_model.base_x),
-            base_y=float(player_model.base_y),
-            base_z=float(player_model.base_z),
-            body_yaw_deg=float(player_model.body_yaw_deg),
-            head_yaw_deg=float(player_model.head_yaw_deg),
-            head_pitch_deg=float(player_model.head_pitch_deg),
-            limb_phase_rad=float(player_model.limb_phase_rad),
-            limb_swing_amount=float(player_model.limb_swing_amount),
-            crouch_amount=float(player_model.crouch_amount),
-            hurt_tint_strength=float(player_model.hurt_tint_strength),
-            first_person_tx=float(player_model.first_person_tx) * float(scale),
-            first_person_ty=float(player_model.first_person_ty) * float(scale),
-            first_person_tz=float(player_model.first_person_tz) * float(scale),
-            first_person_yaw_deg=float(player_model.first_person_yaw_deg) * float(scale),
-            first_person_pitch_deg=float(player_model.first_person_pitch_deg) * float(scale),
-            first_person_roll_deg=float(player_model.first_person_roll_deg) * float(scale),
-            is_first_person=bool(player_model.is_first_person),
-        )
+        player_model = type(player_model)(base_x=float(player_model.base_x), base_y=float(player_model.base_y), base_z=float(player_model.base_z), body_yaw_deg=float(player_model.body_yaw_deg), head_yaw_deg=float(player_model.head_yaw_deg), head_pitch_deg=float(player_model.head_pitch_deg), limb_phase_rad=float(player_model.limb_phase_rad), limb_swing_amount=float(player_model.limb_swing_amount), crouch_amount=float(player_model.crouch_amount), hurt_tint_strength=float(player_model.hurt_tint_strength), first_person_tx=float(player_model.first_person_tx) * float(scale), first_person_ty=float(player_model.first_person_ty) * float(scale), first_person_tz=float(player_model.first_person_tz) * float(scale), first_person_yaw_deg=float(player_model.first_person_yaw_deg) * float(scale), first_person_pitch_deg=float(player_model.first_person_pitch_deg) * float(scale), first_person_roll_deg=float(player_model.first_person_roll_deg) * float(scale), is_first_person=bool(player_model.is_first_person))
 
         falling_blocks = tuple(FallingBlockRenderSampleDTO(state_str=str(sample.state_str), x=float(sample.x), y=float(sample.y), z=float(sample.z)) for sample in self.gravity.render_samples())
         return RenderSnapshotDTO(world_revision=int(self.world.revision), camera=camera, player_model=player_model, falling_blocks=falling_blocks)

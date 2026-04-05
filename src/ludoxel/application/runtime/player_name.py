@@ -4,54 +4,9 @@ from __future__ import annotations
 
 from secrets import randbelow
 
-_ADJECTIVES: tuple[str, ...] = (
-    "Amber",
-    "Aqua",
-    "Brisk",
-    "Cinder",
-    "Clear",
-    "Copper",
-    "Crimson",
-    "Drift",
-    "Ember",
-    "Golden",
-    "Ivory",
-    "Jade",
-    "Mellow",
-    "Mist",
-    "Moss",
-    "North",
-    "Quartz",
-    "River",
-    "Silver",
-    "Spruce",
-    "Sunny",
-    "Swift",
-    "Velvet",
-    "Winter",
-)
+_ADJECTIVES: tuple[str, ...] = ("Amber", "Aqua", "Brisk", "Cinder", "Clear", "Copper", "Crimson", "Drift", "Ember", "Golden", "Ivory", "Jade", "Mellow", "Mist", "Moss", "North", "Quartz", "River", "Silver", "Spruce", "Sunny", "Swift", "Velvet", "Winter")
 
-_NOUNS: tuple[str, ...] = (
-    "Badger",
-    "Comet",
-    "Falcon",
-    "Finch",
-    "Fox",
-    "Heron",
-    "Lynx",
-    "Maple",
-    "Otter",
-    "Panda",
-    "Pine",
-    "Raven",
-    "Salmon",
-    "Stone",
-    "Tern",
-    "Tiger",
-    "Violet",
-    "Willow",
-    "Wolf",
-)
+_NOUNS: tuple[str, ...] = ("Badger", "Comet", "Falcon", "Finch", "Fox", "Heron", "Lynx", "Maple", "Otter", "Panda", "Pine", "Raven", "Salmon", "Stone", "Tern", "Tiger", "Violet", "Willow", "Wolf")
 
 
 def normalize_player_name(value: object) -> str:
